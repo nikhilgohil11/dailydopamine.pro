@@ -37,6 +37,60 @@ const state = {
 };
 
 // DOM Elements
+const DOM = {
+    loadingScreen: document.getElementById('loading-screen'),
+    loadingBar: document.getElementById('loading-bar'),
+    loadingText: document.getElementById('loading-text'),
+    appContainer: document.getElementById('app-container'),
+    sidebar: document.getElementById('sidebar'),
+    sidebarOverlay: document.getElementById('sidebar-overlay'),
+    menuToggle: document.getElementById('menu-toggle'),
+    addTaskButton: document.getElementById('add-task-button'),
+    createTaskFormContainer: document.getElementById('create-task-form-container'),
+    closeCreateTaskFormButton: document.getElementById('close-create-task-form'),
+    taskForm: document.getElementById('task-form'),
+    taskNameInput: document.getElementById('task-name'),
+    taskTimeInput: document.getElementById('task-time'),
+    taskSoundInput: document.getElementById('task-sound'),
+    taskList: document.getElementById('task-list'),
+    emptyTaskList: document.getElementById('empty-task-list'),
+    taskSearchInput: document.getElementById('task-search'),
+    activeTaskContainer: document.getElementById('active-task-container'),
+    noTaskMessage: document.getElementById('no-task-message'),
+    activeTaskDiv: document.getElementById('active-task'),
+    activeTaskName: document.getElementById('active-task-name'),
+    timerDisplay: document.getElementById('timer-display'),
+    timerBar: document.getElementById('timer-bar'),
+    soundName: document.getElementById('sound-name'),
+    startTaskButton: document.getElementById('start-task'),
+    pauseTaskButton: document.getElementById('pause-task'),
+    resumeTaskButton: document.getElementById('resume-task'),
+    finishTaskButton: document.getElementById('finish-task'),
+    cancelTaskButton: document.getElementById('cancel-task'),
+    completionModal: document.getElementById('completion-modal'),
+    completedTaskName: document.getElementById('completed-task-name'),
+    nextTaskButton: document.getElementById('next-task-button'),
+    takeBreakButton: document.getElementById('take-break-button'),
+    endSessionButton: document.getElementById('end-session-button'),
+    statsButton: document.getElementById('stats-button'),
+    statsButtonMobile: document.getElementById('stats-button-mobile'), // Added mobile stats button
+    statsModal: document.getElementById('stats-modal'),
+    closeStatsButton: document.getElementById('close-stats'),
+    statsTodayFocusTime: document.getElementById('today-focus-time'),
+    statsTasksCompleted: document.getElementById('tasks-completed'),
+    statsMostUsedSound: document.getElementById('most-used-sound'),
+    statsRecentTasksList: document.getElementById('recent-tasks-list'),
+    breakModal: document.getElementById('break-modal'),
+    breakTimer: document.getElementById('break-timer'),
+    endBreakButton: document.getElementById('end-break-button'),
+    volumeControl: document.getElementById('volume-control'),
+    volumeDownButton: document.getElementById('volume-down'),
+    volumeUpButton: document.getElementById('volume-up'),
+    muteButton: document.getElementById('mute-button'),
+    themeToggleButton: document.getElementById('theme-toggle'), // Main theme toggle
+    themeToggleButtonMobile: document.getElementById('theme-toggle-mobile') // Mobile theme toggle
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     // Preload audio files
     preloadAudioFiles();
@@ -47,8 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Preload all audio files before showing the app
 function preloadAudioFiles() {
-    const loadingBar = document.getElementById('loading-bar');
-    const loadingText = document.getElementById('loading-text');
     let filesLoaded = 0;
     
     AUDIO_FILES.forEach(file => {
@@ -64,16 +116,16 @@ function preloadAudioFiles() {
         audio.addEventListener('canplaythrough', () => {
             filesLoaded++;
             const progress = (filesLoaded / AUDIO_FILES.length) * 100;
-            loadingBar.style.width = `${progress}%`;
-            loadingText.textContent = `${filesLoaded}/${AUDIO_FILES.length} files loaded`;
+            DOM.loadingBar.style.width = `${progress}%`;
+            DOM.loadingText.textContent = `${filesLoaded}/${AUDIO_FILES.length} files loaded`;
             
             // When all files are loaded, show the app
             if (filesLoaded === AUDIO_FILES.length) {
                 setTimeout(() => {
-                    document.getElementById('loading-screen').classList.add('fade-out');
+                    DOM.loadingScreen.classList.add('fade-out');
                     setTimeout(() => {
-                        document.getElementById('loading-screen').style.display = 'none';
-                        document.getElementById('app-container').classList.remove('hidden');
+                        DOM.loadingScreen.style.display = 'none';
+                        DOM.appContainer.classList.remove('hidden');
                     }, 500);
                 }, 500);
             }
@@ -84,8 +136,8 @@ function preloadAudioFiles() {
             console.error(`Error loading audio file: ${file.path}`);
             filesLoaded++;
             const progress = (filesLoaded / AUDIO_FILES.length) * 100;
-            loadingBar.style.width = `${progress}%`;
-            loadingText.textContent = `${filesLoaded}/${AUDIO_FILES.length} files loaded (Error with ${file.name})`;
+            DOM.loadingBar.style.width = `${progress}%`;
+            DOM.loadingText.textContent = `${filesLoaded}/${AUDIO_FILES.length} files loaded (Error with ${file.name})`;
         });
     });
 }
@@ -137,79 +189,100 @@ function initializeApp() {
 
 // Set up all event listeners
 function setupEventListeners() {
-    // Task form submission
-    document.getElementById('task-form').addEventListener('submit', handleTaskFormSubmit);
+    // Task form submission (inside modal now)
+    DOM.taskForm.addEventListener('submit', handleTaskFormSubmit);
     
     // Timer control buttons
-    document.getElementById('start-task').addEventListener('click', startTask);
-    document.getElementById('pause-task').addEventListener('click', pauseTask);
-    document.getElementById('resume-task').addEventListener('click', resumeTask);
-    document.getElementById('finish-task').addEventListener('click', finishTask);
-    document.getElementById('cancel-task').addEventListener('click', cancelTask);
+    DOM.startTaskButton.addEventListener('click', startTask);
+    DOM.pauseTaskButton.addEventListener('click', pauseTask);
+    DOM.resumeTaskButton.addEventListener('click', resumeTask);
+    DOM.finishTaskButton.addEventListener('click', finishTask);
+    DOM.cancelTaskButton.addEventListener('click', cancelTask);
     
     // Completion modal buttons
-    document.getElementById('next-task-button').addEventListener('click', startNextTask);
-    document.getElementById('take-break-button').addEventListener('click', startBreak);
-    document.getElementById('end-session-button').addEventListener('click', endSession);
+    DOM.nextTaskButton.addEventListener('click', startNextTask);
+    DOM.takeBreakButton.addEventListener('click', startBreak);
+    DOM.endSessionButton.addEventListener('click', endSession);
     
     // Break modal button
-    document.getElementById('end-break-button').addEventListener('click', endBreak);
+    DOM.endBreakButton.addEventListener('click', endBreak);
     
     // Stats modal
-    document.getElementById('stats-button').addEventListener('click', toggleStatsModal);
-    document.getElementById('close-stats').addEventListener('click', toggleStatsModal);
+    DOM.statsButton.addEventListener('click', toggleStatsModal);
+    DOM.statsButtonMobile.addEventListener('click', toggleStatsModal); // Mobile stats button
+    DOM.closeStatsButton.addEventListener('click', toggleStatsModal);
     
     // Audio controls
-    document.getElementById('volume-control').addEventListener('input', adjustVolume);
-    document.getElementById('volume-up').addEventListener('click', increaseVolume);
-    document.getElementById('volume-down').addEventListener('click', decreaseVolume);
-    document.getElementById('mute-button').addEventListener('click', toggleMute);
+    DOM.volumeControl.addEventListener('input', adjustVolume);
+    DOM.volumeUpButton.addEventListener('click', increaseVolume);
+    DOM.volumeDownButton.addEventListener('click', decreaseVolume);
+    DOM.muteButton.addEventListener('click', toggleMute);
     
-    // Add search functionality
-    document.getElementById('task-search').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        const taskItems = document.querySelectorAll('.task-item');
-        
-        taskItems.forEach(item => {
-            const taskName = item.querySelector('h3').textContent.toLowerCase();
-            if (taskName.includes(searchTerm)) {
-                item.style.display = '';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-        
-        // Show/hide empty state message
-        const visibleTasks = Array.from(taskItems).filter(item => item.style.display !== 'none');
-        const emptyTaskList = document.getElementById('empty-task-list');
-        
-        if (visibleTasks.length === 0 && searchTerm !== '') {
-            emptyTaskList.innerHTML = `
-                <p>No tasks found matching "${searchTerm}"</p>
-                <p class="text-sm mt-2">Try a different search term</p>
-            `;
-            emptyTaskList.classList.remove('hidden');
-        } else if (visibleTasks.length === 0) {
-            emptyTaskList.innerHTML = `
-                <p>No tasks in queue</p>
-                <p class="text-sm mt-2">Create tasks to get started</p>
-            `;
-            emptyTaskList.classList.remove('hidden');
-        } else {
-            emptyTaskList.classList.add('hidden');
+    // Task search
+    DOM.taskSearchInput.addEventListener('input', handleSearchInput);
+
+    // --- New Listeners for Sidebar and Modals ---
+
+    // Sidebar toggle (mobile)
+    DOM.menuToggle.addEventListener('click', toggleSidebar);
+    DOM.sidebarOverlay.addEventListener('click', toggleSidebar); // Close sidebar on overlay click
+
+    // Create Task Modal
+    DOM.addTaskButton.addEventListener('click', openCreateTaskModal);
+    DOM.closeCreateTaskFormButton.addEventListener('click', closeCreateTaskModal);
+    // Close modal if clicking outside the form container
+    DOM.createTaskFormContainer.addEventListener('click', (e) => {
+        if (e.target === DOM.createTaskFormContainer) {
+            closeCreateTaskModal();
         }
     });
+
+    // Delegate task list events (start/delete)
+    DOM.taskList.addEventListener('click', handleTaskListClick);
+
+    // Theme toggle buttons (already handled in index.html script, but can be moved here if preferred)
+    // DOM.themeToggleButton.addEventListener('click', toggleTheme);
+    // DOM.themeToggleButtonMobile.addEventListener('click', toggleTheme);
 }
+
+// --- Sidebar and Modal Functions ---
+
+function toggleSidebar() {
+    DOM.sidebar.classList.toggle('open'); // Assumes 'open' class translates it into view
+    DOM.sidebarOverlay.classList.toggle('hidden');
+    // Optional: Prevent body scroll when sidebar is open on mobile
+    if (DOM.sidebar.classList.contains('open')) {
+        document.body.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';
+    }
+}
+
+function openCreateTaskModal() {
+    DOM.createTaskFormContainer.classList.remove('hidden');
+    DOM.taskNameInput.focus(); // Focus the first input field
+}
+
+function closeCreateTaskModal() {
+    DOM.createTaskFormContainer.classList.add('hidden');
+    DOM.taskForm.reset(); // Clear the form when closing
+}
+
+// --- Modified Event Handlers ---
 
 // Handle task form submission
 function handleTaskFormSubmit(e) {
     e.preventDefault();
     
-    const taskName = document.getElementById('task-name').value.trim();
-    const taskTime = parseInt(document.getElementById('task-time').value);
-    const taskSound = document.getElementById('task-sound').value;
+    const taskName = DOM.taskNameInput.value.trim();
+    const taskTime = parseInt(DOM.taskTimeInput.value);
+    const taskSound = DOM.taskSoundInput.value;
     
-    if (!taskName || !taskTime) return;
+    if (!taskName || !taskTime || taskTime <= 0) {
+        // Add some validation feedback if needed
+        console.warn('Invalid task input');
+        return;
+    }
     
     // Create new task
     const newTask = {
@@ -229,174 +302,221 @@ function handleTaskFormSubmit(e) {
     // Update UI
     updateTaskList();
     
-    // Clear form
-    document.getElementById('task-form').reset();
+    // Close the modal and clear form
+    closeCreateTaskModal();
     
-    // If this is the first task, suggest starting it
-    if (state.tasks.length === 1 && !state.activeTaskId) {
-        document.getElementById('active-task-name').textContent = newTask.name;
+    // If this is the first task or no task is active, set it active
+    if (!state.activeTaskId) {
         setActiveTask(newTask.id);
+    }
+    
+    // Close sidebar if open on mobile after adding task
+    if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
+        toggleSidebar();
     }
 }
 
-// Update the task list in the UI
-function updateTaskList() {
-    const taskList = document.getElementById('task-list');
-    const emptyTaskList = document.getElementById('empty-task-list');
-    
-    // Clear current list
-    taskList.innerHTML = '';
-    
-    if (state.tasks.length === 0 && state.completedTasks.length === 0 && state.canceledTasks.length === 0) {
-        taskList.classList.add('hidden');
-        emptyTaskList.classList.remove('hidden');
-        return;
-    }
-    
-    taskList.classList.remove('hidden');
-    emptyTaskList.classList.add('hidden');
-    
-    // Add each active task to the list
-    state.tasks.forEach((task, index) => {
-        const li = document.createElement('li');
-        li.classList.add('py-3', 'px-4', 'task-item');
-        
-        // Highlight active task
-        if (task.id === state.activeTaskId) {
-            li.classList.add('active');
+// Handle clicks within the task list (delegation)
+function handleTaskListClick(e) {
+    const startButton = e.target.closest('.start-button');
+    const deleteButton = e.target.closest('.delete-button');
+    const taskItem = e.target.closest('.task-item');
+
+    if (startButton) {
+        const taskId = startButton.dataset.id;
+        setActiveTask(taskId);
+        startTask(); // Optionally auto-start when clicked from sidebar
+        // Close sidebar if open on mobile after starting task
+        if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
+            toggleSidebar();
         }
-        
-        li.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="min-w-0 flex-1">
-                    <h3 class="font-medium ${task.id === state.activeTaskId ? 'text-indigo-700' : ''} truncate">${task.name}</h3>
-                    <div class="flex items-center text-sm text-gray-500 mt-1">
-                        <span class="mr-3"><i class="far fa-clock mr-1"></i>${task.duration} min</span>
-                        ${task.sound !== 'none' ? `<span><i class="fas fa-volume-up mr-1"></i>${findAudioName(task.sound)}</span>` : ''}
-                    </div>
-                </div>
-                <div class="flex items-center ml-4">
-                    ${task.id !== state.activeTaskId ? `
-                        <button class="start-button p-2 text-green-600 hover:text-green-800" data-id="${task.id}">
-                            <i class="fas fa-play"></i>
-                        </button>
-                    ` : ''}
-                    <button class="delete-button p-2 text-red-600 hover:text-red-800" data-id="${task.id}">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            </div>
-        `;
-        
-        taskList.appendChild(li);
+        return; // Prevent task item click logic below
+    }
+
+    if (deleteButton) {
+        const taskId = deleteButton.dataset.id;
+        // Add confirmation dialog?
+        // if (confirm('Are you sure you want to delete this task?')) { ... }
+        if (taskItem.classList.contains('completed')) {
+            deleteCompletedTask(taskId);
+        } else if (taskItem.classList.contains('canceled')) {
+            deleteCanceledTask(taskId);
+        } else {
+            deleteTask(taskId);
+        }
+        return; // Prevent task item click logic below
+    }
+
+    // Handle clicking anywhere else on the task item (to make it active)
+    if (taskItem && !taskItem.classList.contains('active') && !taskItem.classList.contains('completed') && !taskItem.classList.contains('canceled')) {
+        const taskId = taskItem.dataset.id;
+        setActiveTask(taskId);
+         // Close sidebar if open on mobile after selecting task
+         if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
+            toggleSidebar();
+        }
+    }
+}
+
+// Handle search input
+function handleSearchInput(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    filterTaskList(searchTerm);
+}
+
+// Filter task list based on search term
+function filterTaskList(searchTerm) {
+    const taskItems = DOM.taskList.querySelectorAll('li[data-id]'); // Select only items with data-id
+    let visibleTasks = 0;
+
+    taskItems.forEach(item => {
+        const taskName = item.querySelector('h3')?.textContent.toLowerCase() || '';
+        const isMatch = taskName.includes(searchTerm);
+        item.style.display = isMatch ? '' : 'none';
+        if (isMatch) {
+            visibleTasks++;
+        }
     });
-    
-    // Add completed tasks section if there are any completed tasks
+
+    // Show/hide empty state message
+    if (visibleTasks === 0 && searchTerm !== '') {
+        DOM.emptyTaskList.innerHTML = `<p>No tasks found matching "${searchTerm}"</p>`;
+        DOM.emptyTaskList.classList.remove('hidden');
+    } else if (state.tasks.length === 0 && state.completedTasks.length === 0 && state.canceledTasks.length === 0) {
+        DOM.emptyTaskList.innerHTML = `<p>No tasks in queue</p>`;
+        DOM.emptyTaskList.classList.remove('hidden');
+    } else if (visibleTasks === 0 && searchTerm === '' && (state.tasks.length > 0 || state.completedTasks.length > 0 || state.canceledTasks.length > 0)) {
+        // This case shouldn't happen if dividers are not hidden, but as fallback:
+        DOM.emptyTaskList.classList.add('hidden'); // Hide if search is empty but lists exist
+    } else if (visibleTasks > 0) {
+         DOM.emptyTaskList.classList.add('hidden');
+    }
+
+    // Ensure dividers are always visible if their sections have content (even if filtered out)
+    const completedDivider = DOM.taskList.querySelector('.task-divider.completed-divider');
+    const canceledDivider = DOM.taskList.querySelector('.task-divider.canceled-divider');
+    if (completedDivider) completedDivider.style.display = state.completedTasks.length > 0 ? '' : 'none';
+    if (canceledDivider) canceledDivider.style.display = state.canceledTasks.length > 0 ? '' : 'none';
+}
+
+// Update the task list in the UI (Sidebar Version)
+function updateTaskList() {
+    DOM.taskList.innerHTML = ''; // Clear current list
+
+    const searchTerm = DOM.taskSearchInput.value.toLowerCase().trim();
+
+    let hasVisibleQueuedTasks = false;
+    let hasVisibleCompletedTasks = false;
+    let hasVisibleCanceledTasks = false;
+
+    // Add active tasks to the list
+    state.tasks.forEach(task => {
+        const li = createTaskListItem(task, 'queued');
+        DOM.taskList.appendChild(li);
+        if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+            hasVisibleQueuedTasks = true;
+        }
+    });
+
+    // Add completed tasks section
     if (state.completedTasks.length > 0) {
         const completedDivider = document.createElement('li');
-        completedDivider.classList.add('py-2', 'px-4', 'bg-gray-100');
-        completedDivider.innerHTML = `
-            <div class="flex items-center justify-between">
-                <h3 class="text-sm font-medium text-gray-500">Completed Tasks</h3>
-            </div>
-        `;
-        taskList.appendChild(completedDivider);
-        
-        // Add recently completed tasks (limit to 5)
-        state.completedTasks.slice(0, 5).forEach(task => {
-            const li = document.createElement('li');
-            li.classList.add('py-3', 'px-4', 'task-item', 'opacity-70');
-            
-            const date = new Date(task.completedAt);
-            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            li.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-medium line-through text-gray-500">${task.name}</h3>
-                        <div class="flex items-center text-sm text-gray-500 mt-1">
-                            <span class="mr-3"><i class="far fa-check-circle mr-1"></i>Completed at ${timeString}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <button class="delete-completed-button p-2 text-red-600 hover:text-red-800" data-id="${task.id}">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            taskList.appendChild(li);
+        completedDivider.className = 'task-divider completed-divider';
+        completedDivider.innerHTML = 'Completed Tasks';
+        DOM.taskList.appendChild(completedDivider);
+
+        state.completedTasks.slice(0, 10).forEach(task => { // Show more completed tasks
+            const li = createTaskListItem(task, 'completed');
+            DOM.taskList.appendChild(li);
+            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                hasVisibleCompletedTasks = true;
+            }
         });
     }
-    
-    // Add canceled tasks section if there are any canceled tasks
+
+    // Add canceled tasks section
     if (state.canceledTasks.length > 0) {
         const canceledDivider = document.createElement('li');
-        canceledDivider.classList.add('py-2', 'px-4', 'bg-gray-100');
-        canceledDivider.innerHTML = `
-            <div class="flex items-center justify-between">
-                <h3 class="text-sm font-medium text-gray-500">Canceled Tasks</h3>
-            </div>
-        `;
-        taskList.appendChild(canceledDivider);
-        
-        // Add recently canceled tasks (limit to 5)
+        canceledDivider.className = 'task-divider canceled-divider';
+        canceledDivider.innerHTML = 'Canceled Tasks';
+        DOM.taskList.appendChild(canceledDivider);
+
         state.canceledTasks.slice(0, 5).forEach(task => {
-            const li = document.createElement('li');
-            li.classList.add('py-3', 'px-4', 'task-item', 'opacity-70');
-            
-            const date = new Date(task.canceledAt);
-            const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            
-            li.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-medium text-gray-500"><i class="fas fa-ban text-red-500 mr-1"></i>${task.name}</h3>
-                        <div class="flex items-center text-sm text-gray-500 mt-1">
-                            <span class="mr-3"><i class="far fa-times-circle mr-1"></i>Canceled at ${timeString}</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center">
-                        <button class="delete-canceled-button p-2 text-red-600 hover:text-red-800" data-id="${task.id}">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            taskList.appendChild(li);
+            const li = createTaskListItem(task, 'canceled');
+            DOM.taskList.appendChild(li);
+            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                hasVisibleCanceledTasks = true;
+            }
         });
     }
-    
-    // Add event listeners to all buttons
-    document.querySelectorAll('.start-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const taskId = e.currentTarget.getAttribute('data-id');
-            setActiveTask(taskId);
-        });
-    });
-    
-    document.querySelectorAll('.delete-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const taskId = e.currentTarget.getAttribute('data-id');
-            deleteTask(taskId);
-        });
-    });
-    
-    document.querySelectorAll('.delete-completed-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const taskId = e.currentTarget.getAttribute('data-id');
-            deleteCompletedTask(taskId);
-        });
-    });
-    
-    document.querySelectorAll('.delete-canceled-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            const taskId = e.currentTarget.getAttribute('data-id');
-            deleteCanceledTask(taskId);
-        });
-    });
+
+    // Apply current search filter
+    filterTaskList(searchTerm);
+
+    // Show/hide overall empty state message
+    const hasAnyTasks = state.tasks.length > 0 || state.completedTasks.length > 0 || state.canceledTasks.length > 0;
+    const hasAnyVisibleContent = hasVisibleQueuedTasks || hasVisibleCompletedTasks || hasVisibleCanceledTasks;
+
+    if (!hasAnyTasks) {
+        DOM.emptyTaskList.innerHTML = `<p>No tasks yet!</p><p class="text-sm mt-1">Click the '+' to add one.</p>`;
+        DOM.emptyTaskList.classList.remove('hidden');
+    } else if (!hasAnyVisibleContent && searchTerm) {
+        DOM.emptyTaskList.innerHTML = `<p>No tasks found matching "${searchTerm}"</p>`;
+        DOM.emptyTaskList.classList.remove('hidden');
+    } else {
+        DOM.emptyTaskList.classList.add('hidden');
+    }
+}
+
+// Helper function to create a task list item element
+function createTaskListItem(task, type) {
+    const li = document.createElement('li');
+    li.className = `task-item ${type}`; // Add type class (queued, completed, canceled)
+    li.dataset.id = task.id;
+
+    // Highlight active task
+    if (type === 'queued' && task.id === state.activeTaskId) {
+        li.classList.add('active');
+    }
+
+    const soundIcon = task.sound !== 'none' ? `<i class="fas fa-music mr-1 text-indigo-400"></i>${findAudioName(task.sound)}` : '';
+    const durationInfo = type === 'queued' ? `<i class="far fa-clock mr-1"></i>${task.duration} min` : '';
+
+    let statusIcon = '';
+    let timestamp = '';
+    if (type === 'completed') {
+        statusIcon = `<i class="far fa-check-circle text-green-500 mr-1"></i>`;
+        const date = new Date(task.completedAt);
+        timestamp = `Completed ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (type === 'canceled') {
+        statusIcon = `<i class="fas fa-ban text-red-500 mr-1"></i>`;
+        const date = new Date(task.canceledAt);
+        timestamp = `Canceled ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+
+    li.innerHTML = `
+        <div class="flex items-center justify-between">
+            <div class="min-w-0 flex-1">
+                <h3 class="font-medium truncate ${task.id === state.activeTaskId ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'}">${task.name}</h3>
+                <div class="task-details flex items-center space-x-3 text-xs mt-1 text-gray-500 dark:text-gray-400">
+                    ${statusIcon ? `<span>${statusIcon}${timestamp}</span>` : ''}
+                    ${durationInfo ? `<span>${durationInfo}</span>` : ''}
+                    ${soundIcon ? `<span class="truncate">${soundIcon}</span>` : ''}
+                </div>
+            </div>
+            <div class="task-actions flex items-center ml-2">
+                ${type === 'queued' && task.id !== state.activeTaskId ? `
+                    <button title="Start Task" class="start-button p-1 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-full" data-id="${task.id}">
+                        <i class="fas fa-play fa-xs"></i>
+                    </button>
+                ` : ''}
+                <button title="Delete Task" class="delete-button p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-full" data-id="${task.id}">
+                    <i class="fas fa-trash-alt fa-xs"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    return li;
 }
 
 // Find audio name from ID
@@ -416,36 +536,56 @@ function findAudioName(audioId) {
 // Set the active task
 function setActiveTask(taskId) {
     const task = state.tasks.find(t => t.id === taskId);
-    if (!task) return;
-    
+    if (!task) {
+        // If task not found (maybe deleted?), clear active state
+        clearActiveTask();
+        return;
+    }
+
+    // Clear previous active task timer/audio if switching
+    if (state.activeTaskId && state.activeTaskId !== taskId) {
+        if (state.timerInterval) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+        }
+        stopAudio();
+        state.isPaused = false;
+    }
+
     state.activeTaskId = taskId;
-    
-    // Update UI
-    document.getElementById('no-task-message').classList.add('hidden');
-    document.getElementById('active-task').classList.remove('hidden');
-    const activeTaskName = document.getElementById('active-task-name');
-    activeTaskName.textContent = task.name;
-    activeTaskName.classList.add('break-words', 'whitespace-normal', 'overflow-wrap-anywhere', 'word-break-break-word');
-    
-    // Format time display
+
+    // Update Active Task UI
+    DOM.noTaskMessage.classList.add('hidden');
+    DOM.activeTaskDiv.classList.remove('hidden');
+    DOM.activeTaskName.textContent = task.name;
+    // DOM.activeTaskName.classList.add('break-words', 'whitespace-normal'); // Ensure long names wrap
+
+    // Reset timer display and bar
     state.remainingTime = task.duration * 60;
     updateTimerDisplay();
-    
-    // Configure audio
+    DOM.timerBar.style.width = '100%';
+    DOM.timerBar.style.transitionDuration = '0ms'; // Prevent animation on reset
+    setTimeout(() => { DOM.timerBar.style.transitionDuration = ''; }, 50); // Re-enable after a tick
+
+    // Configure audio display (don't play yet)
     if (task.sound !== 'none') {
-        document.getElementById('sound-name').textContent = findAudioName(task.sound);
-        document.getElementById('sound-name').parentElement.classList.remove('hidden');
+        DOM.soundName.textContent = `Sound: ${findAudioName(task.sound)}`;
+        DOM.soundName.classList.remove('hidden');
     } else {
-        document.getElementById('sound-name').parentElement.classList.add('hidden');
+        DOM.soundName.textContent = '';
+        DOM.soundName.classList.add('hidden');
     }
-    
-    // Reset buttons
-    document.getElementById('start-task').classList.remove('hidden');
-    document.getElementById('pause-task').classList.add('hidden');
-    document.getElementById('resume-task').classList.add('hidden');
-    
+
+    // Reset control buttons state
+    DOM.startTaskButton.classList.remove('hidden');
+    DOM.pauseTaskButton.classList.add('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
+
     // Update task list highlighting
     updateTaskList();
+
+     // Reset sound mixer sliders (important when switching tasks)
+     // stopAudio(); // This is called above, includes slider reset
 }
 
 // Delete a task
@@ -466,8 +606,8 @@ function deleteTask(taskId) {
 // Clear the active task view
 function clearActiveTask() {
     state.activeTaskId = null;
-    document.getElementById('no-task-message').classList.remove('hidden');
-    document.getElementById('active-task').classList.add('hidden');
+    DOM.noTaskMessage.classList.remove('hidden');
+    DOM.activeTaskDiv.classList.add('hidden');
     
     // Stop any running timers or audio
     if (state.timerInterval) {
@@ -486,9 +626,9 @@ function startTask() {
     if (!task) return;
     
     // Update UI buttons
-    document.getElementById('start-task').classList.add('hidden');
-    document.getElementById('pause-task').classList.remove('hidden');
-    document.getElementById('resume-task').classList.add('hidden');
+    DOM.startTaskButton.classList.add('hidden');
+    DOM.pauseTaskButton.classList.remove('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
     
     // Reset timer if needed
     if (!state.isPaused) {
@@ -510,7 +650,7 @@ function startTask() {
     }
     
     // Reset timer bar
-    const timerBar = document.getElementById('timer-bar');
+    const timerBar = DOM.timerBar;
     timerBar.style.width = '100%';
     const totalSeconds = task.duration * 60;
     
@@ -542,12 +682,12 @@ function pauseTask() {
     state.timerInterval = null;
     state.isPaused = true;
     
-    // Stop all audio when paused
-    stopAudio();
+    // Pause audio when task is paused
+    pauseAudio(); // Use a separate function to just pause, not reset sliders
     
     // Update UI
-    document.getElementById('pause-task').classList.add('hidden');
-    document.getElementById('resume-task').classList.remove('hidden');
+    DOM.pauseTaskButton.classList.add('hidden');
+    DOM.resumeTaskButton.classList.remove('hidden');
 }
 
 // Resume the paused task
@@ -555,16 +695,37 @@ function resumeTask() {
     if (!state.isPaused) return;
     
     // Resume audio
-    if (state.currentAudio) {
-        state.currentAudio.play();
-    }
+    resumeAudio(); // Use a separate function to resume paused sounds
     
     // Update UI
-    document.getElementById('resume-task').classList.add('hidden');
-    document.getElementById('pause-task').classList.remove('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
+    DOM.pauseTaskButton.classList.remove('hidden');
     
-    // Restart timer
-    startTask();
+    // Restart the timer interval
+    startTimerInterval(); // Use refactored interval start
+}
+
+// Refactor timer start logic into its own function
+function startTimerInterval() {
+    if (state.timerInterval) clearInterval(state.timerInterval); // Clear existing interval if any
+
+    const task = state.tasks.find(t => t.id === state.activeTaskId);
+    if (!task) return;
+    const totalSeconds = task.duration * 60;
+
+    state.timerInterval = setInterval(() => {
+        state.remainingTime--;
+
+        updateTimerDisplay();
+
+        const percentage = Math.max(0, (state.remainingTime / totalSeconds) * 100);
+        DOM.timerBar.style.width = percentage + '%';
+
+        if (state.remainingTime <= 0) {
+            clearInterval(state.timerInterval);
+            completeTask();
+        }
+    }, 1000);
 }
 
 // Finish the current task
@@ -614,22 +775,27 @@ function cancelTask() {
     
     // Get next task if available
     const currentIndex = state.tasks.findIndex(t => t.id === state.activeTaskId);
-    const nextTask = state.tasks[currentIndex + 1];
-    
-    // Remove current task from list
-    state.tasks = state.tasks.filter(task => task.id !== state.activeTaskId);
-    
-    // Clear active task
+    const currentActiveId = state.activeTaskId; // Store before removing
+
+    // Remove current task from active list
+    state.tasks = state.tasks.filter(task => task.id !== currentActiveId);
+
+    // Find the *next* task in the original list order, if any
+    const nextTask = state.tasks[currentIndex]; // Index remains valid if task before it was removed
+
+    // Clear active task UI *before* potentially setting a new one
     clearActiveTask();
-    
+
     // Set next task as active if available
     if (nextTask) {
         setActiveTask(nextTask.id);
+    } else {
+        updateTaskList(); // Update list even if no next task
     }
-    
-    // Save and update UI
+
+    // Save state
     saveToLocalStorage();
-    updateTaskList();
+    // updateTaskList() is called within setActiveTask or just above
 }
 
 // Complete the active task
@@ -674,12 +840,15 @@ function completeTask() {
         state.stats.soundUsage[task.sound]++;
     }
     
-    // Remove from task list
+    // Remove from active task list
     state.tasks = state.tasks.filter(t => t.id !== state.activeTaskId);
-    
+    const completedTaskId = state.activeTaskId; // Store ID before clearing
+    state.activeTaskId = null; // Clear active ID
+    state.isPaused = false;
+
     // Show completion modal
-    document.getElementById('completed-task-name').textContent = task.name;
-    document.getElementById('completion-modal').classList.remove('hidden');
+    DOM.completedTaskName.textContent = task.name;
+    DOM.completionModal.classList.remove('hidden');
     
     // Create confetti effect
     createConfetti();
@@ -687,6 +856,11 @@ function completeTask() {
     // Update UI
     updateTaskList();
     updateStats();
+    saveToLocalStorage(); // Save state after updates
+
+    // Clear the active task display area after showing modal
+    clearActiveTask(); // Resets UI for active task area
+    updateTaskList(); // Update the sidebar list
 }
 
 // Create confetti effect for celebration
@@ -724,7 +898,7 @@ function startNextTask() {
     }
     
     // Hide completion modal
-    document.getElementById('completion-modal').classList.add('hidden');
+    DOM.completionModal.classList.add('hidden');
     
     // Check if there are tasks in the queue
     if (state.tasks.length === 0) {
@@ -749,13 +923,13 @@ function startBreak() {
     }
     
     // Hide completion modal
-    document.getElementById('completion-modal').classList.add('hidden');
+    DOM.completionModal.classList.add('hidden');
     
     // Clear active task view
     clearActiveTask();
     
     // Show break modal
-    document.getElementById('break-modal').classList.remove('hidden');
+    DOM.breakModal.classList.remove('hidden');
     
     // Set initial break time (5 minutes)
     let breakTime = 5 * 60;
@@ -776,7 +950,7 @@ function startBreak() {
 function updateBreakTimerDisplay(seconds) {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    document.getElementById('break-timer').textContent = 
+    DOM.breakTimer.textContent = 
         `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
 }
 
@@ -789,7 +963,7 @@ function endBreak() {
     }
     
     // Hide break modal
-    document.getElementById('break-modal').classList.add('hidden');
+    DOM.breakModal.classList.add('hidden');
     
     // If there are tasks, set the first one as active
     if (state.tasks.length > 0) {
@@ -809,7 +983,7 @@ function endSession() {
     }
     
     // Hide completion modal
-    document.getElementById('completion-modal').classList.add('hidden');
+    DOM.completionModal.classList.add('hidden');
     
     // Clear active task
     clearActiveTask();
@@ -817,18 +991,17 @@ function endSession() {
 
 // Toggle stats modal
 function toggleStatsModal() {
-    const modal = document.getElementById('stats-modal');
-    modal.classList.toggle('hidden');
+    DOM.statsModal.classList.toggle('hidden');
     
-    if (!modal.classList.contains('hidden')) {
+    if (!DOM.statsModal.classList.contains('hidden')) {
         updateStats();
     }
 }
 
 // Update stats display
 function updateStats() {
-    document.getElementById('today-focus-time').textContent = `${state.stats.todayFocusTime} minutes`;
-    document.getElementById('tasks-completed').textContent = `${state.stats.tasksCompleted} tasks`;
+    DOM.statsTodayFocusTime.textContent = `${state.stats.todayFocusTime} minutes`;
+    DOM.statsTasksCompleted.textContent = `${state.stats.tasksCompleted} ${state.stats.tasksCompleted === 1 ? 'task' : 'tasks'}`;
     
     // Most used sound
     let mostUsedSound = 'None';
@@ -841,10 +1014,10 @@ function updateStats() {
         }
     }
     
-    document.getElementById('most-used-sound').textContent = mostUsedSound;
+    DOM.statsMostUsedSound.textContent = mostUsedSound;
     
     // Recent tasks
-    const recentTasksList = document.getElementById('recent-tasks-list');
+    const recentTasksList = DOM.statsRecentTasksList;
     recentTasksList.innerHTML = '';
     
     if (state.completedTasks.length === 0) {
@@ -881,14 +1054,15 @@ function updateStats() {
 function updateTimerDisplay() {
     const minutes = Math.floor(state.remainingTime / 60);
     const seconds = state.remainingTime % 60;
-    document.getElementById('timer-display').textContent = 
+    DOM.timerDisplay.textContent = 
         `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 }
 
 // Audio control functions
+
+// Play a specific sound or mix
 function playAudio(audioId) {
-    // Stop current audio if playing
-    stopAudio();
+    stopAudio(); // Stop everything before starting new sound/mix
     
     // Remove active class from all preset buttons
     document.querySelectorAll('.sound-preset').forEach(button => {
@@ -917,7 +1091,7 @@ function playAudio(audioId) {
     if (!audio) return;
     
     // Set volume from range input
-    const volumeControl = document.getElementById('volume-control');
+    const volumeControl = DOM.volumeControl;
     audio.volume = parseInt(volumeControl.value) / 100;
     
     // Play the audio
@@ -927,6 +1101,26 @@ function playAudio(audioId) {
     
     // Update state
     state.currentAudio = audio;
+}
+
+// Pause currently playing audio (without resetting sliders)
+function pauseAudio() {
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+    }
+    Object.values(state.activeSounds).forEach(audio => {
+        audio.pause();
+    });
+}
+
+// Resume paused audio
+function resumeAudio() {
+    if (state.currentAudio) {
+        state.currentAudio.play().catch(e => console.error("Error resuming single audio:", e));
+    }
+    Object.values(state.activeSounds).forEach(audio => {
+        audio.play().catch(e => console.error("Error resuming mixed audio:", e));
+    });
 }
 
 // Modify the applyPresetMix function to update slider positions
@@ -1059,112 +1253,79 @@ function stopAudio() {
     });
 }
 
-// Adjust volume
+// Adjust volume based on the main volume slider
 function adjustVolume() {
-    const volume = parseInt(this.value) / 100;
-    
-    // Adjust volume for single sound
-    if (state.currentAudio) {
-        state.currentAudio.volume = volume;
-    }
-    
-    // Adjust volume for mixed sounds
-    Object.values(state.activeSounds).forEach(audio => {
-        // Maintain relative volumes for mixed sounds
-        const relativeVolume = audio._baseVolume || 1;
-        audio.volume = volume * relativeVolume;
-    });
+    const volume = parseInt(DOM.volumeControl.value) / 100;
+    setGlobalVolume(volume);
+
+    // Update mute button state
+    updateMuteButtonIcon(volume > 0);
 }
 
-// Increase volume
+// Increase volume via button
 function increaseVolume() {
-    const volumeControl = document.getElementById('volume-control');
-    const currentVolume = parseInt(volumeControl.value);
-    const newVolume = Math.min(currentVolume + 10, 100);
-    volumeControl.value = newVolume;
-    
-    // Apply new volume
-    const volume = newVolume / 100;
-    
-    // Adjust volume for single sound
-    if (state.currentAudio) {
-        state.currentAudio.volume = volume;
-    }
-    
-    // Adjust volume for mixed sounds
-    Object.values(state.activeSounds).forEach(audio => {
-        const relativeVolume = audio._baseVolume || 1;
-        audio.volume = volume * relativeVolume;
-    });
+    const currentVolume = parseInt(DOM.volumeControl.value);
+    const newVolumeValue = Math.min(currentVolume + 10, 100);
+    DOM.volumeControl.value = newVolumeValue;
+    setGlobalVolume(newVolumeValue / 100);
+    updateMuteButtonIcon(newVolumeValue > 0);
 }
 
-// Decrease volume
+// Decrease volume via button
 function decreaseVolume() {
-    const volumeControl = document.getElementById('volume-control');
-    const currentVolume = parseInt(volumeControl.value);
-    const newVolume = Math.max(currentVolume - 10, 0);
-    volumeControl.value = newVolume;
-    
-    // Apply new volume
-    const volume = newVolume / 100;
-    
-    // Adjust volume for single sound
-    if (state.currentAudio) {
-        state.currentAudio.volume = volume;
-    }
-    
-    // Adjust volume for mixed sounds
-    Object.values(state.activeSounds).forEach(audio => {
-        const relativeVolume = audio._baseVolume || 1;
-        audio.volume = volume * relativeVolume;
-    });
+    const currentVolume = parseInt(DOM.volumeControl.value);
+    const newVolumeValue = Math.max(currentVolume - 10, 0);
+    DOM.volumeControl.value = newVolumeValue;
+    setGlobalVolume(newVolumeValue / 100);
+    updateMuteButtonIcon(newVolumeValue > 0);
 }
 
 // Toggle mute
 function toggleMute() {
-    const volumeControl = document.getElementById('volume-control');
-    const muteButton = this;
-    
-    // Handle single audio
-    if (state.currentAudio) {
-        if (state.currentAudio.volume > 0) {
-            state.currentAudio._previousVolume = state.currentAudio.volume;
-            state.currentAudio.volume = 0;
-            volumeControl.value = 0;
-        } else {
-            const previousVolume = state.currentAudio._previousVolume || 0.5;
-            state.currentAudio.volume = previousVolume;
-            volumeControl.value = previousVolume * 100;
-        }
-    }
-    
-    // Handle mixed sounds
-    if (Object.keys(state.activeSounds).length > 0) {
-        const firstSound = Object.values(state.activeSounds)[0];
-        if (firstSound.volume > 0) {
-            // Store current volumes and mute
-            Object.values(state.activeSounds).forEach(audio => {
-                audio._previousVolume = audio.volume;
-                audio.volume = 0;
-            });
-            volumeControl.value = 0;
-        } else {
-            // Restore previous volumes
-            Object.values(state.activeSounds).forEach(audio => {
-                const previousVolume = audio._previousVolume || audio._baseVolume || 0.5;
-                audio.volume = previousVolume;
-            });
-            volumeControl.value = 50; // Reset to 50% when unmuting
-        }
-    }
-    
-    // Toggle mute icon
-    if (volumeControl.value > 0) {
-        muteButton.querySelector('i').classList.remove('fa-volume-up');
-        muteButton.querySelector('i').classList.add('fa-volume-mute');
+    const currentVolume = parseInt(DOM.volumeControl.value);
+    let newVolume = 0;
+
+    if (currentVolume === 0) {
+        // Unmute: Restore previous volume or set to default (e.g., 50%)
+        newVolume = state.previousVolume || 50; // Use stored previous volume or default
     } else {
-        muteButton.querySelector('i').classList.remove('fa-volume-mute');
-        muteButton.querySelector('i').classList.add('fa-volume-up');
+        // Mute: Store current volume before setting to 0
+        state.previousVolume = currentVolume;
+        newVolume = 0;
+    }
+
+    DOM.volumeControl.value = newVolume;
+    setGlobalVolume(newVolume / 100);
+    updateMuteButtonIcon(newVolume > 0);
+}
+
+// Helper to set volume for all playing sounds
+function setGlobalVolume(volume) {
+    // Adjust volume for single sound
+    if (state.currentAudio) {
+        // Ensure baseVolume exists, default to 1 if not
+        const baseVolume = state.currentAudio._baseVolume || 1;
+        state.currentAudio.volume = volume * baseVolume;
+    }
+
+    // Adjust volume for mixed sounds
+    Object.values(state.activeSounds).forEach(audio => {
+        const baseVolume = audio._baseVolume || 1; // Each sound in a mix uses its own base volume
+        audio.volume = volume * baseVolume; // Apply global volume multiplier
+    });
+}
+
+// Helper to update mute button icon
+function updateMuteButtonIcon(isAudible) {
+    const icon = DOM.muteButton.querySelector('i');
+    if (isAudible) {
+        icon.classList.remove('fa-volume-mute');
+        icon.classList.add('fa-volume-up');
+        DOM.muteButton.title = "Mute";
+    } else {
+        icon.classList.remove('fa-volume-up');
+        icon.classList.add('fa-volume-mute');
+        DOM.muteButton.title = "Unmute";
     }
 }
 

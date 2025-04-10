@@ -1171,4 +1171,213 @@ header h1 {
 .task-item {
   max-width: 100%;
   overflow-wrap: break-word;
-} 
+}
+
+/* Sidebar Styles */
+#sidebar {
+  /* Base styles - already defined in HTML */
+}
+
+#sidebar.open {
+  transform: translateX(0);
+}
+
+/* Ensure sidebar content scrolls, not the whole sidebar */
+#task-list {
+  /* Existing styles - enhanced in HTML */
+}
+
+/* Sidebar Overlay for mobile */
+#sidebar-overlay {
+  /* Base styles - already defined in HTML */
+}
+
+/* Create Task Modal Styles */
+#create-task-form-container {
+  /* Base styles - already defined in HTML */
+}
+
+/* Main content padding adjustment */
+@media (min-width: 768px) {
+  #app-container {
+    /* margin-left is handled by Tailwind class md:ml-72 */
+  }
+}
+
+/* Custom Scrollbar for specific elements */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Dark mode scrollbar for custom elements */
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+}
+
+[data-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Ensure dark mode select arrow is correct */
+[data-theme="dark"] #task-sound {
+   background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"%3E%3Cpath stroke="%239ca3af" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 8l4 4 4-4"/%3E%3C/svg%3E'); /* gray-400 */
+}
+
+/* Add Task Button styling */
+#add-task-button {
+    /* Basic styling in HTML, add more if needed */
+}
+
+/* Header Menu Toggle Button */
+#menu-toggle {
+    /* Basic styling in HTML, add more if needed */
+}
+
+/* Task Item Styling in Sidebar */
+#task-list .task-item {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--input-border);
+    background: var(--bg-secondary);
+    border-radius: 0.75rem; /* 12px */
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+}
+
+#task-list .task-item:hover {
+    background: var(--hover-bg);
+    border-color: var(--active-border);
+    transform: translateX(2px);
+}
+
+#task-list .task-item.active {
+    background: var(--active-bg);
+    border-color: var(--active-border);
+    box-shadow: 0 0 0 2px var(--active-border);
+}
+
+#task-list .task-item h3 {
+    font-weight: 500; /* Medium */
+}
+
+#task-list .task-item.active h3 {
+    color: var(--slider-border); /* Use slider border color for active */
+}
+
+#task-list .task-item .task-details {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between icons/text */
+}
+
+#task-list .task-item .task-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem; /* Space between details and actions */
+}
+
+#task-list .task-item .task-actions button {
+    padding: 0.3rem;
+    border-radius: 50%;
+    line-height: 1;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+#task-list .task-item .task-actions button i {
+    font-size: 0.8rem;
+}
+
+#task-list .task-item .task-actions .start-button {
+    color: #16a34a; /* green-600 */
+}
+[data-theme="dark"] #task-list .task-item .task-actions .start-button {
+    color: #4ade80; /* green-400 */
+}
+#task-list .task-item .task-actions .start-button:hover {
+    background-color: rgba(22, 163, 74, 0.1);
+}
+[data-theme="dark"] #task-list .task-item .task-actions .start-button:hover {
+    background-color: rgba(74, 222, 128, 0.15);
+}
+
+#task-list .task-item .task-actions .delete-button {
+    color: #dc2626; /* red-600 */
+}
+[data-theme="dark"] #task-list .task-item .task-actions .delete-button {
+    color: #f87171; /* red-400 */
+}
+#task-list .task-item .task-actions .delete-button:hover {
+    background-color: rgba(220, 38, 38, 0.1);
+}
+[data-theme="dark"] #task-list .task-item .task-actions .delete-button:hover {
+    background-color: rgba(248, 113, 113, 0.15);
+}
+
+/* Completed/Canceled Task Item Styling */
+#task-list .task-divider {
+    padding: 0.5rem 1rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--input-border);
+}
+
+#task-list .task-item.completed,
+#task-list .task-item.canceled {
+    opacity: 0.7;
+    background: repeating-linear-gradient(
+        -45deg,
+        var(--bg-secondary),
+        var(--bg-secondary) 5px,
+        var(--input-bg) 5px,
+        var(--input-bg) 10px
+    );
+}
+
+#task-list .task-item.completed h3,
+#task-list .task-item.canceled h3 {
+    text-decoration: line-through;
+    color: var(--text-secondary);
+}
+
+#task-list .task-item.completed .task-actions .delete-button,
+#task-list .task-item.canceled .task-actions .delete-button {
+    /* Keep delete button visible */
+}
+
+/* Adjust input/select appearance */
+input[type="text"],
+input[type="number"],
+select {
+    padding: 0.65rem 0.75rem; /* Slightly adjust padding */
+}
+
+#task-search {
+    padding-left: 2.5rem; /* Ensure space for icon */
+}

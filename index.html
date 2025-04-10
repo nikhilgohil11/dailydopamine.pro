@@ -7,8 +7,17 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WNP9ZN0K7P"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+    
+      gtag('config', 'G-WNP9ZN0K7P');
+    </script>
 </head>
-<body class="bg-gray-100 font-sans antialiased text-gray-800">
+<body class="bg-gray-100 dark:bg-gray-900 font-sans antialiased text-gray-800 dark:text-gray-200">
     <!-- Mobile Message Container -->
     <div id="mobile-message" class="hidden fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-50 p-6">
         <div class="text-white text-center max-w-md">
@@ -21,14 +30,14 @@
                 </a>
                 <p class="text-white/80"> or </p>
                 <a href="https://x.com/VikasGohil2" target="_blank" class="block bg-white text-indigo-600 py-3 px-6 rounded-lg font-semibold hover:bg-indigo-50 transition">
-                    <i class="fab fa-twitter mr-2"></i>@nikhilgohil11
+                    <i class="fab fa-twitter mr-2"></i>@VikasGohil2
                 </a>
                 <p class="text-white/80">We will share the current mobile version with you.</p>
             </div>
         </div>
     </div>
 
-    <div id="loading-screen" class="fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-50">
+    <div id="loading-screen" class="fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-[60]">
         <div class="text-white text-2xl mb-4">Loading Audio Files</div>
         <div class="w-64 bg-white rounded-full h-4 overflow-hidden">
             <div id="loading-bar" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
@@ -36,366 +45,382 @@
         <div id="loading-text" class="text-white mt-2">0/10 files loaded</div>
     </div>
 
-    <div id="app-container" class="hidden min-h-screen flex flex-col app-container pb-24">
-        <header class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-6 shadow-lg">
-            <div class="max-w-[1280px] mx-auto px-6 flex justify-between items-center">
-                <div class="flex items-center space-x-4">
-                    <h3 class="text-2xl font-bold">Daily Dopamine Pro</h1>
-                    <div class="flex items-center space-x-2">
-                        <button id="stats-button" class="p-2 hover:bg-indigo-700 rounded-full transition">
+    <!-- Sidebar Overlay (for mobile) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 p-6 flex flex-col space-y-4 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-lg border-r border-gray-200 dark:border-gray-700">
+        <!-- Sidebar Header -->
+        <div class="flex justify-between items-center mb-4 flex-shrink-0">
+            <h2 class="text-xl font-bold text-indigo-600 dark:text-indigo-400">DailyDopamine.Pro</h2>
+            <button id="add-task-button" class="text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-gray-700 p-2 rounded-full transition">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <!-- Task Queue Section -->
+        <div class="flex flex-col flex-grow overflow-hidden">
+            <h3 class="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-300 flex-shrink-0">Task Queue</h3>
+            <div class="relative mb-4 flex-shrink-0">
+                <input type="text" id="task-search" placeholder="Search tasks..."
+                       class="w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 pl-10 border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
+            <ul id="task-list" class="flex-grow overflow-y-auto space-y-2 pr-2 -mr-2 custom-scrollbar">
+                <!-- Tasks will be inserted here by JavaScript -->
+            </ul>
+            <div id="empty-task-list" class="text-center py-8 text-gray-500 dark:text-gray-400 italic hidden flex-grow flex items-center justify-center">
+                <p>No tasks in queue</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div id="app-container" class="hidden md:ml-72 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-4 shadow-lg sticky top-0 z-20">
+            <div class="max-w-full mx-auto px-6 flex justify-between items-center">
+                <!-- Left side: Hamburger Menu (mobile) + Stats/Theme -->
+                <div class="flex items-center space-x-3">
+                    <button id="menu-toggle" class="p-2 text-white hover:bg-indigo-700 rounded-full transition md:hidden">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="hidden md:flex items-center space-x-2"> <!-- Hide on mobile -->
+                        <button id="stats-button" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
                             <i class="fas fa-chart-bar"></i>
                         </button>
-                        <button id="theme-toggle" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                        <button id="theme-toggle" title="Toggle Theme" class="p-2 hover:bg-indigo-700 rounded-full transition">
                             <i class="fas fa-moon"></i>
                         </button>
                     </div>
                 </div>
-                
-                <!-- Ad Placeholder -->
-                <div class="flex-1 flex justify-center">
-                    <a href="https://nas.io/checkout-global?communityId=67f44d8f9bc2972b9825b1c0&communityCode=DAILY_DOPAMINE_PRO&requestor=signupRequestor&linkClicked=https%3A%2F%2Fnas.io%2Fportal%2Fproducts%2F67f44ebc91ef51b127ea2da5&sourceInfoType=folder&sourceInfoOrigin=67f44ebc91ef51b127ea2da5" 
-                       target="_blank" 
-                       class="border-2 border-dashed border-white/30 rounded-lg px-6 py-2 flex items-center space-x-4 hover:bg-white/10 transition">
-                        <div class="w-8 h-8 bg-white/10 rounded flex items-center justify-center">
-                            <i class="fas fa-ad text-white/70"></i>
+
+                <!-- Center: Ad Placeholder -->
+                <div class="flex-1 flex justify-center px-4">
+                    <a href="https://nas.io/checkout-global?communityId=67f44d8f9bc2972b9825b1c0&communityCode=DAILY_DOPAMINE_PRO&requestor=signupRequestor&linkClicked=https%3A%2F%2Fnas.io%2Fportal%2Fproducts%2F67f44ebc91ef51b127ea2da5&sourceInfoType=folder&sourceInfoOrigin=67f44ebc91ef51b127ea2da5"
+                       target="_blank"
+                       class="border-2 border-dashed border-white/30 rounded-lg px-4 py-1.5 flex items-center space-x-3 hover:bg-white/10 transition text-sm">
+                        <div class="w-6 h-6 bg-white/10 rounded flex items-center justify-center">
+                            <i class="fas fa-ad text-white/70 text-xs"></i>
                         </div>
-                        <div class="flex items-center space-x-2">
+                        <div class="hidden sm:flex items-center space-x-1">
                             <span class="text-white/70">Advertise Here</span>
-                            <i class="fas fa-plus text-white/70"></i>
+                            <i class="fas fa-plus text-white/70 text-xs"></i>
                         </div>
                     </a>
                 </div>
-                
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-2">
-                        <button id="volume-down" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                            <i class="fas fa-volume-down"></i>
-                        </button>
-                        <input type="range" id="volume-control" min="0" max="100" value="50" class="w-24">
-                        <button id="volume-up" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                        <button id="mute-button" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                            <i class="fas fa-volume-up"></i>
-                        </button>
-                    </div>
+
+                <!-- Right side: Volume Controls -->
+                <div class="flex items-center space-x-3">
+                     <div class="flex items-center space-x-1">
+                         <button id="volume-down" title="Volume Down" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <i class="fas fa-volume-down"></i>
+                         </button>
+                         <input type="range" id="volume-control" title="Volume" min="0" max="100" value="50" class="w-20 md:w-24 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-indigo-300">
+                         <button id="volume-up" title="Volume Up" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <i class="fas fa-volume-up"></i>
+                         </button>
+                         <button id="mute-button" title="Mute" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <i class="fas fa-volume-up"></i>
+                         </button>
+                     </div>
+                     <!-- Mobile Only: Stats/Theme Toggles -->
+                     <div class="flex items-center space-x-2 md:hidden">
+                         <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <i class="fas fa-chart-bar"></i>
+                         </button>
+                         <button id="theme-toggle-mobile" title="Toggle Theme" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <i class="fas fa-moon"></i>
+                         </button>
+                     </div>
                 </div>
             </div>
         </header>
 
-        <main class="flex-grow max-w-[1280px] mx-auto px-6 py-8 md:py-12 grid grid-cols-12 gap-8">
-            <!-- Task Creation Column -->
-            <div class="card rounded-2xl shadow-lg p-6 col-span-12 md:col-span-3">
-                <h2 class="text-xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent">Create Task</h2>
-                <form id="task-form" class="space-y-4">
-                    <div>
-                        <label for="task-name" class="block text-sm font-medium mb-1">Task Name</label>
-                        <input type="text" id="task-name" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" required>
-                    </div>
-                    <div>
-                        <label for="task-time" class="block text-sm font-medium mb-1">Duration (minutes)</label>
-                        <input type="number" id="task-time" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" min="1" max="120" value="25" required>
-                    </div>
-                    <div>
-                        <label for="task-sound" class="block text-sm font-medium mb-1">Background Sound</label>
-                        <select id="task-sound" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="none">None</option>
-                            
-                            <!-- Preset Mixes -->
-                            <optgroup label="Preset Mixes">
-                                <option value="mix_focus">Focus Mix</option>
-                                <option value="mix_relaxation">Relaxation Mix</option>
-                                <option value="mix_sleep">Sleep Mix</option>
-                                <option value="mix_nature">Nature Mix</option>
-                                <option value="mix_random">Random Mix</option>
-                            </optgroup>
-                            
-                            <!-- Individual Sounds -->
-                            <optgroup label="Single Sounds">
-                                <option value="rain">Rain</option>
-                                <option value="birds">Birds</option>
-                                <option value="water">Water</option>
-                                <option value="wind">Wind</option>
-                                <option value="whitenoise">White Noise</option>
-                                <option value="thunder">Thunder</option>
-                                <option value="bonfire">Bonfire</option>
-                                <option value="gong">Gong</option>
-                                <option value="chatter">Cafe Chatter</option>
-                                <option value="alpha">Alpha Waves</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                        Add Task
-                    </button>
-                </form>
-            </div>
-
+        <!-- Main Content -->
+        <main class="flex-grow p-4 md:p-8">
             <!-- Active Task Column -->
-            <div class="card rounded-2xl shadow-lg p-6 col-span-12 md:col-span-6">
-                <h2 class="text-xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent">Current Task</h2>
+            <div class="card bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mx-auto max-w-4xl">
+                <h2 class="text-xl font-bold mb-6 text-indigo-600 dark:text-indigo-400">Current Task</h2>
                 <div id="active-task-container" class="text-center py-8">
-                    <div id="no-task-message" class="text-gray-500 italic">
+                    <div id="no-task-message" class="text-gray-500 dark:text-gray-400 italic">
                         <p>No active task</p>
-                        <p class="text-sm mt-2">Create a task or select one from your list</p>
+                        <p class="text-sm mt-2">Create a task or select one from the list</p>
                     </div>
                     <div id="active-task" class="hidden">
-                        <h3 id="active-task-name" class="text-2xl font-bold mb-2"></h3>
+                        <h3 id="active-task-name" class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 break-words"></h3>
                         <div class="my-6 relative">
-                            <div class="mx-auto relative w-full max-w-md">
-                                <!-- Progress bar timer replaces circular timer -->
-                                <div class="relative pt-1">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div id="timer-display" class="text-3xl font-bold text-center w-full"></div>
-                                    </div>
-                                    <div class="overflow-hidden h-6 mb-4 text-xs flex rounded-xl bg-gray-200">
-                                        <div id="timer-bar" class="w-full flex flex-col justify-center text-center text-white bg-indigo-600 rounded-xl transition-all duration-1000 ease-linear" style="width: 100%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                             <div class="mx-auto relative w-full max-w-lg">
+                                 <div class="relative pt-1">
+                                     <div class="flex items-center justify-center mb-3">
+                                         <div id="timer-display" class="text-4xl md:text-5xl font-bold text-center w-full text-indigo-600 dark:text-indigo-400"></div>
+                                     </div>
+                                     <div class="overflow-hidden h-4 md:h-6 mb-4 text-xs flex rounded-full bg-gray-200 dark:bg-gray-700">
+                                         <div id="timer-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500 rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
                         <div class="audio-controls mb-4">
-                            <div class="flex items-center justify-center space-x-2">
-                                <button id="volume-down" class="p-2 text-gray-600 hover:text-indigo-600">
-                                    <i class="fas fa-volume-down"></i>
-                                </button>
-                                <input type="range" id="volume-control" min="0" max="100" value="50" class="w-32">
-                                <button id="volume-up" class="p-2 text-gray-600 hover:text-indigo-600">
-                                    <i class="fas fa-volume-up"></i>
-                                </button>
-                                <button id="mute-button" class="p-2 text-gray-600 hover:text-indigo-600">
-                                    <i class="fas fa-volume-mute"></i>
-                                </button>
-                            </div>
-                            <div id="sound-name" class="text-sm text-gray-500 text-center mt-1"></div>
-                        </div>
-                        <div class="sound-mixer mt-4 border-t pt-4">
-                            <h4 class="text-sm font-medium text-gray-700 mb-2">Sound Mixer</h4>
-                            
-                            <!-- Preset Mixes -->
-                            <div class="preset-mixes mb-3">
-                                <p class="text-xs text-gray-500 mb-1">Preset Mixes</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <button class="sound-preset px-3 py-1 text-xs rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200" data-preset="focus">
-                                        <i class="fas fa-brain mr-1"></i> Focus
-                                    </button>
-                                    <button class="sound-preset px-3 py-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200" data-preset="relaxation">
-                                        <i class="fas fa-spa mr-1"></i> Relaxation
-                                    </button>
-                                    <button class="sound-preset px-3 py-1 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200" data-preset="sleep">
-                                        <i class="fas fa-moon mr-1"></i> Sleep
-                                    </button>
-                                    <button class="sound-preset px-3 py-1 text-xs rounded bg-yellow-100 text-yellow-700 hover:bg-yellow-200" data-preset="nature">
-                                        <i class="fas fa-leaf mr-1"></i> Nature
-                                    </button>
-                                    <button class="sound-preset px-3 py-1 text-xs rounded bg-purple-100 text-purple-700 hover:bg-purple-200" data-preset="random">
-                                        <i class="fas fa-random mr-1"></i> Random Mix
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Custom Mix Controls -->
-                            <div class="custom-mix">
-                                <p class="text-xs text-gray-500 mb-1">Custom Mix</p>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Rain</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="rain" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Birds</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="birds" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Water</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="water" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Wind</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="wind" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>White Noise</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="whitenoise" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Thunder</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="thunder" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Bonfire</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="bonfire" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Cafe Chatter</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="chatter" min="0" max="100" value="0">
-                                    </div>
-                                    <div class="sound-channel">
-                                        <label class="flex items-center justify-between text-xs">
-                                            <span>Alpha Waves</span>
-                                            <span class="channel-value">0%</span>
-                                        </label>
-                                        <input type="range" class="channel-slider w-full h-1 bg-gray-200 rounded-full" data-sound="alpha" min="0" max="100" value="0">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="flex justify-center space-x-3">
-                            <button id="start-task" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition">
+                             <div id="sound-name" class="text-sm text-gray-500 dark:text-gray-400 text-center mt-1 mb-3"></div>
+                             <div class="sound-mixer mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                 <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">Adjust Background Sounds</h4>
+                                 <div class="preset-mixes mb-4">
+                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Presets</p>
+                                     <div class="flex flex-wrap gap-2 justify-center">
+                                         <button class="sound-preset px-3 py-1 text-xs rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900 dark:text-indigo-300 dark:hover:bg-indigo-800 transition" data-preset="focus">
+                                             <i class="fas fa-brain mr-1"></i> Focus
+                                         </button>
+                                         <button class="sound-preset px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 transition" data-preset="relaxation">
+                                             <i class="fas fa-spa mr-1"></i> Relax
+                                         </button>
+                                         <button class="sound-preset px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 transition" data-preset="sleep">
+                                             <i class="fas fa-moon mr-1"></i> Sleep
+                                         </button>
+                                         <button class="sound-preset px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:hover:bg-yellow-800 transition" data-preset="nature">
+                                             <i class="fas fa-leaf mr-1"></i> Nature
+                                         </button>
+                                          <button class="sound-preset px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-300 dark:hover:bg-purple-800 transition" data-preset="random">
+                                             <i class="fas fa-random mr-1"></i> Random
+                                         </button>
+                                     </div>
+                                 </div>
+                                 <div class="custom-mix">
+                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Individual Sounds</p>
+                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
+                                         <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Rain</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="rain" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Birds</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="birds" min="0" max="100" value="0">
+                                         </div>
+                                         <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Water</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="water" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Wind</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="wind" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>White Noise</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="whitenoise" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Thunder</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="thunder" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Bonfire</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="bonfire" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Cafe Chatter</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="chatter" min="0" max="100" value="0">
+                                         </div>
+                                          <div class="sound-channel">
+                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                 <span>Alpha Waves</span>
+                                                 <span class="channel-value font-medium">0%</span>
+                                             </label>
+                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="alpha" min="0" max="100" value="0">
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                        <div class="flex justify-center space-x-2 md:space-x-3 mt-6">
+                            <button id="start-task" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base">
                                 <i class="fas fa-play mr-1"></i> Start
                             </button>
-                            <button id="pause-task" class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition hidden">
+                            <button id="pause-task" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base">
                                 <i class="fas fa-pause mr-1"></i> Pause
                             </button>
-                            <button id="resume-task" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition hidden">
+                            <button id="resume-task" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base">
                                 <i class="fas fa-play mr-1"></i> Resume
                             </button>
-                            <button id="finish-task" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+                            <button id="finish-task" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base">
                                 <i class="fas fa-check mr-1"></i> Finish
                             </button>
-                            <button id="cancel-task" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition">
+                            <button id="cancel-task" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base">
                                 <i class="fas fa-times mr-1"></i> Cancel
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Task List Column -->
-            <div class="card rounded-2xl shadow-lg p-6 col-span-12 md:col-span-3">
-                <h2 class="text-xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent">Task Queue</h2>
-                <div class="mb-4">
-                    <div class="relative">
-                        <input type="text" id="task-search" placeholder="Search tasks..." 
-                               class="w-full px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 pl-11">
-                        <span class="absolute left-4 top-3.5 text-gray-400">
-                            <i class="fas fa-search"></i>
-                        </span>
-                    </div>
-                </div>
-                <ul id="task-list" class="divide-y divide-gray-200">
-                    <!-- Tasks will be inserted here by JavaScript -->
-                </ul>
-                <div id="empty-task-list" class="text-center py-8 text-gray-500 italic">
-                    <p>No tasks in queue</p>
-                    <p class="text-sm mt-2">Create tasks to get started</p>
-                </div>
-            </div>
         </main>
 
-        <!-- Completion Modal -->
-        <div id="completion-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden">
-            <div class="modal rounded-2xl shadow-xl p-8 max-w-md w-full animate__animated animate__zoomIn">
-                <div class="text-center mb-6">
-                    <div class="celebration">
-                        <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
-                        <div class="confetti-container"></div>
-                    </div>
-                    <h3 class="text-2xl font-bold text-indigo-700">Task Complete!</h3>
-                    <p id="completed-task-name" class="text-lg mt-2"></p>
-                </div>
-                <div class="flex flex-col space-y-3">
-                    <button id="next-task-button" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">
-                        <i class="fas fa-tasks mr-2"></i>Start Next Task
-                    </button>
-                    <button id="take-break-button" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition">
-                        <i class="fas fa-coffee mr-2"></i>Take a Break
-                    </button>
-                    <button id="end-session-button" class="w-full border border-gray-300 py-2 px-4 rounded-md hover:bg-gray-100 transition">
-                        <i class="fas fa-flag-checkered mr-2"></i>End Session
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Footer -->
+        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 text-center text-sm text-gray-600 dark:text-gray-400 mt-auto">
+             <p class="mb-2">For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@VikasGohil2</a></p>
+            <p class="text-xs">Data is stored locally in your browser.</p>
+        </footer>
+    </div>
 
-        <!-- Stats Modal -->
-        <div id="stats-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden">
-            <div class="modal rounded-2xl shadow-xl p-8 max-w-md w-full">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-indigo-700">Your Productivity Stats</h3>
-                    <button id="close-stats" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <div id="stats-content" class="space-y-4">
-                    <div class="bg-gray-100 p-3 rounded">
-                        <h4 class="font-semibold">Today's Focus</h4>
-                        <p id="today-focus-time" class="text-lg">0 minutes</p>
-                    </div>
-                    <div class="bg-gray-100 p-3 rounded">
-                        <h4 class="font-semibold">Tasks Completed</h4>
-                        <p id="tasks-completed" class="text-lg">0 tasks</p>
-                    </div>
-                    <div class="bg-gray-100 p-3 rounded">
-                        <h4 class="font-semibold">Most Used Sound</h4>
-                        <p id="most-used-sound" class="text-lg">None</p>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold mb-2">Recent Tasks</h4>
-                        <ul id="recent-tasks-list" class="divide-y divide-gray-200">
-                            <!-- Recent tasks will be inserted here -->
-                        </ul>
-                    </div>
-                </div>
+    <!-- Create Task Modal -->
+    <div id="create-task-form-container" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-md animate__animated animate__zoomIn">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Create New Task</h2>
+                <button id="close-create-task-form" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 dark:text-gray-400 transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
             </div>
+            <form id="task-form" class="space-y-4">
+                 <div>
+                    <label for="task-name" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Task Name</label>
+                    <input type="text" id="task-name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                 </div>
+                 <div>
+                    <label for="task-time" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Duration (minutes)</label>
+                    <input type="number" id="task-time" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" min="1" max="120" value="25" required>
+                 </div>
+                 <div>
+                    <label for="task-sound" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Background Sound</label>
+                    <select id="task-sound" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 appearance-none bg-no-repeat bg-right pr-8" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E');">
+                        <option value="none">None</option>
+                        <optgroup label="Preset Mixes">
+                            <option value="mix_focus">Focus Mix</option>
+                            <option value="mix_relaxation">Relaxation Mix</option>
+                            <option value="mix_sleep">Sleep Mix</option>
+                            <option value="mix_nature">Nature Mix</option>
+                            <option value="mix_random">Random Mix</option>
+                        </optgroup>
+                        <optgroup label="Single Sounds">
+                            <option value="rain">Rain</option>
+                            <option value="birds">Birds</option>
+                            <option value="water">Water</option>
+                            <option value="wind">Wind</option>
+                            <option value="whitenoise">White Noise</option>
+                            <option value="thunder">Thunder</option>
+                            <option value="bonfire">Bonfire</option>
+                            <option value="gong">Gong</option>
+                            <option value="chatter">Cafe Chatter</option>
+                            <option value="alpha">Alpha Waves</option>
+                        </optgroup>
+                    </select>
+                 </div>
+                 <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 font-semibold">
+                     Add Task
+                 </button>
+            </form>
         </div>
+    </div>
 
-        <!-- Break Timer Modal -->
-        <div id="break-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden">
-            <div class="modal rounded-2xl shadow-xl p-8 max-w-md w-full">
-                <div class="text-center mb-6">
-                    <i class="fas fa-coffee text-4xl text-indigo-500 mb-3"></i>
-                    <h3 class="text-2xl font-bold text-indigo-700">Break Time</h3>
-                    <div id="break-timer" class="text-3xl font-bold my-4">5:00</div>
-                    <p class="text-gray-600">Take some time to rest and recharge</p>
+    <!-- Completion Modal -->
+    <div id="completion-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+        <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full animate__animated animate__zoomIn">
+            <div class="text-center mb-6">
+                <div class="celebration relative">
+                    <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
+                    <div class="confetti-container absolute inset-0 pointer-events-none"></div>
                 </div>
-                <div class="flex justify-center space-x-3">
-                    <button id="end-break-button" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">
-                        End Break Early
-                    </button>
-                </div>
+                <h3 class="text-2xl font-bold text-indigo-700 dark:text-indigo-400">Task Complete!</h3>
+                <p id="completed-task-name" class="text-lg mt-2 text-gray-700 dark:text-gray-300"></p>
+            </div>
+            <div class="flex flex-col space-y-3">
+                <button id="next-task-button" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                    <i class="fas fa-forward mr-2"></i>Start Next Task
+                </button>
+                <button id="take-break-button" class="w-full bg-green-600 text-white py-2.5 px-4 rounded-lg hover:bg-green-700 transition font-semibold">
+                    <i class="fas fa-coffee mr-2"></i>Take a 5-min Break
+                </button>
+                <button id="end-session-button" class="w-full border border-gray-300 dark:border-gray-600 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300 font-semibold">
+                    <i class="fas fa-flag-checkered mr-2"></i>End Session
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 text-center text-sm text-gray-600 dark:text-gray-400">
-        <p class="mb-2">For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@VikasGohil2</a></p>
-        <p class="text-xs">This app is for daily task management only. Data is stored locally in your browser and may be lost in the future.</p>
-    </footer>
+    <!-- Stats Modal -->
+     <div id="stats-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+         <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 max-w-lg w-full max-h-[80vh] flex flex-col">
+             <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                 <h3 class="text-xl font-bold text-indigo-700 dark:text-indigo-400">Your Productivity Stats</h3>
+                 <button id="close-stats" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                     <i class="fas fa-times text-xl"></i>
+                 </button>
+             </div>
+             <div id="stats-content" class="space-y-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar">
+                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">Today's Focus</h4>
+                     <p id="today-focus-time" class="text-lg font-medium text-indigo-600 dark:text-indigo-400">0 minutes</p>
+                 </div>
+                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">Tasks Completed Today</h4>
+                     <p id="tasks-completed" class="text-lg font-medium text-indigo-600 dark:text-indigo-400">0 tasks</p>
+                 </div>
+                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">Most Used Sound</h4>
+                     <p id="most-used-sound" class="text-lg font-medium text-indigo-600 dark:text-indigo-400">None</p>
+                 </div>
+                 <div>
+                     <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-2 mt-4">Recently Completed Tasks</h4>
+                     <ul id="recent-tasks-list" class="divide-y divide-gray-200 dark:divide-gray-600 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                         <!-- Recent tasks will be inserted here -->
+                         <li class="py-3 text-gray-500 dark:text-gray-400 italic">No completed tasks yet</li>
+                     </ul>
+                 </div>
+             </div>
+         </div>
+     </div>
+
+    <!-- Break Timer Modal -->
+    <div id="break-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+        <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full">
+            <div class="text-center mb-6">
+                <i class="fas fa-coffee text-4xl text-green-500 mb-3"></i>
+                <h3 class="text-2xl font-bold text-indigo-700 dark:text-indigo-400">Break Time!</h3>
+                <div id="break-timer" class="text-5xl font-bold my-4 text-gray-800 dark:text-gray-200">5:00</div>
+                <p class="text-gray-600 dark:text-gray-400">Rest and recharge. You've earned it!</p>
+            </div>
+            <div class="flex justify-center space-x-3">
+                <button id="end-break-button" class="bg-indigo-600 text-white py-2.5 px-6 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                    End Break Early
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script src="script.js"></script>
-    
-    <!-- Mobile Detection Script -->
+
+    <!-- Mobile/Theme Init Script -->
     <script>
+        // Basic Mobile Detection (for initial message only)
         function isMobileDevice() {
-            return (window.innerWidth <= 768) || 
+            // Keep the original broad check for the initial mobile block message
+             return (window.innerWidth <= 768) ||
                    (navigator.userAgent.match(/Android/i) ||
                     navigator.userAgent.match(/webOS/i) ||
                     navigator.userAgent.match(/iPhone/i) ||
@@ -406,10 +431,59 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            if (isMobileDevice()) {
+            // Show mobile block message if detected (unchanged logic)
+            if (isMobileDevice() && false) { // Temporarily disable mobile block for testing
                 document.getElementById('mobile-message').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('sidebar').classList.add('hidden'); // Also hide sidebar
             }
+
+            // Initialize Theme based on localStorage or system preference
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const themeToggleMobileBtn = document.getElementById('theme-toggle-mobile');
+            const themeIcon = themeToggleBtn?.querySelector('i');
+            const themeIconMobile = themeToggleMobileBtn?.querySelector('i');
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    if(themeIcon) themeIcon.className = 'fas fa-sun';
+                    if(themeIconMobile) themeIconMobile.className = 'fas fa-sun';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                     if(themeIcon) themeIcon.className = 'fas fa-moon';
+                    if(themeIconMobile) themeIconMobile.className = 'fas fa-moon';
+                }
+                // Update select dropdown arrow color for dark mode
+                 const selectElement = document.getElementById('task-sound');
+                 if (selectElement) {
+                    const arrowColor = theme === 'dark' ? '%239ca3af' : '%236b7280'; // gray-400 : gray-500
+                    selectElement.style.backgroundImage = `url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"%3E%3Cpath stroke="${arrowColor}" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 8l4 4 4-4"/%3E%3C/svg%3E')`;
+                }
+            };
+
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+            applyTheme(initialTheme);
+
+            // Theme toggle listeners
+            const themeHandler = () => {
+                const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            };
+            themeToggleBtn?.addEventListener('click', themeHandler);
+            themeToggleMobileBtn?.addEventListener('click', themeHandler);
+
+            // System theme change listener
+             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                 if (!localStorage.getItem('theme')) { // Only respect system change if no override is set
+                     const newTheme = e.matches ? 'dark' : 'light';
+                     applyTheme(newTheme);
+                 }
+             });
         });
     </script>
 </body>
