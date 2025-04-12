@@ -192,6 +192,7 @@ function initializeApp() {
     });
 
     setupLocalMusicHandlers();
+    setupSoundControlsCollapse();
 }
 
 // Set up all event listeners
@@ -250,6 +251,15 @@ function setupEventListeners() {
     // Theme toggle buttons (already handled in index.html script, but can be moved here if preferred)
     // DOM.themeToggleButton.addEventListener('click', toggleTheme);
     // DOM.themeToggleButtonMobile.addEventListener('click', toggleTheme);
+
+    // Add event listener for the "Start now" button
+    document.getElementById('add-first-task')?.addEventListener('click', () => {
+        openCreateTaskModal();
+    });
+
+    // Add task header buttons
+    document.getElementById('add-task-header')?.addEventListener('click', openCreateTaskModal);
+    document.getElementById('add-task-header-mobile')?.addEventListener('click', openCreateTaskModal);
 }
 
 // --- Sidebar and Modal Functions ---
@@ -1557,4 +1567,61 @@ function stopLocalMusic() {
         isLocalMusicPlaying = false;
         document.getElementById('sound-name').textContent = '';
     }
+}
+
+// Add this function to handle sound controls collapse/expand
+function setupSoundControlsCollapse() {
+    const header = document.getElementById('sound-controls-header');
+    const content = document.getElementById('sound-controls-content');
+    const toggleButton = document.getElementById('toggle-sound-controls');
+    const icon = toggleButton.querySelector('i');
+    const toggleText = toggleButton.querySelector('span');
+
+    // Set initial state to collapsed
+    let isExpanded = false;
+    content.style.maxHeight = '0';
+    content.style.opacity = '0';
+    icon.className = 'fas fa-chevron-up';
+    toggleText.textContent = 'Show controls';
+
+    function toggleControls() {
+        isExpanded = !isExpanded;
+        
+        if (isExpanded) {
+            content.style.maxHeight = 'none';
+            content.style.opacity = '1';
+            icon.className = 'fas fa-chevron-down';
+            toggleText.textContent = 'Hide controls';
+        } else {
+            content.style.maxHeight = '0';
+            content.style.opacity = '0';
+            icon.className = 'fas fa-chevron-up';
+            toggleText.textContent = 'Show controls';
+        }
+    }
+
+    // Add click event to header and button
+    header.addEventListener('click', (e) => {
+        if (!e.target.closest('#toggle-sound-controls')) {
+            toggleControls();
+        }
+    });
+    toggleButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleControls();
+    });
+
+    // Handle mobile view
+    function handleMobileView() {
+        // Keep collapsed on both mobile and desktop
+        if (isExpanded) {
+            toggleControls();
+        }
+    }
+
+    // Initial check
+    handleMobileView();
+
+    // Listen for window resize
+    window.addEventListener('resize', handleMobileView);
 } 
