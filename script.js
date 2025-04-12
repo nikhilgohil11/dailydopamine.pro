@@ -36,6 +36,11 @@ const state = {
     completionSound: null
 };
 
+// Add these variables at the top with other state variables
+let localMusicFiles = [];
+let localMusicPlayer = null;
+let isLocalMusicPlaying = false;
+
 // DOM Elements
 const DOM = {
     loadingScreen: document.getElementById('loading-screen'),
@@ -185,6 +190,8 @@ function initializeApp() {
             }
         });
     });
+
+    setupLocalMusicHandlers();
 }
 
 // Set up all event listeners
@@ -253,7 +260,7 @@ function toggleSidebar() {
     // Optional: Prevent body scroll when sidebar is open on mobile
     if (DOM.sidebar.classList.contains('open')) {
         document.body.style.overflow = 'hidden';
-    } else {
+        } else {
         document.body.style.overflow = '';
     }
 }
@@ -470,7 +477,7 @@ function updateTaskList() {
 
 // Helper function to create a task list item element
 function createTaskListItem(task, type) {
-    const li = document.createElement('li');
+            const li = document.createElement('li');
     li.className = `task-item ${type}`; // Add type class (queued, completed, canceled)
     li.dataset.id = task.id;
 
@@ -490,20 +497,20 @@ function createTaskListItem(task, type) {
         timestamp = `Completed ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } else if (type === 'canceled') {
         statusIcon = `<i class="fas fa-ban text-red-500 mr-1"></i>`;
-        const date = new Date(task.canceledAt);
+            const date = new Date(task.canceledAt);
         timestamp = `Canceled ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     }
-
-    li.innerHTML = `
-        <div class="flex items-center justify-between">
+            
+            li.innerHTML = `
+                <div class="flex items-center justify-between">
             <div class="min-w-0 flex-1">
                 <h3 class="font-medium truncate ${task.id === state.activeTaskId ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'}">${task.name}</h3>
                 <div class="task-details flex items-center space-x-3 text-xs mt-1 text-gray-500 dark:text-gray-400">
                     ${statusIcon ? `<span>${statusIcon}${timestamp}</span>` : ''}
                     ${durationInfo ? `<span>${durationInfo}</span>` : ''}
                     ${soundIcon ? `<span class="truncate">${soundIcon}</span>` : ''}
-                </div>
-            </div>
+                        </div>
+                    </div>
             <div class="task-actions flex items-center ml-2">
                 ${type === 'queued' && task.id !== state.activeTaskId ? `
                     <button title="Start Task" class="start-button p-1 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-full" data-id="${task.id}">
@@ -512,10 +519,10 @@ function createTaskListItem(task, type) {
                 ` : ''}
                 <button title="Delete Task" class="delete-button p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-full" data-id="${task.id}">
                     <i class="fas fa-trash-alt fa-xs"></i>
-                </button>
-            </div>
-        </div>
-    `;
+                        </button>
+                    </div>
+                </div>
+            `;
     return li;
 }
 
@@ -551,9 +558,9 @@ function setActiveTask(taskId) {
         stopAudio();
         state.isPaused = false;
     }
-
+    
     state.activeTaskId = taskId;
-
+    
     // Update Active Task UI
     DOM.noTaskMessage.classList.add('hidden');
     DOM.activeTaskDiv.classList.remove('hidden');
@@ -566,7 +573,7 @@ function setActiveTask(taskId) {
     DOM.timerBar.style.width = '100%';
     DOM.timerBar.style.transitionDuration = '0ms'; // Prevent animation on reset
     setTimeout(() => { DOM.timerBar.style.transitionDuration = ''; }, 50); // Re-enable after a tick
-
+    
     // Configure audio display (don't play yet)
     if (task.sound !== 'none') {
         DOM.soundName.textContent = `Sound: ${findAudioName(task.sound)}`;
@@ -580,7 +587,7 @@ function setActiveTask(taskId) {
     DOM.startTaskButton.classList.remove('hidden');
     DOM.pauseTaskButton.classList.add('hidden');
     DOM.resumeTaskButton.classList.add('hidden');
-
+    
     // Update task list highlighting
     updateTaskList();
 
@@ -624,6 +631,13 @@ function startTask() {
     
     const task = state.tasks.find(t => t.id === state.activeTaskId);
     if (!task) return;
+    
+    // Start local music if files are loaded
+    if (localMusicFiles.length > 0) {
+        playLocalMusic(0);
+        isLocalMusicPlaying = true;
+        document.getElementById('sound-name').textContent = `Playing: ${localMusicFiles[0].name}`;
+    }
     
     // Update UI buttons
     DOM.startTaskButton.classList.add('hidden');
@@ -682,6 +696,12 @@ function pauseTask() {
     state.timerInterval = null;
     state.isPaused = true;
     
+    // Pause local music if playing
+    if (isLocalMusicPlaying && localMusicPlayer) {
+        localMusicPlayer.pause();
+        document.getElementById('sound-name').textContent = `Paused: ${localMusicFiles[0].name}`;
+    }
+    
     // Pause audio when task is paused
     pauseAudio(); // Use a separate function to just pause, not reset sliders
     
@@ -693,6 +713,13 @@ function pauseTask() {
 // Resume the paused task
 function resumeTask() {
     if (!state.isPaused) return;
+    
+    // Resume local music if files are loaded
+    if (localMusicFiles.length > 0) {
+        playLocalMusic(0);
+        isLocalMusicPlaying = true;
+        document.getElementById('sound-name').textContent = `Playing: ${localMusicFiles[0].name}`;
+    }
     
     // Resume audio
     resumeAudio(); // Use a separate function to resume paused sounds
@@ -732,6 +759,12 @@ function startTimerInterval() {
 function finishTask() {
     if (!state.activeTaskId) return;
     
+    // Stop local music if playing
+    if (isLocalMusicPlaying) {
+        stopLocalMusic();
+        document.getElementById('sound-name').textContent = `Loaded: ${localMusicFiles[0].name}`;
+    }
+    
     // Stop timer and audio
     if (state.timerInterval) {
         clearInterval(state.timerInterval);
@@ -745,6 +778,12 @@ function finishTask() {
 // Cancel the active task
 function cancelTask() {
     if (!state.activeTaskId) return;
+    
+    // Stop local music if playing
+    if (isLocalMusicPlaying) {
+        stopLocalMusic();
+        document.getElementById('sound-name').textContent = `Loaded: ${localMusicFiles[0].name}`;
+    }
     
     // Stop timer and audio
     if (state.timerInterval) {
@@ -776,23 +815,23 @@ function cancelTask() {
     // Get next task if available
     const currentIndex = state.tasks.findIndex(t => t.id === state.activeTaskId);
     const currentActiveId = state.activeTaskId; // Store before removing
-
+    
     // Remove current task from active list
     state.tasks = state.tasks.filter(task => task.id !== currentActiveId);
-
+    
     // Find the *next* task in the original list order, if any
     const nextTask = state.tasks[currentIndex]; // Index remains valid if task before it was removed
 
     // Clear active task UI *before* potentially setting a new one
     clearActiveTask();
-
+    
     // Set next task as active if available
     if (nextTask) {
         setActiveTask(nextTask.id);
     } else {
         updateTaskList(); // Update list even if no next task
     }
-
+    
     // Save state
     saveToLocalStorage();
     // updateTaskList() is called within setActiveTask or just above
@@ -845,7 +884,7 @@ function completeTask() {
     const completedTaskId = state.activeTaskId; // Store ID before clearing
     state.activeTaskId = null; // Clear active ID
     state.isPaused = false;
-
+    
     // Show completion modal
     DOM.completedTaskName.textContent = task.name;
     DOM.completionModal.classList.remove('hidden');
@@ -1062,6 +1101,9 @@ function updateTimerDisplay() {
 
 // Play a specific sound or mix
 function playAudio(audioId) {
+    // If local music is playing, don't play preset sounds
+    if (isLocalMusicPlaying) return;
+    
     stopAudio(); // Stop everything before starting new sound/mix
     
     // Remove active class from all preset buttons
@@ -1227,6 +1269,9 @@ function updateSliderValue(slider) {
 
 // Modify the stopAudio function to reset sliders
 function stopAudio() {
+    // Stop local music if playing
+    stopLocalMusic();
+    
     // Stop single playing audio
     if (state.currentAudio) {
         state.currentAudio.pause();
@@ -1307,7 +1352,7 @@ function setGlobalVolume(volume) {
         const baseVolume = state.currentAudio._baseVolume || 1;
         state.currentAudio.volume = volume * baseVolume;
     }
-
+    
     // Adjust volume for mixed sounds
     Object.values(state.activeSounds).forEach(audio => {
         const baseVolume = audio._baseVolume || 1; // Each sound in a mix uses its own base volume
@@ -1322,7 +1367,7 @@ function updateMuteButtonIcon(isAudible) {
         icon.classList.remove('fa-volume-mute');
         icon.classList.add('fa-volume-up');
         DOM.muteButton.title = "Mute";
-    } else {
+        } else {
         icon.classList.remove('fa-volume-up');
         icon.classList.add('fa-volume-mute');
         DOM.muteButton.title = "Unmute";
@@ -1428,3 +1473,88 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)
         updateThemeIcon(newTheme);
     }
 }); 
+
+// Add these functions after the existing audio-related functions
+function setupLocalMusicHandlers() {
+    const dropZone = document.getElementById('local-music-drop-zone');
+    const fileInput = document.getElementById('local-music-input');
+
+    // Handle click to select files
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+
+    // Handle file selection
+    fileInput.addEventListener('change', (e) => {
+        handleLocalMusicFiles(e.target.files);
+    });
+
+    // Handle drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-500', 'dark:border-indigo-400');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
+        handleLocalMusicFiles(e.dataTransfer.files);
+    });
+}
+
+function handleLocalMusicFiles(files) {
+    localMusicFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
+    
+    if (localMusicFiles.length > 0) {
+        // Stop any currently playing sounds
+        stopAudio();
+        
+        // Create or update the audio player
+        if (!localMusicPlayer) {
+            localMusicPlayer = new Audio();
+            localMusicPlayer.addEventListener('ended', playNextLocalMusic);
+        }
+        
+        // Set isLocalMusicPlaying to false initially
+        isLocalMusicPlaying = false;
+        
+        // Update the sound name display
+        document.getElementById('sound-name').textContent = `Loaded: ${localMusicFiles[0].name}`;
+    }
+}
+
+function playLocalMusic(index) {
+    if (!localMusicFiles[index]) return;
+    
+    const file = localMusicFiles[index];
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+        localMusicPlayer.src = e.target.result;
+        localMusicPlayer.play();
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function playNextLocalMusic() {
+    const currentIndex = localMusicFiles.findIndex(file => 
+        localMusicPlayer.src.includes(file.name)
+    );
+    
+    const nextIndex = (currentIndex + 1) % localMusicFiles.length;
+    playLocalMusic(nextIndex);
+}
+
+function stopLocalMusic() {
+    if (localMusicPlayer) {
+        localMusicPlayer.pause();
+        localMusicPlayer.currentTime = 0;
+        isLocalMusicPlaying = false;
+        document.getElementById('sound-name').textContent = '';
+    }
+} 
