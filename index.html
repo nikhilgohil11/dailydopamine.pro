@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Daily Dopamine Pro - Task Management for ADHD</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -78,240 +78,223 @@
     </aside>
 
     <!-- Main Content Area -->
-    <div id="app-container" class="hidden md:ml-72 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
-        <!-- Header -->
-        <header class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-4 shadow-lg sticky top-0 z-20">
-            <div class="max-w-full mx-auto px-6 flex justify-between items-center">
-                <!-- Left side: Hamburger Menu (mobile) + Stats/Theme -->
-                <div class="flex items-center space-x-3">
-                    <button id="menu-toggle" class="p-2 text-white hover:bg-indigo-700 rounded-full transition md:hidden">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    <div class="hidden md:flex items-center space-x-2"> <!-- Hide on mobile -->
-                        <button id="stats-button" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                            <i class="fas fa-chart-bar"></i>
+    <div id="app-container" class="hidden md:ml-72 flex flex-col min-h-screen transition-all duration-300 ease-in-out relative">
+        <div class="w-full max-w-full flex-1 flex flex-col">
+            <!-- Header -->
+            <header class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-4 shadow-lg sticky top-0 z-20 w-full">
+                <div class="container mx-auto px-4 flex justify-between items-center max-w-full">
+                    <!-- Left side: Hamburger Menu (mobile) + Stats/Theme -->
+                    <div class="flex items-center space-x-3">
+                        <button id="menu-toggle" class="p-2 text-white hover:bg-indigo-700 rounded-full transition md:hidden">
+                            <i class="fas fa-bars"></i>
                         </button>
-                        <button id="add-task-header" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Center: Ad Placeholder -->
-                <div class="flex-1 flex justify-center px-4">
-                    <!-- <a href="https://nas.io/checkout-global?communityId=67f44d8f9bc2972b9825b1c0&communityCode=DAILY_DOPAMINE_PRO&requestor=signupRequestor&linkClicked=https%3A%2F%2Fnas.io%2Fportal%2Fproducts%2F67f44ebc91ef51b127ea2da5&sourceInfoType=folder&sourceInfoOrigin=67f44ebc91ef51b127ea2da5"
-                       target="_blank"
-                       class="border-2 border-dashed border-white/30 rounded-lg px-4 py-1.5 flex items-center space-x-3 hover:bg-white/10 transition text-sm">
-                        <div class="w-6 h-6 bg-white/10 rounded flex items-center justify-center">
-                            <i class="fas fa-ad text-white/70 text-xs"></i>
-                        </div>
-                        <div class="hidden sm:flex items-center space-x-1">
-                            <span class="text-white/70">Advertise Here</span>
-                            <i class="fas fa-plus text-white/70 text-xs"></i>
-                        </div>
-                    </a> -->
-                </div>
-
-                <!-- Right side: Volume Controls -->
-                <div class="flex items-center space-x-3">
-                     <div class="flex items-center space-x-1">
-                         <button id="volume-down" title="Volume Down" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                             <i class="fas fa-volume-down"></i>
-                         </button>
-                         <input type="range" id="volume-control" title="Volume" min="0" max="100" value="50" class="w-20 md:w-24 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-indigo-300">
-                         <button id="volume-up" title="Volume Up" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                             <i class="fas fa-volume-up"></i>
-                         </button>
-                         <button id="mute-button" title="Mute" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                             <i class="fas fa-volume-up"></i>
-                         </button>
-                     </div>
-                     <!-- Mobile Only: Stats/Theme Toggles -->
-                     <div class="flex items-center space-x-2 md:hidden">
-                         <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                             <i class="fas fa-chart-bar"></i>
-                         </button>
-                         <button id="add-task-header-mobile" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition">
-                             <i class="fas fa-plus"></i>
-                         </button>
-                     </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
-        <main class="flex-grow p-4 md:p-8">
-            <!-- Active Task Column -->
-            <div class="card bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mx-auto max-w-4xl">
-                <h2 class="text-xl font-bold mb-6 text-indigo-600 dark:text-indigo-400">Current Task</h2>
-                <div id="active-task-container" class="text-center py-8">
-                    <div id="no-task-message" class="text-gray-500 dark:text-gray-400 italic">
-                        <div class="text-center space-y-4">
-                            <h3 class="text-xl font-bold text-indigo-600 dark:text-indigo-400">✨ Trouble Focusing on Daily Tasks? Try This!</h3>
-                            <p class="text-lg">Feeling distracted? Can't start that one task? We got you.</p>
-                            <div class="space-y-2 text-left max-w-md mx-auto">
-                                <p class="flex items-center"><span class="mr-2">✅</span> Add your task</p>
-                                <p class="flex items-center"><span class="mr-2">⏱️</span> Set a timer</p>
-                                <p class="flex items-center"><span class="mr-2">🎧</span> Play soothing sounds (waves, wind, birds & more)</p>
-                                <p class="flex items-center"><span class="mr-2">🎯</span> Focus. Finish. Feel great.</p>
-                            </div>
-                            <p class="text-sm mt-4">Built for ADHD minds and busy brains — this tool helps you stay on track, stress-free.</p>
-                            <p class="text-sm italic">"it works for me."</p>
-                            <button id="add-first-task" class="mt-4 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold">
-                                👉 Start now
+                        <div class="hidden md:flex items-center space-x-2"> <!-- Hide on mobile -->
+                            <button id="stats-button" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                            <button id="add-task-header" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                <i class="fas fa-plus"></i>
                             </button>
                         </div>
                     </div>
-                    <div id="active-task" class="hidden">
-                        <h3 id="active-task-name" class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 break-words"></h3>
-                        <div class="my-6 relative">
-                             <div class="mx-auto relative w-full max-w-lg">
-                                 <div class="relative pt-1">
-                                     <div class="flex items-center justify-center mb-3">
-                                         <div id="timer-display" class="text-4xl md:text-5xl font-bold text-center w-full text-indigo-600 dark:text-indigo-400"></div>
-                                     </div>
-                                     <div class="overflow-hidden h-4 md:h-6 mb-4 text-xs flex rounded-full bg-gray-200 dark:bg-gray-700">
-                                         <div id="timer-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500 rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
-                                     </div>
-                                 </div>
-                             </div>
-                         </div>
-                        <div class="audio-controls mb-4">
-                            <!-- Task Control Buttons -->
-                            <div class="flex justify-center space-x-2 md:space-x-3 mb-4">
-                                <button id="start-task" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base">
-                                    <i class="fas fa-play mr-1"></i> Start
-                                </button>
-                                <button id="pause-task" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base">
-                                    <i class="fas fa-pause mr-1"></i> Pause
-                                </button>
-                                <button id="resume-task" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base">
-                                    <i class="fas fa-play mr-1"></i> Resume
-                                </button>
-                                <button id="finish-task" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base">
-                                    <i class="fas fa-check mr-1"></i> Finish
-                                </button>
-                                <button id="cancel-task" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base">
-                                    <i class="fas fa-times mr-1"></i> Cancel
-                                </button>
+
+                    <!-- Center: Ad Placeholder -->
+                    <div class="flex-1 flex justify-center px-4">
+                        <!-- <a href="https://nas.io/checkout-global?communityId=67f44d8f9bc2972b9825b1c0&communityCode=DAILY_DOPAMINE_PRO&requestor=signupRequestor&linkClicked=https%3A%2F%2Fnas.io%2Fportal%2Fproducts%2F67f44ebc91ef51b127ea2da5&sourceInfoType=folder&sourceInfoOrigin=67f44ebc91ef51b127ea2da5"
+                           target="_blank"
+                           class="border-2 border-dashed border-white/30 rounded-lg px-4 py-1.5 flex items-center space-x-3 hover:bg-white/10 transition text-sm">
+                            <div class="w-6 h-6 bg-white/10 rounded flex items-center justify-center">
+                                <i class="fas fa-ad text-white/70 text-xs"></i>
                             </div>
+                            <div class="hidden sm:flex items-center space-x-1">
+                                <span class="text-white/70">Advertise Here</span>
+                                <i class="fas fa-plus text-white/70 text-xs"></i>
+                            </div>
+                        </a> -->
+                    </div>
 
-                            <!-- Sound Label -->
-                            <div id="sound-name" class="text-sm text-gray-500 dark:text-gray-400 text-center mb-4"></div>
+                    <!-- Right side: Volume Controls -->
+                    <div class="flex items-center space-x-3">
+                         <div class="flex items-center space-x-1">
+                             <button id="volume-down" title="Volume Down" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                 <i class="fas fa-volume-down"></i>
+                             </button>
+                             <input type="range" id="volume-control" title="Volume" min="0" max="100" value="50" class="w-20 md:w-24 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-indigo-300">
+                             <button id="volume-up" title="Volume Up" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                 <i class="fas fa-volume-up"></i>
+                             </button>
+                             <button id="mute-button" title="Mute" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                 <i class="fas fa-volume-up"></i>
+                             </button>
+                         </div>
+                         <!-- Mobile Only: Stats/Theme Toggles -->
+                         <div class="flex items-center space-x-2 md:hidden">
+                             <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                 <i class="fas fa-chart-bar"></i>
+                             </button>
+                             <button id="add-task-header-mobile" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                                 <i class="fas fa-plus"></i>
+                             </button>
+                         </div>
+                    </div>
+                </div>
+            </header>
 
-                            <!-- Sound Controls Header -->
-                            <div class="flex flex-col mb-4" id="sound-controls-header">
-                                <div class="flex items-center justify-between cursor-pointer p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                    <div class="flex items-center space-x-2">
-                                        <i class="fas fa-music text-indigo-500 dark:text-indigo-400"></i>
-                                        <div>
-                                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Sound Settings</h4>
-                                            <p class="text-xs text-gray-500 dark:text-gray-400">Music upload, presets & mixer controls</p>
-                                        </div>
+            <!-- Main Content -->
+            <main class="flex-grow p-4 md:p-8 w-full overflow-x-hidden">
+                <div class="max-w-full mx-auto">
+                    <!-- Active Task Column -->
+                    <div class="card bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 md:p-6 mx-auto w-full md:max-w-4xl">
+                        <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-indigo-600 dark:text-indigo-400">Current Task</h2>
+                        <div id="active-task-container" class="text-center py-4 md:py-8 w-full">
+                            <div id="no-task-message" class="text-gray-500 dark:text-gray-400 italic px-2 md:px-4">
+                                <div class="text-center space-y-3 md:space-y-4">
+                                    <h3 class="text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400 break-words">✨ Trouble Focusing on Daily Tasks? </br> Can't start that one task? We got you</h3>
+                                    <div class="space-y-2 text-left max-w-md mx-auto text-sm md:text-base">
+                                        <p class="flex items-center"><span class="mr-2">✅</span> Add your task</p>
+                                        <p class="flex items-center"><span class="mr-2">⏱️</span> Set a timer</p>
+                                        <p class="flex items-center"><span class="mr-2">🎧</span> Play soothing sounds (waves, wind, birds & more)</p>
+                                        <p class="flex items-center"><span class="mr-2">🎯</span> Focus. Finish. Feel great.</p>
                                     </div>
-                                    <button id="toggle-sound-controls" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition flex items-center space-x-1">
-                                        <span class="text-xs">Show controls</span>
-                                        <i class="fas fa-chevron-up"></i>
+                                    <p class="text-xs md:text-sm mt-4">Built for ADHD minds and busy brains — this tool helps you stay on track, stress-free.</p>
+                                    <p class="text-xs md:text-sm italic">"it works for me."</p>
+                                    <button id="add-first-task" class="mt-4 px-4 md:px-6 py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold text-sm md:text-base">
+                                        👉 Start now
                                     </button>
                                 </div>
                             </div>
-                            
-                            <!-- Collapsible Content -->
-                            <div id="sound-controls-content" class="transition-all duration-300 ease-in-out">
-                                <!-- Add Local Music Drop Zone -->
-                                <div id="local-music-drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4 text-center cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors">
-                                    <i class="fas fa-music text-2xl text-gray-400 dark:text-gray-500 mb-2"></i>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400">Drag & drop your music files here</p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">or click to select files</p>
-                                    <input type="file" id="local-music-input" class="hidden" accept="audio/*" multiple>
-                                </div>
-                                <div class="sound-mixer mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">Adjust Background Sounds</h4>
-                                    <div class="preset-mixes mb-4">
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Presets</p>
-                                        <div class="flex flex-wrap gap-2 justify-center">
-                                            <span class="px-3 py-1 text-xs rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-                                                <i class="fas fa-brain mr-1"></i> Focus
-                                            </span>
-                                            <span class="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                                                <i class="fas fa-spa mr-1"></i> Relax
-                                            </span>
-                                            <span class="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-                                                <i class="fas fa-moon mr-1"></i> Sleep
-                                            </span>
-                                            <span class="px-3 py-1 text-xs rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
-                                                <i class="fas fa-leaf mr-1"></i> Nature
-                                            </span>
-                                            <span class="px-3 py-1 text-xs rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300">
-                                                <i class="fas fa-random mr-1"></i> Random
-                                            </span>
+                            <div id="active-task" class="hidden">
+                                <h3 id="active-task-name" class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 break-words"></h3>
+                                <div class="my-6 relative">
+                                     <div class="mx-auto relative w-full max-w-lg">
+                                         <div class="relative pt-1">
+                                             <div class="flex items-center justify-center mb-3">
+                                                 <div id="timer-display" class="text-4xl md:text-5xl font-bold text-center w-full text-indigo-600 dark:text-indigo-400"></div>
+                                             </div>
+                                             <div class="overflow-hidden h-4 md:h-6 mb-4 text-xs flex rounded-full bg-gray-200 dark:bg-gray-700">
+                                                 <div id="timer-bar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-indigo-500 rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+                                <div class="audio-controls mb-4">
+                                    <!-- Task Control Buttons -->
+                                    <div class="flex justify-center space-x-2 md:space-x-3 mb-4">
+                                        <button id="start-task" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base">
+                                            <i class="fas fa-play mr-1"></i> Start
+                                        </button>
+                                        <button id="pause-task" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base">
+                                            <i class="fas fa-pause mr-1"></i> Pause
+                                        </button>
+                                        <button id="resume-task" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base">
+                                            <i class="fas fa-play mr-1"></i> Resume
+                                        </button>
+                                        <button id="finish-task" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base">
+                                            <i class="fas fa-check mr-1"></i> Finish
+                                        </button>
+                                        <button id="cancel-task" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base">
+                                            <i class="fas fa-times mr-1"></i> Cancel
+                                        </button>
+                                    </div>
+
+                                    <!-- Sound Label -->
+                                    <div id="sound-name" class="text-sm text-gray-500 dark:text-gray-400 text-center mb-4"></div>
+
+                                    <!-- Sound Controls Header -->
+                                    <div class="flex flex-col mb-4" id="sound-controls-header">
+                                        <div class="flex items-center justify-between cursor-pointer p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                            <div class="flex items-center space-x-2">
+                                                <i class="fas fa-music text-indigo-500 dark:text-indigo-400"></i>
+                                                <div>
+                                                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">Sound Settings</h4>
+                                                    <p class="text-xs text-gray-500 dark:text-gray-400">Music upload, presets & mixer controls</p>
+                                                </div>
+                                            </div>
+                                            <button id="toggle-sound-controls" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition flex items-center space-x-1">
+                                                <span class="text-xs">Show controls</span>
+                                                <i class="fas fa-chevron-up"></i>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="custom-mix">
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Individual Sounds</p>
-                                        <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
-                                            <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Rain</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="rain" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Birds</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="birds" min="0" max="100" value="0">
-                                            </div>
-                                            <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Water</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="water" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Wind</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="wind" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>White Noise</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="whitenoise" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Thunder</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="thunder" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Bonfire</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="bonfire" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Cafe Chatter</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="chatter" min="0" max="100" value="0">
-                                            </div>
-                                             <div class="sound-channel">
-                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                    <span>Alpha Waves</span>
-                                                    <span class="channel-value font-medium">0%</span>
-                                                </label>
-                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="alpha" min="0" max="100" value="0">
+                                    
+                                    <!-- Collapsible Content -->
+                                    <div id="sound-controls-content" class="transition-all duration-300 ease-in-out">
+                                        <!-- Add Local Music Drop Zone -->
+                                        <div id="local-music-drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4 text-center cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors">
+                                            <i class="fas fa-music text-2xl text-gray-400 dark:text-gray-500 mb-2"></i>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Drag & drop your music files here</p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">or click to select files</p>
+                                            <input type="file" id="local-music-input" class="hidden" accept="audio/*" multiple>
+                                        </div>
+                                        <div class="sound-mixer mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">Adjust Background Sounds</h4>
+                                            <div class="custom-mix">
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Individual Sounds</p>
+                                                <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
+                                                    <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Rain</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="rain" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Birds</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="birds" min="0" max="100" value="0">
+                                                    </div>
+                                                    <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Water</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="water" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Wind</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="wind" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>White Noise</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="whitenoise" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Thunder</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="thunder" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Bonfire</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="bonfire" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Cafe Chatter</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="chatter" min="0" max="100" value="0">
+                                                    </div>
+                                                     <div class="sound-channel">
+                                                        <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                            <span>Alpha Waves</span>
+                                                            <span class="channel-value font-medium">0%</span>
+                                                        </label>
+                                                        <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="alpha" min="0" max="100" value="0">
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -320,37 +303,37 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
 
-        <!-- Footer -->
-        <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 text-center text-sm text-gray-600 dark:text-gray-400 mt-auto">
-             <p class="mb-2">For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@VikasGohil2</a></p>
-            <p class="text-xs">Data is stored locally in your browser.</p>
-        </footer>
+            <!-- Footer -->
+            <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 text-center text-sm text-gray-600 dark:text-gray-400 mt-auto w-full">
+                 <p class="mb-2">For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline">@VikasGohil2</a></p>
+                <p class="text-xs">Data is stored locally in your browser.</p>
+            </footer>
+        </div>
     </div>
 
     <!-- Create Task Modal -->
-    <div id="create-task-form-container" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-xl w-full max-w-md animate__animated animate__zoomIn">
+    <div id="create-task-form-container" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-2xl shadow-xl w-full max-w-[95%] md:max-w-md animate__animated animate__zoomIn">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100">Create New Task</h2>
+                <h2 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100">Create New Task</h2>
                 <button id="close-create-task-form" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 dark:text-gray-400 transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
                     <i class="fas fa-times text-lg"></i>
                 </button>
             </div>
             <form id="task-form" class="space-y-4">
-                 <div>
+                <div>
                     <label for="task-name" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Task Name</label>
-                    <input type="text" id="task-name" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
-                 </div>
-                 <div>
+                    <input type="text" id="task-name" class="w-full px-3 py-2 text-base md:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" required>
+                </div>
+                <div>
                     <label for="task-time" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Duration (minutes)</label>
-                    <input type="number" id="task-time" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100" min="1" max="120" value="25" required>
-                 </div>
-                 <div>
+                    <input type="number" id="task-time" class="w-full px-3 py-2 text-base md:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" min="1" max="120" value="25" required>
+                </div>
+                <div>
                     <label for="task-sound" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Background Sound</label>
-                    <select id="task-sound" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 appearance-none bg-no-repeat bg-right pr-8" style="background-image: url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3E%3C/svg%3E');">
+                    <select id="task-sound" class="w-full px-3 py-2 text-base md:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 appearance-none bg-no-repeat bg-right pr-8">
                         <option value="none">None</option>
                         <optgroup label="Preset Mixes">
                             <option value="mix_focus">Focus Mix</option>
@@ -372,10 +355,10 @@
                             <option value="alpha">Alpha Waves</option>
                         </optgroup>
                     </select>
-                 </div>
-                 <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 font-semibold">
-                     Add Task
-                 </button>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 font-semibold text-base md:text-lg">
+                    Add Task
+                </button>
             </form>
         </div>
     </div>

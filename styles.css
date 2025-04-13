@@ -119,6 +119,9 @@
   position: relative;
   color: var(--text-primary);
   min-height: 100vh;
+  width: calc(100% - 18rem); /* 18rem = 72 (md:ml-72) in pixels */
+  max-width: calc(100% - 18rem);
+  margin-left: 18rem;
 }
 
 .app-container::before {
@@ -150,7 +153,14 @@ header {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 160px); /* Account for header and padding */
+  max-height: calc(100vh - 200px); /* Base height */
+  width: 100%;
+  max-width: 100%;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.card.expanded {
+  max-height: calc(100vh - 100px); /* Increased height when controls are expanded */
 }
 
 .card:hover {
@@ -722,6 +732,12 @@ input[type="range"]::-moz-range-thumb:hover {
   #task-list {
     max-height: 60vh; /* Limit height on mobile */
   }
+
+  #app-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+  }
 }
 
 /* Additional mobile optimizations */
@@ -1156,6 +1172,23 @@ header h1 {
   overflow-x: hidden;
   padding-right: 4px; /* Add some space for the scrollbar */
   flex-grow: 1;
+  height: 100%; /* Take full height of parent */
+}
+
+/* When sound controls are expanded, allow more scrolling */
+#active-task-container.expanded {
+  max-height: none; /* Remove max-height constraint */
+}
+
+/* Sound controls content */
+#sound-controls-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+#sound-controls-content.expanded {
+  max-height: 500px; /* Increased height to show all sliders */
 }
 
 /* Task Queue section - handle overflowing content */
@@ -1240,6 +1273,19 @@ header h1 {
 /* Ensure dark mode select arrow is correct */
 [data-theme="dark"] #task-sound {
    background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"%3E%3Cpath stroke="%239ca3af" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 8l4 4 4-4"/%3E%3C/svg%3E'); /* gray-400 */
+   background-repeat: no-repeat;
+   background-position: right 0.5rem center;
+   background-size: 1.5em 1.5em;
+   padding-right: 2.5rem;
+}
+
+/* Add light mode select arrow */
+#task-sound {
+   background-image: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20"%3E%3Cpath stroke="%236b7280" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 8l4 4 4-4"/%3E%3C/svg%3E'); /* gray-500 */
+   background-repeat: no-repeat;
+   background-position: right 0.5rem center;
+   background-size: 1.5em 1.5em;
+   padding-right: 2.5rem;
 }
 
 /* Add Task Button styling */
@@ -1380,4 +1426,189 @@ select {
 
 #task-search {
     padding-left: 2.5rem; /* Ensure space for icon */
+}
+
+/* Mobile Optimization Styles */
+@media screen and (max-width: 768px) {
+    html, body {
+        width: 100%;
+        min-width: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    #app-container {
+        width: 100vw;
+        min-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    .card {
+        width: 100%;
+        margin: 0;
+        border-radius: 1rem;
+    }
+
+    /* Adjust font sizes for better readability on mobile */
+    h2 {
+        font-size: clamp(1.25rem, 4vw, 1.5rem);
+    }
+
+    h3 {
+        font-size: clamp(1rem, 3.5vw, 1.25rem);
+    }
+
+    p {
+        font-size: clamp(0.875rem, 3vw, 1rem);
+    }
+
+    /* Ensure inputs and buttons are easily tappable */
+    input, select, button {
+        min-height: 44px; /* Minimum touch target size */
+        font-size: 16px; /* Prevent iOS zoom on focus */
+    }
+
+    /* Improve modal display on mobile */
+    #create-task-form-container .modal {
+        width: 95vw;
+        max-height: 90vh;
+        margin: 0 auto;
+    }
+
+    /* Ensure proper spacing in task container */
+    #active-task-container {
+        padding: 1rem;
+    }
+
+    /* Make sure content doesn't overflow */
+    .break-words {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
+
+    /* Adjust spacing for mobile */
+    .space-y-4 > * + * {
+        margin-top: 0.75rem;
+    }
+
+    /* Ensure proper button sizing */
+    .button {
+        padding: 0.75rem 1rem;
+        width: 100%;
+        max-width: none;
+    }
+
+    /* Fix any potential horizontal scrolling issues */
+    .overflow-x-hidden {
+        overflow-x: hidden !important;
+    }
+
+    /* Ensure proper text wrapping */
+    .text-wrap {
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+/* Additional responsive typography */
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 14px;
+    }
+
+    input, select, button {
+        font-size: 16px !important; /* Prevent zoom on iOS */
+    }
+
+    .text-sm {
+        font-size: 0.875rem !important;
+    }
+
+    .text-base {
+        font-size: 1rem !important;
+    }
+
+    .text-lg {
+        font-size: 1.125rem !important;
+    }
+
+    .text-xl {
+        font-size: 1.25rem !important;
+    }
+}
+
+/* Safe area insets for modern mobile devices */
+@supports (padding: max(0px)) {
+    .safe-area-inset {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* Prevent content from being hidden under notches and dynamic islands */
+@supports (padding: max(0px)) {
+    .header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+    }
+}
+
+/* Ensure content stays within bounds */
+.max-w-full {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden;
+}
+
+/* Container width calculations */
+.container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 769px) {
+    .container {
+        max-width: calc(100vw - 18rem - 2rem); /* Account for sidebar and padding */
+    }
+}
+
+/* Card container adjustments */
+.card {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    max-height: calc(100vh - 200px); /* Base height */
+}
+
+.card.expanded {
+    max-height: calc(100vh - 100px); /* Increased height when controls are expanded */
+}
+
+@media (min-width: 769px) {
+    .card {
+        max-width: min(100%, 56rem); /* 56rem = equivalent to max-w-4xl */
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Main content area */
+main {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Prevent horizontal scroll */
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
 }

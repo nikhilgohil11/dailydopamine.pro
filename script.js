@@ -1144,7 +1144,15 @@ function playAudio(audioId) {
     
     // Set volume from range input
     const volumeControl = DOM.volumeControl;
-    audio.volume = parseInt(volumeControl.value) / 100;
+    const volume = parseInt(volumeControl.value) / 100;
+    audio.volume = volume;
+    
+    // Update the corresponding slider
+    const slider = document.querySelector(`.channel-slider[data-sound="${audioId}"]`);
+    if (slider) {
+        slider.value = volume * 100; // Convert to percentage
+        updateSliderValue(slider);
+    }
     
     // Play the audio
     audio.play().catch(error => {
@@ -1574,54 +1582,34 @@ function setupSoundControlsCollapse() {
     const header = document.getElementById('sound-controls-header');
     const content = document.getElementById('sound-controls-content');
     const toggleButton = document.getElementById('toggle-sound-controls');
-    const icon = toggleButton.querySelector('i');
-    const toggleText = toggleButton.querySelector('span');
-
-    // Set initial state to collapsed
-    let isExpanded = false;
-    content.style.maxHeight = '0';
-    content.style.opacity = '0';
-    icon.className = 'fas fa-chevron-up';
-    toggleText.textContent = 'Show controls';
-
+    const activeTaskContainer = document.getElementById('active-task-container');
+    const card = document.querySelector('.card'); // Get the card element
+    
     function toggleControls() {
-        isExpanded = !isExpanded;
+        const isExpanded = content.classList.toggle('expanded');
+        activeTaskContainer.classList.toggle('expanded', isExpanded);
+        card.classList.toggle('expanded', isExpanded); // Toggle card expanded class
         
+        // Update button text and icon
         if (isExpanded) {
-            content.style.maxHeight = 'none';
-            content.style.opacity = '1';
-            icon.className = 'fas fa-chevron-down';
-            toggleText.textContent = 'Hide controls';
+            toggleButton.innerHTML = '<span class="text-xs">Hide controls</span><i class="fas fa-chevron-down"></i>';
         } else {
-            content.style.maxHeight = '0';
-            content.style.opacity = '0';
-            icon.className = 'fas fa-chevron-up';
-            toggleText.textContent = 'Show controls';
+            toggleButton.innerHTML = '<span class="text-xs">Show controls</span><i class="fas fa-chevron-up"></i>';
         }
     }
-
-    // Add click event to header and button
-    header.addEventListener('click', (e) => {
-        if (!e.target.closest('#toggle-sound-controls')) {
-            toggleControls();
-        }
-    });
-    toggleButton.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleControls();
-    });
-
+    
+    header.addEventListener('click', toggleControls);
+    
     // Handle mobile view
     function handleMobileView() {
-        // Keep collapsed on both mobile and desktop
-        if (isExpanded) {
-            toggleControls();
+        if (window.innerWidth <= 768) {
+            content.classList.remove('expanded');
+            activeTaskContainer.classList.remove('expanded');
+            card.classList.remove('expanded'); // Remove expanded class on mobile
+            toggleButton.innerHTML = '<span class="text-xs">Show controls</span><i class="fas fa-chevron-up"></i>';
         }
     }
-
-    // Initial check
-    handleMobileView();
-
-    // Listen for window resize
+    
     window.addEventListener('resize', handleMobileView);
+    handleMobileView(); // Initial check
 } 
