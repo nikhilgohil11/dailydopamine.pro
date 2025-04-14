@@ -97,18 +97,61 @@ const DOM = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Preload audio files
-    preloadAudioFiles();
+    console.log('DOM Content Loaded');
+    
+    // Ensure all required DOM elements exist
+    if (!DOM.loadingScreen || !DOM.loadingBar || !DOM.loadingText || !DOM.appContainer) {
+        console.error('Required DOM elements not found');
+        // If critical elements are missing, show the app anyway
+        document.getElementById('app-container')?.classList.remove('hidden');
+        return;
+    }
     
     // Initialize the app
     initializeApp();
+    
+    // Preload audio files
+    preloadAudioFiles();
 });
 
 // Preload all audio files before showing the app
 function preloadAudioFiles() {
+    console.log('Starting audio preload...');
     let filesLoaded = 0;
+    let filesFailed = 0;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    console.log('Is mobile device:', isMobile);
     
-    AUDIO_FILES.forEach(file => {
+    // Add a safety timeout to show the app even if loading fails
+    const safetyTimeout = setTimeout(() => {
+        console.log('Safety timeout reached, showing app');
+        DOM.loadingScreen.classList.add('fade-out');
+        setTimeout(() => {
+            DOM.loadingScreen.style.display = 'none';
+            DOM.appContainer.classList.remove('hidden');
+        }, 500);
+    }, 10000); // 10 second timeout
+    
+    // On mobile, we'll only preload essential files
+    const filesToLoad = isMobile ? 
+        AUDIO_FILES.slice(0, 3) : // Only load first 3 files on mobile
+        AUDIO_FILES; // Load all files on desktop
+    
+    console.log('Files to load:', filesToLoad.length);
+    
+    if (filesToLoad.length === 0) {
+        console.log('No files to load, showing app immediately');
+        clearTimeout(safetyTimeout);
+        DOM.loadingScreen.classList.add('fade-out');
+        setTimeout(() => {
+            DOM.loadingScreen.style.display = 'none';
+            DOM.appContainer.classList.remove('hidden');
+        }, 500);
+        return;
+    }
+    
+    filesToLoad.forEach(file => {
+        console.log('Attempting to load:', file.path);
         const audio = new Audio();
         audio.src = file.path;
         audio.preload = 'auto';
@@ -119,13 +162,16 @@ function preloadAudioFiles() {
         
         // Update progress when each file loads
         audio.addEventListener('canplaythrough', () => {
+            console.log('Successfully loaded:', file.path);
             filesLoaded++;
-            const progress = (filesLoaded / AUDIO_FILES.length) * 100;
+            const progress = ((filesLoaded + filesFailed) / filesToLoad.length) * 100;
             DOM.loadingBar.style.width = `${progress}%`;
-            DOM.loadingText.textContent = `${filesLoaded}/${AUDIO_FILES.length} files loaded`;
+            DOM.loadingText.textContent = `${filesLoaded}/${filesToLoad.length} files loaded`;
             
-            // When all files are loaded, show the app
-            if (filesLoaded === AUDIO_FILES.length) {
+            // When all files are loaded or failed, show the app
+            if ((filesLoaded + filesFailed) === filesToLoad.length) {
+                console.log('All files processed, showing app');
+                clearTimeout(safetyTimeout);
                 setTimeout(() => {
                     DOM.loadingScreen.classList.add('fade-out');
                     setTimeout(() => {
@@ -137,20 +183,55 @@ function preloadAudioFiles() {
         });
         
         // Handle loading errors
-        audio.addEventListener('error', () => {
-            console.error(`Error loading audio file: ${file.path}`);
-            filesLoaded++;
-            const progress = (filesLoaded / AUDIO_FILES.length) * 100;
+        audio.addEventListener('error', (e) => {
+            console.error(`Error loading audio file: ${file.path}`, e);
+            filesFailed++;
+            const progress = ((filesLoaded + filesFailed) / filesToLoad.length) * 100;
             DOM.loadingBar.style.width = `${progress}%`;
-            DOM.loadingText.textContent = `${filesLoaded}/${AUDIO_FILES.length} files loaded (Error with ${file.name})`;
+            DOM.loadingText.textContent = `${filesLoaded}/${filesToLoad.length} files loaded (${filesFailed} failed)`;
+            
+            // Remove the failed audio from the elements
+            delete state.audioElements[file.id];
+            
+            // When all files are loaded or failed, show the app
+            if ((filesLoaded + filesFailed) === filesToLoad.length) {
+                console.log('All files processed (with errors), showing app');
+                clearTimeout(safetyTimeout);
+                setTimeout(() => {
+                    DOM.loadingScreen.classList.add('fade-out');
+                    setTimeout(() => {
+                        DOM.loadingScreen.style.display = 'none';
+                        DOM.appContainer.classList.remove('hidden');
+                    }, 500);
+                }, 500);
+            }
         });
     });
 }
 
 // Initialize app functionality
 function initializeApp() {
-    // Load saved data from localStorage
-    loadFromLocalStorage();
+    console.log('Initializing app...');
+    
+    try {
+        // Test if localStorage is available
+        localStorage.setItem('test', 'test');
+        localStorage.removeItem('test');
+        
+        // Load saved data from localStorage
+        loadFromLocalStorage();
+    } catch (error) {
+        console.warn('localStorage is not available:', error);
+        // Initialize with default values
+        state.tasks = [];
+        state.completedTasks = [];
+        state.canceledTasks = [];
+        state.stats = {
+            todayFocusTime: 0,
+            tasksCompleted: 0,
+            soundUsage: {}
+        };
+    }
     
     // Set up event listeners for UI elements
     setupEventListeners();
@@ -1140,7 +1221,10 @@ function playAudio(audioId) {
     
     // Handle single sound playback
     const audio = state.audioElements[audioId];
-    if (!audio) return;
+    if (!audio) {
+        console.error(`Audio file not found: ${audioId}`);
+        return;
+    }
     
     // Set volume from range input
     const volumeControl = DOM.volumeControl;
@@ -1154,10 +1238,19 @@ function playAudio(audioId) {
         updateSliderValue(slider);
     }
     
-    // Play the audio
-    audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-    });
+    // Play the audio with error handling
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.error('Error playing audio:', error);
+            // If the error is due to user interaction requirement
+            if (error.name === 'NotAllowedError') {
+                // Show a message to the user
+                alert('Please interact with the page first to enable audio playback.');
+            }
+        });
+    }
     
     // Update state
     state.currentAudio = audio;
@@ -1394,46 +1487,53 @@ function updateMuteButtonIcon(isAudible) {
 
 // LocalStorage functions
 function saveToLocalStorage() {
-    const dataToSave = {
-        tasks: state.tasks,
-        completedTasks: state.completedTasks,
-        canceledTasks: state.canceledTasks,
-        soundPreferences: state.soundPreferences,
-        stats: state.stats
-    };
-    
-    localStorage.setItem('focusflow_data', JSON.stringify(dataToSave));
+    try {
+        // Only save essential data
+        const dataToSave = {
+            tasks: state.tasks,
+            completedTasks: state.completedTasks,
+            canceledTasks: state.canceledTasks,
+            stats: state.stats
+        };
+        localStorage.setItem('focusflow_data', JSON.stringify(dataToSave));
+    } catch (error) {
+        console.warn('Could not save data to localStorage:', error);
+    }
 }
 
 function loadFromLocalStorage() {
-    const savedData = localStorage.getItem('focusflow_data');
-    if (!savedData) return;
-    
     try {
-        const parsedData = JSON.parse(savedData);
-        
-        // Restore saved data
-        state.tasks = parsedData.tasks || [];
-        state.completedTasks = parsedData.completedTasks || [];
-        state.canceledTasks = parsedData.canceledTasks || [];
-        state.soundPreferences = parsedData.soundPreferences || {};
-        state.stats = parsedData.stats || {
+        const savedData = localStorage.getItem('focusflow_data');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            
+            // Only load data if it's valid
+            if (parsedData && typeof parsedData === 'object') {
+                // Merge saved data with current state
+                Object.assign(state, parsedData);
+                
+                // Ensure required properties exist
+                if (!state.tasks) state.tasks = [];
+                if (!state.completedTasks) state.completedTasks = [];
+                if (!state.canceledTasks) state.canceledTasks = [];
+                if (!state.stats) state.stats = {
+                    todayFocusTime: 0,
+                    tasksCompleted: 0,
+                    soundUsage: {}
+                };
+            }
+        }
+    } catch (error) {
+        console.warn('Could not load data from localStorage:', error);
+        // Initialize with default values if loading fails
+        state.tasks = [];
+        state.completedTasks = [];
+        state.canceledTasks = [];
+        state.stats = {
             todayFocusTime: 0,
             tasksCompleted: 0,
             soundUsage: {}
         };
-        
-        // Check if stats are from a previous day, reset if needed
-        const lastSavedDate = new Date(state.stats.lastSaved || 0);
-        const today = new Date();
-        
-        if (lastSavedDate.toDateString() !== today.toDateString()) {
-            // Reset daily stats but keep total stats
-            state.stats.todayFocusTime = 0;
-            state.stats.lastSaved = Date.now();
-        }
-    } catch (error) {
-        console.error('Error loading saved data:', error);
     }
 }
 

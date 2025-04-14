@@ -548,7 +548,15 @@
                 }
             };
 
-            const savedTheme = localStorage.getItem('theme');
+            // Try to get saved theme from localStorage, fallback to system preference
+            let savedTheme;
+            try {
+                savedTheme = localStorage.getItem('theme');
+            } catch (error) {
+                console.warn('Could not access localStorage:', error);
+                savedTheme = null;
+            }
+            
             const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             const initialTheme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
             applyTheme(initialTheme);
@@ -557,7 +565,11 @@
             const themeHandler = () => {
                 const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                localStorage.setItem('theme', newTheme);
+                try {
+                    localStorage.setItem('theme', newTheme);
+                } catch (error) {
+                    console.warn('Could not save theme to localStorage:', error);
+                }
                 applyTheme(newTheme);
             };
             themeToggleBtn?.addEventListener('click', themeHandler);
@@ -565,7 +577,13 @@
 
             // System theme change listener
              window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-                 if (!localStorage.getItem('theme')) { // Only respect system change if no override is set
+                 try {
+                     if (!localStorage.getItem('theme')) { // Only respect system change if no override is set
+                         const newTheme = e.matches ? 'dark' : 'light';
+                         applyTheme(newTheme);
+                     }
+                 } catch (error) {
+                     console.warn('Could not access localStorage:', error);
                      const newTheme = e.matches ? 'dark' : 'light';
                      applyTheme(newTheme);
                  }
