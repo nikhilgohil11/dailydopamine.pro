@@ -1464,7 +1464,7 @@ select {
     }
 
     /* Ensure inputs and buttons are easily tappable */
-    input, select, button {
+    input:not([type="range"]), select, button {
         min-height: 44px; /* Minimum touch target size */
         font-size: 16px; /* Prevent iOS zoom on focus */
     }
