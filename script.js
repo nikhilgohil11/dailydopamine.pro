@@ -37,9 +37,31 @@ const state = {
 };
 
 // Add these variables at the top with other state variables
+let audioContext = null;
+let completionSoundBuffer = null;
 let localMusicFiles = [];
 let localMusicPlayer = null;
 let isLocalMusicPlaying = false;
+let youtubePlayer = null;
+let isYoutubePlaying = false;
+
+let soundMixerState = {
+    isPlaying: false,
+    currentSound: null,
+    volume: 0.5,
+    sliderValues: {}
+};
+
+let localFilesState = {
+    isPlaying: false,
+    currentFile: null,
+    volume: 0.5
+};
+
+let youtubeState = {
+    isPlaying: false,
+    currentUrl: null
+};
 
 // DOM Elements
 const DOM = {
@@ -112,6 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Preload audio files
     preloadAudioFiles();
+
+    initializeAudioContext();
+    loadCompletionSound();
+    
+    // Add visibility change listener to handle audio context
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            initializeAudioContext();
+        }
+    });
 });
 
 // Preload all audio files before showing the app
@@ -272,8 +304,301 @@ function initializeApp() {
         });
     });
 
+    // Set up local music handlers
     setupLocalMusicHandlers();
-    setupSoundControlsCollapse();
+
+    // Initialize tabs and YouTube player
+    setupTabs();
+    setupYouTubePlayer();
+}
+
+// Set up local music handlers
+function setupLocalMusicHandlers() {
+    const dropZone = document.getElementById('local-music-drop-zone');
+    const fileInput = document.getElementById('local-music-input');
+
+    if (!dropZone || !fileInput) return;
+
+    // Handle file selection
+    fileInput.addEventListener('change', (e) => {
+        handleLocalMusicFiles(e.target.files);
+    });
+
+    // Handle drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-indigo-500', 'dark:border-indigo-400');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
+        handleLocalMusicFiles(e.dataTransfer.files);
+    });
+
+    // Handle click to select files
+    dropZone.addEventListener('click', () => {
+        fileInput.click();
+    });
+}
+
+// Handle local music files
+function handleLocalMusicFiles(files) {
+    localMusicFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
+    
+    if (localMusicFiles.length > 0) {
+        // Store current sound mixer slider values
+        const currentSliderValues = {};
+        document.querySelectorAll('.channel-slider').forEach(slider => {
+            const soundId = slider.dataset.sound;
+            currentSliderValues[soundId] = parseInt(slider.value);
+        });
+        
+        // Stop any currently playing sounds
+        stopAudio();
+        
+        // Restore sound mixer slider values
+        Object.entries(currentSliderValues).forEach(([soundId, value]) => {
+            const slider = document.querySelector(`.channel-slider[data-sound="${soundId}"]`);
+            if (slider) {
+                slider.value = value;
+                updateSliderValue(slider);
+            }
+        });
+        
+        // Show the local music control
+        const localMusicControl = document.getElementById('local-music-info');
+        localMusicControl.classList.remove('hidden');
+        
+        // Set initial volume and add event listener
+        const slider = localMusicControl.querySelector('.channel-slider');
+        if (slider) {
+            slider.value = parseInt(DOM.volumeControl.value);
+            updateSliderValue(slider);
+            
+            // Add event listener for volume changes
+            slider.addEventListener('input', function() {
+                const volume = parseInt(this.value) / 100;
+                if (localMusicPlayer) {
+                    localMusicPlayer.volume = volume;
+                    updateSliderValue(this);
+                }
+            });
+        }
+        
+        // Create the audio player with the first file
+        const file = localMusicFiles[0];
+        const url = URL.createObjectURL(file);
+        
+        // Create player but don't play yet
+        localMusicPlayer = new Audio(url);
+        localMusicPlayer.volume = parseInt(DOM.volumeControl.value) / 100;
+        isLocalMusicPlaying = false;
+        
+        // Set up ended event for when we do play
+        localMusicPlayer.addEventListener('ended', () => {
+            playNextLocalMusic(0);
+        });
+        
+        // Update the current file name display
+        const fileNameDisplay = document.getElementById('current-file-name');
+        if (fileNameDisplay) {
+            fileNameDisplay.textContent = file.name;
+        }
+    }
+}
+
+// Play local music
+function playLocalMusic(index) {
+    if (index >= localMusicFiles.length) {
+        // If we've reached the end, start over
+        index = 0;
+    }
+
+    const file = localMusicFiles[index];
+    const url = URL.createObjectURL(file);
+    
+    // Stop previous player if exists
+    if (localMusicPlayer) {
+        localMusicPlayer.pause();
+        URL.revokeObjectURL(localMusicPlayer.src);
+    }
+
+    // Create new player
+    localMusicPlayer = new Audio(url);
+    localMusicPlayer.volume = parseInt(DOM.volumeControl.value) / 100;
+    isLocalMusicPlaying = true;
+
+    // Play the file
+    localMusicPlayer.play().catch(error => {
+        console.error('Error playing local music:', error);
+    });
+
+    // When the file ends, play the next one
+    localMusicPlayer.addEventListener('ended', () => {
+        playNextLocalMusic(index);
+    });
+}
+
+// Play next local music file
+function playNextLocalMusic(currentIndex) {
+    const nextIndex = (currentIndex + 1) % localMusicFiles.length;
+    playLocalMusic(nextIndex);
+}
+
+// Stop local music
+function stopLocalMusic() {
+    if (localMusicPlayer) {
+        localMusicPlayer.pause();
+        localMusicPlayer.currentTime = 0;
+        URL.revokeObjectURL(localMusicPlayer.src);
+        localMusicPlayer = null;
+    }
+    isLocalMusicPlaying = false;
+}
+
+// Modify the playAudio function to ensure proper sound playback
+function playAudio(audioId) {
+    // If local music is playing, don't play preset sounds
+    if (isLocalMusicPlaying) return;
+    
+    // Only stop preset sounds, not local music
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+        state.currentAudio = null;
+    }
+    
+    // Stop all active sounds in the mix
+    Object.values(state.activeSounds).forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+    });
+    state.activeSounds = {};
+    
+    // Remove active class from all preset buttons
+    document.querySelectorAll('.sound-preset').forEach(button => {
+        button.classList.remove('active-preset');
+    });
+    
+    // Check if it's a preset mix
+    if (audioId.startsWith('mix_')) {
+        const mixName = audioId.replace('mix_', '');
+        // Add active class to the current preset button
+        const presetButton = document.querySelector(`.sound-preset[data-preset="${mixName}"]`);
+        if (presetButton) {
+            presetButton.classList.add('active-preset');
+        }
+        
+        if (mixName === 'random') {
+            applyRandomMix();
+        } else {
+            applyPresetMix(mixName);
+        }
+        return;
+    }
+    
+    // Handle single sound playback
+    const audio = state.audioElements[audioId];
+    if (!audio) {
+        console.error(`Audio file not found: ${audioId}`);
+        return;
+    }
+    
+    // Set volume from range input
+    const volumeControl = DOM.volumeControl;
+    const volume = parseInt(volumeControl.value) / 100;
+    audio.volume = volume;
+    
+    // Update the corresponding slider
+    const slider = document.querySelector(`.channel-slider[data-sound="${audioId}"]`);
+    if (slider) {
+        slider.value = volume * 100; // Convert to percentage
+        updateSliderValue(slider);
+    }
+    
+    // Create a new audio instance to ensure fresh playback
+    const audioInstance = new Audio(audio.src);
+    audioInstance.loop = true;
+    audioInstance.volume = volume;
+    
+    // Play the audio with error handling
+    const playPromise = audioInstance.play();
+    
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.error('Error playing audio:', error);
+            // If the error is due to user interaction requirement
+            if (error.name === 'NotAllowedError') {
+                // Show a message to the user
+                alert('Please interact with the page first to enable audio playback.');
+            }
+        });
+    }
+    
+    // Update state
+    state.currentAudio = audioInstance;
+}
+
+// Modify the stopAudio function to handle local music
+function stopAudio() {
+    // Don't stop local music here, only stop preset sounds
+    if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+        state.currentAudio = null;
+    }
+    
+    // Stop all active sounds in the mix
+    Object.values(state.activeSounds).forEach(audio => {
+        audio.pause();
+        audio.currentTime = 0;
+    });
+    state.activeSounds = {};
+    
+    // Reset all sliders to 0
+    document.querySelectorAll('.channel-slider').forEach(slider => {
+        if (slider.dataset.sound !== 'local-music') { // Don't reset local music slider
+            slider.value = 0;
+            updateSliderValue(slider);
+        }
+    });
+    
+    // Remove active class from all preset buttons
+    document.querySelectorAll('.sound-preset').forEach(button => {
+        button.classList.remove('active-preset');
+    });
+}
+
+// Modify the setGlobalVolume function to handle local music
+function setGlobalVolume(volume) {
+    // Adjust volume for local music
+    if (localMusicPlayer) {
+        localMusicPlayer.volume = volume;
+        // Update the local music slider
+        const localMusicSlider = document.querySelector('.channel-slider[data-sound="local-music"]');
+        if (localMusicSlider) {
+            localMusicSlider.value = volume * 100;
+            updateSliderValue(localMusicSlider);
+        }
+    }
+    
+    // Adjust volume for single sound
+    if (state.currentAudio) {
+        // Ensure baseVolume exists, default to 1 if not
+        const baseVolume = state.currentAudio._baseVolume || 1;
+        state.currentAudio.volume = volume * baseVolume;
+    }
+    
+    // Adjust volume for mixed sounds
+    Object.values(state.activeSounds).forEach(audio => {
+        const baseVolume = audio._baseVolume || 1; // Each sound in a mix uses its own base volume
+        audio.volume = volume * baseVolume; // Apply global volume multiplier
+    });
 }
 
 // Set up all event listeners
@@ -329,10 +654,6 @@ function setupEventListeners() {
     // Delegate task list events (start/delete)
     DOM.taskList.addEventListener('click', handleTaskListClick);
 
-    // Theme toggle buttons (already handled in index.html script, but can be moved here if preferred)
-    // DOM.themeToggleButton.addEventListener('click', toggleTheme);
-    // DOM.themeToggleButtonMobile.addEventListener('click', toggleTheme);
-
     // Add event listener for the "Start now" button
     document.getElementById('add-first-task')?.addEventListener('click', () => {
         openCreateTaskModal();
@@ -341,6 +662,18 @@ function setupEventListeners() {
     // Add task header buttons
     document.getElementById('add-task-header')?.addEventListener('click', openCreateTaskModal);
     document.getElementById('add-task-header-mobile')?.addEventListener('click', openCreateTaskModal);
+
+    // Add event listener for local music slider
+    const localMusicSlider = document.querySelector('.channel-slider[data-sound="local-music"]');
+    if (localMusicSlider) {
+        localMusicSlider.addEventListener('input', function() {
+            const volume = parseInt(this.value) / 100;
+            if (localMusicPlayer) {
+                localMusicPlayer.volume = volume;
+                updateSliderValue(this);
+            }
+        });
+    }
 }
 
 // --- Sidebar and Modal Functions ---
@@ -656,14 +989,20 @@ function setActiveTask(taskId) {
     DOM.noTaskMessage.classList.add('hidden');
     DOM.activeTaskDiv.classList.remove('hidden');
     DOM.activeTaskName.textContent = task.name;
-    // DOM.activeTaskName.classList.add('break-words', 'whitespace-normal'); // Ensure long names wrap
 
     // Reset timer display and bar
     state.remainingTime = task.duration * 60;
     updateTimerDisplay();
-    DOM.timerBar.style.width = '100%';
-    DOM.timerBar.style.transitionDuration = '0ms'; // Prevent animation on reset
-    setTimeout(() => { DOM.timerBar.style.transitionDuration = ''; }, 50); // Re-enable after a tick
+    
+    // Reset circular progress
+    const timerBar = document.getElementById('timer-bar');
+    if (timerBar) {
+        timerBar.style.strokeDashoffset = '691.15'; // Start from full circle
+        timerBar.style.transition = 'none';
+        setTimeout(() => {
+            timerBar.style.transition = 'stroke-dashoffset 1s linear';
+        }, 50);
+    }
     
     // Configure audio display (don't play yet)
     if (task.sound !== 'none') {
@@ -681,9 +1020,6 @@ function setActiveTask(taskId) {
     
     // Update task list highlighting
     updateTaskList();
-
-     // Reset sound mixer sliders (important when switching tasks)
-     // stopAudio(); // This is called above, includes slider reset
 }
 
 // Delete a task
@@ -723,13 +1059,6 @@ function startTask() {
     const task = state.tasks.find(t => t.id === state.activeTaskId);
     if (!task) return;
     
-    // Start local music if files are loaded
-    if (localMusicFiles.length > 0) {
-        playLocalMusic(0);
-        isLocalMusicPlaying = true;
-        document.getElementById('sound-name').textContent = `Playing: ${localMusicFiles[0].name}`;
-    }
-    
     // Update UI buttons
     DOM.startTaskButton.classList.add('hidden');
     DOM.pauseTaskButton.classList.remove('hidden');
@@ -741,23 +1070,45 @@ function startTask() {
         updateTimerDisplay();
     }
     
-    // Start audio if selected
-    if (task.sound !== 'none') {
-        // If it's a single sound (not a mix), update the corresponding slider
-        if (!task.sound.startsWith('mix_')) {
-            const slider = document.querySelector(`.channel-slider[data-sound="${task.sound}"]`);
-            if (slider) {
-                slider.value = 100; // Set to full volume
-                updateSliderValue(slider);
-            }
-        }
+    // Get the active tab
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+    
+    // Stop any playing audio from other tabs
+    if (activeTab !== 'sound-mixer') {
+        stopAudio();
+    }
+    if (activeTab !== 'local-files' && localMusicPlayer && isLocalMusicPlaying) {
+        localMusicPlayer.pause();
+        localMusicPlayer.currentTime = 0;
+        isLocalMusicPlaying = false;
+    }
+    if (activeTab !== 'youtube' && youtubePlayer && isYoutubePlaying) {
+        youtubePlayer.pauseVideo();
+        youtubePlayer.seekTo(0);
+        isYoutubePlaying = false;
+    }
+    
+    // Start audio based on active tab
+    if (activeTab === 'sound-mixer' && task.sound !== 'none') {
         playAudio(task.sound);
+    } else if (activeTab === 'local-files' && localMusicPlayer) {
+        if (!isLocalMusicPlaying) {
+            playLocalMusic(0);
+        } else {
+            localMusicPlayer.play().catch(error => {
+                console.error('Error resuming local music:', error);
+            });
+        }
+    } else if (activeTab === 'youtube' && youtubePlayer) {
+        youtubePlayer.playVideo();
     }
     
     // Reset timer bar
-    const timerBar = DOM.timerBar;
-    timerBar.style.width = '100%';
-    const totalSeconds = task.duration * 60;
+    const timerBar = document.getElementById('timer-bar');
+    if (timerBar) {
+        timerBar.style.strokeDashoffset = '691.15'; // Start from full circle
+        timerBar.style.transition = 'stroke-dashoffset 1s linear';
+    }
     
     // Start the timer
     state.isPaused = false;
@@ -766,10 +1117,6 @@ function startTask() {
         
         // Update timer display
         updateTimerDisplay();
-        
-        // Update timer bar
-        const percentage = (state.remainingTime / totalSeconds) * 100;
-        timerBar.style.width = percentage + '%';
         
         // Check if timer is complete
         if (state.remainingTime <= 0) {
@@ -787,14 +1134,16 @@ function pauseTask() {
     state.timerInterval = null;
     state.isPaused = true;
     
-    // Pause local music if playing
-    if (isLocalMusicPlaying && localMusicPlayer) {
-        localMusicPlayer.pause();
-        document.getElementById('sound-name').textContent = `Paused: ${localMusicFiles[0].name}`;
-    }
+    // Pause audio based on active tab
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
     
-    // Pause audio when task is paused
-    pauseAudio(); // Use a separate function to just pause, not reset sliders
+    if (activeTab === 'sound-mixer') {
+        pauseAudio();
+    } else if (activeTab === 'local-files' && localMusicPlayer && isLocalMusicPlaying) {
+        localMusicPlayer.pause();
+    } else if (activeTab === 'youtube' && youtubePlayer && isYoutubePlaying) {
+        youtubePlayer.pauseVideo();
+    }
     
     // Update UI
     DOM.pauseTaskButton.classList.add('hidden');
@@ -805,22 +1154,54 @@ function pauseTask() {
 function resumeTask() {
     if (!state.isPaused) return;
     
-    // Resume local music if files are loaded
-    if (localMusicFiles.length > 0) {
-        playLocalMusic(0);
-        isLocalMusicPlaying = true;
-        document.getElementById('sound-name').textContent = `Playing: ${localMusicFiles[0].name}`;
-    }
+    // Resume audio based on active tab
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
     
-    // Resume audio
-    resumeAudio(); // Use a separate function to resume paused sounds
+    if (activeTab === 'sound-mixer') {
+        const task = state.tasks.find(t => t.id === state.activeTaskId);
+        if (task && task.sound !== 'none') {
+            // Reset all sliders first
+            document.querySelectorAll('.channel-slider').forEach(slider => {
+                slider.value = 0;
+                updateSliderValue(slider);
+            });
+            
+            // Play the task's sound
+            playAudio(task.sound);
+            
+            // If we have stored slider values, restore them
+            if (soundMixerState.sliderValues) {
+                Object.entries(soundMixerState.sliderValues).forEach(([soundId, value]) => {
+                    const slider = document.querySelector(`.channel-slider[data-sound="${soundId}"]`);
+                    if (slider) {
+                        slider.value = value;
+                        updateSliderValue(slider);
+                    }
+                });
+            }
+        }
+    } else if (activeTab === 'local-files') {
+        if (localMusicPlayer) {
+            // If local music was playing before pause, resume it
+            if (isLocalMusicPlaying) {
+                localMusicPlayer.play().catch(error => {
+                    console.error('Error resuming local music:', error);
+                });
+            } else {
+                // If no local music was playing, start playing the first file
+                playLocalMusic(0);
+            }
+        }
+    } else if (activeTab === 'youtube' && youtubePlayer && isYoutubePlaying) {
+        youtubePlayer.playVideo();
+    }
     
     // Update UI
     DOM.resumeTaskButton.classList.add('hidden');
     DOM.pauseTaskButton.classList.remove('hidden');
     
     // Restart the timer interval
-    startTimerInterval(); // Use refactored interval start
+    startTimerInterval();
 }
 
 // Refactor timer start logic into its own function
@@ -850,16 +1231,23 @@ function startTimerInterval() {
 function finishTask() {
     if (!state.activeTaskId) return;
     
-    // Stop local music if playing
-    if (isLocalMusicPlaying) {
-        stopLocalMusic();
-        document.getElementById('sound-name').textContent = `Loaded: ${localMusicFiles[0].name}`;
-    }
-    
     // Stop timer and audio
     if (state.timerInterval) {
         clearInterval(state.timerInterval);
         state.timerInterval = null;
+    }
+    
+    // Stop audio based on active tab
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+    
+    if (activeTab === 'sound-mixer') {
+        stopAudio();
+    } else if (activeTab === 'local-files' && localMusicPlayer && isLocalMusicPlaying) {
+        localMusicPlayer.pause();
+        localMusicPlayer.currentTime = 0;
+    } else if (activeTab === 'youtube' && youtubePlayer && isYoutubePlaying) {
+        youtubePlayer.pauseVideo();
+        youtubePlayer.seekTo(0);
     }
     
     // Complete the task
@@ -870,19 +1258,24 @@ function finishTask() {
 function cancelTask() {
     if (!state.activeTaskId) return;
     
-    // Stop local music if playing
-    if (isLocalMusicPlaying) {
-        stopLocalMusic();
-        document.getElementById('sound-name').textContent = `Loaded: ${localMusicFiles[0].name}`;
-    }
-    
     // Stop timer and audio
     if (state.timerInterval) {
         clearInterval(state.timerInterval);
         state.timerInterval = null;
     }
     
-    stopAudio();
+    // Stop audio based on active tab
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+    
+    if (activeTab === 'sound-mixer') {
+        stopAudio();
+    } else if (activeTab === 'local-files' && localMusicPlayer && isLocalMusicPlaying) {
+        localMusicPlayer.pause();
+        localMusicPlayer.currentTime = 0;
+    } else if (activeTab === 'youtube' && youtubePlayer && isYoutubePlaying) {
+        youtubePlayer.pauseVideo();
+        youtubePlayer.seekTo(0);
+    }
     
     // Reset state
     state.isPaused = false;
@@ -925,7 +1318,6 @@ function cancelTask() {
     
     // Save state
     saveToLocalStorage();
-    // updateTaskList() is called within setActiveTask or just above
 }
 
 // Complete the active task
@@ -940,11 +1332,8 @@ function completeTask() {
     state.timerInterval = null;
     stopAudio();
     
-    // Play completion sound
-    const completionSound = new Audio('audio/crowdcheers.mp3');
-    completionSound.volume = 0.3;
-    state.completionSound = completionSound; // Store reference to stop it later
-    completionSound.play();
+    // Play completion sound using Web Audio API
+    playCompletionSound();
     
     // Add to completed tasks
     const completedTask = {
@@ -1186,75 +1575,20 @@ function updateTimerDisplay() {
     const seconds = state.remainingTime % 60;
     DOM.timerDisplay.textContent = 
         `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    
+    // Update circular progress
+    const task = state.tasks.find(t => t.id === state.activeTaskId);
+    if (task) {
+        const totalSeconds = task.duration * 60;
+        const progress = ((totalSeconds - state.remainingTime) / totalSeconds) * 691.15; // 691.15 is the circumference (2 * PI * 110)
+        const timerBar = document.getElementById('timer-bar');
+        if (timerBar) {
+            timerBar.style.strokeDashoffset = 691.15 - progress;
+        }
+    }
 }
 
 // Audio control functions
-
-// Play a specific sound or mix
-function playAudio(audioId) {
-    // If local music is playing, don't play preset sounds
-    if (isLocalMusicPlaying) return;
-    
-    stopAudio(); // Stop everything before starting new sound/mix
-    
-    // Remove active class from all preset buttons
-    document.querySelectorAll('.sound-preset').forEach(button => {
-        button.classList.remove('active-preset');
-    });
-    
-    // Check if it's a preset mix
-    if (audioId.startsWith('mix_')) {
-        const mixName = audioId.replace('mix_', '');
-        // Add active class to the current preset button
-        const presetButton = document.querySelector(`.sound-preset[data-preset="${mixName}"]`);
-        if (presetButton) {
-            presetButton.classList.add('active-preset');
-        }
-        
-        if (mixName === 'random') {
-            applyRandomMix();
-        } else {
-            applyPresetMix(mixName);
-        }
-        return;
-    }
-    
-    // Handle single sound playback
-    const audio = state.audioElements[audioId];
-    if (!audio) {
-        console.error(`Audio file not found: ${audioId}`);
-        return;
-    }
-    
-    // Set volume from range input
-    const volumeControl = DOM.volumeControl;
-    const volume = parseInt(volumeControl.value) / 100;
-    audio.volume = volume;
-    
-    // Update the corresponding slider
-    const slider = document.querySelector(`.channel-slider[data-sound="${audioId}"]`);
-    if (slider) {
-        slider.value = volume * 100; // Convert to percentage
-        updateSliderValue(slider);
-    }
-    
-    // Play the audio with error handling
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-        playPromise.catch(error => {
-            console.error('Error playing audio:', error);
-            // If the error is due to user interaction requirement
-            if (error.name === 'NotAllowedError') {
-                // Show a message to the user
-                alert('Please interact with the page first to enable audio playback.');
-            }
-        });
-    }
-    
-    // Update state
-    state.currentAudio = audio;
-}
 
 // Pause currently playing audio (without resetting sliders)
 function pauseAudio() {
@@ -1378,37 +1712,6 @@ function updateSliderValue(slider) {
     }
 }
 
-// Modify the stopAudio function to reset sliders
-function stopAudio() {
-    // Stop local music if playing
-    stopLocalMusic();
-    
-    // Stop single playing audio
-    if (state.currentAudio) {
-        state.currentAudio.pause();
-        state.currentAudio.currentTime = 0;
-        state.currentAudio = null;
-    }
-    
-    // Stop all active sounds in the mix
-    Object.values(state.activeSounds).forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
-    });
-    state.activeSounds = {};
-    
-    // Reset all sliders to 0
-    document.querySelectorAll('.channel-slider').forEach(slider => {
-        slider.value = 0;
-        updateSliderValue(slider);
-    });
-    
-    // Remove active class from all preset buttons
-    document.querySelectorAll('.sound-preset').forEach(button => {
-        button.classList.remove('active-preset');
-    });
-}
-
 // Adjust volume based on the main volume slider
 function adjustVolume() {
     const volume = parseInt(DOM.volumeControl.value) / 100;
@@ -1453,22 +1756,6 @@ function toggleMute() {
     DOM.volumeControl.value = newVolume;
     setGlobalVolume(newVolume / 100);
     updateMuteButtonIcon(newVolume > 0);
-}
-
-// Helper to set volume for all playing sounds
-function setGlobalVolume(volume) {
-    // Adjust volume for single sound
-    if (state.currentAudio) {
-        // Ensure baseVolume exists, default to 1 if not
-        const baseVolume = state.currentAudio._baseVolume || 1;
-        state.currentAudio.volume = volume * baseVolume;
-    }
-    
-    // Adjust volume for mixed sounds
-    Object.values(state.activeSounds).forEach(audio => {
-        const baseVolume = audio._baseVolume || 1; // Each sound in a mix uses its own base volume
-        audio.volume = volume * baseVolume; // Apply global volume multiplier
-    });
 }
 
 // Helper to update mute button icon
@@ -1551,165 +1838,223 @@ function deleteCanceledTask(taskId) {
     updateTaskList();
 }
 
-// Theme handling
-const themeToggle = document.getElementById('theme-toggle');
-const themeIcon = themeToggle.querySelector('i');
-
-// Check for saved theme preference or system preference
-const savedTheme = localStorage.getItem('theme');
-const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-// Set initial theme
-if (savedTheme) {
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
-} else if (systemPrefersDark) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-    updateThemeIcon('dark');
-}
-
-// Theme toggle click handler
-themeToggle.addEventListener('click', () => {
-    const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeIcon(newTheme);
-});
-
-// Update theme icon
-function updateThemeIcon(theme) {
-    themeIcon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-}
-
-// Listen for system theme changes
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    if (!localStorage.getItem('theme')) {
-        const newTheme = e.matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', newTheme);
-        updateThemeIcon(newTheme);
+// Initialize audio context
+function initializeAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
-}); 
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+}
 
-// Add these functions after the existing audio-related functions
-function setupLocalMusicHandlers() {
-    const dropZone = document.getElementById('local-music-drop-zone');
-    const fileInput = document.getElementById('local-music-input');
+// Load completion sound
+function loadCompletionSound() {
+    fetch('audio/crowdcheers.mp3')
+        .then(response => response.arrayBuffer())
+        .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+        .then(audioBuffer => {
+            completionSoundBuffer = audioBuffer;
+        })
+        .catch(error => {
+            console.error('Error loading completion sound:', error);
+        });
+}
 
-    // Handle click to select files
-    dropZone.addEventListener('click', () => {
-        fileInput.click();
-    });
+// Play completion sound
+function playCompletionSound() {
+    if (!completionSoundBuffer) return;
+    
+    initializeAudioContext();
+    
+    const source = audioContext.createBufferSource();
+    source.buffer = completionSoundBuffer;
+    
+    const gainNode = audioContext.createGain();
+    gainNode.gain.value = 0.3; // Set volume to 30%
+    
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    source.start(0);
+}
 
-    // Handle file selection
-    fileInput.addEventListener('change', (e) => {
-        handleLocalMusicFiles(e.target.files);
-    });
+// Add this function to handle tab switching
+function setupTabs() {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
 
-    // Handle drag and drop
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-indigo-500', 'dark:border-indigo-400');
-    });
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const newTabId = button.dataset.tab;
+            const currentTabId = document.querySelector('.tab-button.active').dataset.tab;
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
-    });
+            // If switching to a different tab, handle audio transitions
+            if (newTabId !== currentTabId) {
+                // Pause the task if it's running
+                if (state.activeTaskId && state.timerInterval && !state.isPaused) {
+                    pauseTask();
+                }
 
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
-        handleLocalMusicFiles(e.dataTransfer.files);
+                // Store current state before switching
+                if (currentTabId === 'sound-mixer') {
+                    soundMixerState.isPlaying = state.currentAudio !== null;
+                    soundMixerState.currentSound = state.currentAudio;
+                    soundMixerState.volume = state.currentAudio ? state.currentAudio.volume : 0.5;
+                    
+                    // Store current slider values
+                    soundMixerState.sliderValues = {};
+                    document.querySelectorAll('.channel-slider').forEach(slider => {
+                        const soundId = slider.dataset.sound;
+                        soundMixerState.sliderValues[soundId] = parseInt(slider.value);
+                    });
+                    
+                    // Pause audio without resetting sliders
+                    if (state.currentAudio) {
+                        state.currentAudio.pause();
+                        state.currentAudio.currentTime = 0;
+                        state.currentAudio = null;
+                    }
+                    Object.values(state.activeSounds).forEach(audio => {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    });
+                    state.activeSounds = {};
+                } else if (currentTabId === 'local-files') {
+                    localFilesState.isPlaying = isLocalMusicPlaying;
+                    localFilesState.currentFile = localMusicPlayer;
+                    localFilesState.volume = localMusicPlayer ? localMusicPlayer.volume : 0.5;
+                    if (localMusicPlayer) {
+                        localMusicPlayer.pause();
+                        localMusicPlayer.currentTime = 0;
+                        isLocalMusicPlaying = false;
+                    }
+                } else if (currentTabId === 'youtube') {
+                    youtubeState.isPlaying = isYoutubePlaying;
+                    youtubeState.currentUrl = youtubePlayer ? youtubePlayer.getVideoUrl() : null;
+                    if (youtubePlayer) {
+                        youtubePlayer.pauseVideo();
+                        youtubePlayer.seekTo(0);
+                        isYoutubePlaying = false;
+                    }
+                }
+
+                // Unload YouTube iframe when switching to other tabs
+                if (newTabId !== 'youtube' && youtubePlayer) {
+                    const youtubeIframe = document.getElementById('youtube-iframe');
+                    if (youtubeIframe) {
+                        youtubeIframe.src = '';
+                    }
+                }
+            }
+
+            // Remove active classes from all buttons and panes
+            tabButtons.forEach(btn => {
+                btn.classList.remove('active', 'text-indigo-600', 'dark:text-indigo-400', 'border-indigo-500');
+                btn.classList.add('text-gray-500', 'dark:text-gray-400');
+            });
+            tabPanes.forEach(pane => pane.classList.add('hidden'));
+
+            // Add active classes to clicked button and corresponding pane
+            button.classList.add('active', 'text-indigo-600', 'dark:text-indigo-400', 'border-indigo-500');
+            button.classList.remove('text-gray-500', 'dark:text-gray-400');
+            document.getElementById(`${newTabId}-tab`).classList.remove('hidden');
+
+            // If a task is running, restore audio state for the new tab
+            if (state.activeTaskId && state.timerInterval && !state.isPaused) {
+                const task = state.tasks.find(t => t.id === state.activeTaskId);
+                if (task) {
+                    if (newTabId === 'sound-mixer') {
+                        // Always restore the task's sound when returning to sound mixer
+                        if (task.sound !== 'none') {
+                            // Reset all sliders first
+                            document.querySelectorAll('.channel-slider').forEach(slider => {
+                                slider.value = 0;
+                                updateSliderValue(slider);
+                            });
+                            
+                            // Play the task's sound
+                            playAudio(task.sound);
+                            
+                            // If we have stored slider values, restore them
+                            if (soundMixerState.sliderValues) {
+                                Object.entries(soundMixerState.sliderValues).forEach(([soundId, value]) => {
+                                    const slider = document.querySelector(`.channel-slider[data-sound="${soundId}"]`);
+                                    if (slider) {
+                                        slider.value = value;
+                                        updateSliderValue(slider);
+                                    }
+                                });
+                            }
+                        }
+                    } else if (newTabId === 'local-files' && localMusicPlayer) {
+                        if (localFilesState.isPlaying) {
+                            playLocalMusic(0);
+                            if (localMusicPlayer) {
+                                localMusicPlayer.volume = localFilesState.volume;
+                            }
+                        }
+                    } else if (newTabId === 'youtube' && youtubePlayer) {
+                        if (youtubeState.isPlaying) {
+                            youtubePlayer.playVideo();
+                        }
+                    }
+                }
+            }
+        });
     });
 }
 
-function handleLocalMusicFiles(files) {
-    localMusicFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
-    
-    if (localMusicFiles.length > 0) {
-        // Stop any currently playing sounds
-        stopAudio();
-        
-        // Create or update the audio player
-        if (!localMusicPlayer) {
-            localMusicPlayer = new Audio();
-            localMusicPlayer.addEventListener('ended', playNextLocalMusic);
+// Add this function to handle YouTube player
+function setupYouTubePlayer() {
+    const youtubeUrlInput = document.getElementById('youtube-url');
+    const loadYoutubeButton = document.getElementById('load-youtube');
+    const youtubePlayerContainer = document.getElementById('youtube-player');
+    const youtubeIframe = document.getElementById('youtube-iframe');
+
+    loadYoutubeButton.addEventListener('click', () => {
+        const url = youtubeUrlInput.value.trim();
+        if (!url) return;
+
+        // Extract video ID from URL
+        const videoId = extractYouTubeId(url);
+        if (!videoId) {
+            alert('Please enter a valid YouTube URL');
+            return;
         }
-        
-        // Set isLocalMusicPlaying to false initially
-        isLocalMusicPlaying = false;
-        
-        // Update the sound name display
-        document.getElementById('sound-name').textContent = `Loaded: ${localMusicFiles[0].name}`;
-    }
-}
 
-function playLocalMusic(index) {
-    if (!localMusicFiles[index]) return;
-    
-    const file = localMusicFiles[index];
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-        localMusicPlayer.src = e.target.result;
-        localMusicPlayer.play();
-    };
-    
-    reader.readAsDataURL(file);
-}
+        // Update iframe source
+        youtubeIframe.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1`;
+        youtubePlayerContainer.classList.remove('hidden');
 
-function playNextLocalMusic() {
-    const currentIndex = localMusicFiles.findIndex(file => 
-        localMusicPlayer.src.includes(file.name)
-    );
-    
-    const nextIndex = (currentIndex + 1) % localMusicFiles.length;
-    playLocalMusic(nextIndex);
-}
-
-function stopLocalMusic() {
-    if (localMusicPlayer) {
-        localMusicPlayer.pause();
-        localMusicPlayer.currentTime = 0;
-        isLocalMusicPlaying = false;
-        document.getElementById('sound-name').textContent = '';
-    }
-}
-
-// Add this function to handle sound controls collapse/expand
-function setupSoundControlsCollapse() {
-    const header = document.getElementById('sound-controls-header');
-    const content = document.getElementById('sound-controls-content');
-    const toggleButton = document.getElementById('toggle-sound-controls');
-    const activeTaskContainer = document.getElementById('active-task-container');
-    const card = document.querySelector('.card'); // Get the card element
-    
-    function toggleControls() {
-        const isExpanded = content.classList.toggle('expanded');
-        activeTaskContainer.classList.toggle('expanded', isExpanded);
-        card.classList.toggle('expanded', isExpanded); // Toggle card expanded class
-        
-        // Update button text and icon
-        if (isExpanded) {
-            toggleButton.innerHTML = '<span class="text-xs">Hide controls</span><i class="fas fa-chevron-down"></i>';
-        } else {
-            toggleButton.innerHTML = '<span class="text-xs">Show controls</span><i class="fas fa-chevron-up"></i>';
+        // Initialize YouTube player
+        if (typeof YT !== 'undefined') {
+            youtubePlayer = new YT.Player('youtube-iframe', {
+                events: {
+                    'onReady': onYouTubePlayerReady,
+                    'onStateChange': onYouTubePlayerStateChange
+                }
+            });
         }
+    });
+}
+
+// Helper function to extract YouTube video ID
+function extractYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// YouTube API callbacks
+function onYouTubePlayerReady(event) {
+    // Player is ready
+}
+
+function onYouTubePlayerStateChange(event) {
+    if (event.data === YT.PlayerState.PLAYING) {
+        isYoutubePlaying = true;
+    } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
+        isYoutubePlaying = false;
     }
-    
-    header.addEventListener('click', toggleControls);
-    
-    // Handle mobile view
-    function handleMobileView() {
-        if (window.innerWidth <= 768) {
-            content.classList.remove('expanded');
-            activeTaskContainer.classList.remove('expanded');
-            card.classList.remove('expanded'); // Remove expanded class on mobile
-            toggleButton.innerHTML = '<span class="text-xs">Show controls</span><i class="fas fa-chevron-up"></i>';
-        }
-    }
-    
-    window.addEventListener('resize', handleMobileView);
-    handleMobileView(); // Initial check
 } 
