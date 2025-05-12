@@ -78,17 +78,17 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 font-sans antialiased text-gray-800 dark:text-gray-200">
     <!-- Mobile Message Container -->
-    <div id="mobile-message" class="hidden fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-50 p-6">
+    <div id="mobile-message" class="hidden fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-50 p-6 border border-indigo-700">
         <div class="text-white text-center max-w-md">
             <i class="fas fa-mobile-alt text-5xl mb-6"></i>
             <h2 class="text-2xl font-bold mb-4">Mobile Version Coming Soon</h2>
             <p class="mb-6">We will enable mobile use of this app soon. If you want access right now, you can DM or post to:</p>
             <div class="space-y-4">
-                <a href="https://x.com/nikhilgohil11" target="_blank" class="block bg-white text-indigo-600 py-3 px-6 rounded-lg font-semibold hover:bg-indigo-50 transition">
+                <a href="https://x.com/nikhilgohil11" target="_blank" class="block bg-white text-indigo-600 py-3 px-6 rounded-lg font-semibold hover:bg-indigo-50 transition border border-white">
                     <i class="fab fa-twitter mr-2"></i>@nikhilgohil11
                 </a>
                 <p class="text-white/80"> or </p>
-                <a href="https://x.com/VikasGohil2" target="_blank" class="block bg-white text-indigo-600 py-3 px-6 rounded-lg font-semibold hover:bg-indigo-50 transition">
+                <a href="https://x.com/VikasGohil2" target="_blank" class="block bg-white text-indigo-600 py-3 px-6 rounded-lg font-semibold hover:bg-indigo-50 transition border border-white">
                     <i class="fab fa-twitter mr-2"></i>@VikasGohil2
                 </a>
                 <p class="text-white/80">We will share the current mobile version with you.</p>
@@ -96,9 +96,9 @@
         </div>
     </div>
 
-    <div id="loading-screen" class="fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-[60]">
+    <div id="loading-screen" class="fixed inset-0 bg-indigo-600 flex flex-col items-center justify-center z-[60] border border-indigo-700">
         <div class="text-white text-2xl mb-4">Loading Audio Files</div>
-        <div class="w-64 bg-white rounded-full h-4 overflow-hidden">
+        <div class="w-64 bg-white rounded-full h-4 overflow-hidden border border-indigo-700">
             <div id="loading-bar" class="h-full bg-green-500 transition-all duration-300" style="width: 0%"></div>
         </div>
         <div id="loading-text" class="text-white mt-2">0/10 files loaded</div>
@@ -108,7 +108,7 @@
     <div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
 
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 p-6 flex flex-col space-y-4 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 shadow-lg border-r border-gray-200 dark:border-gray-700">
+    <aside id="sidebar" class="w-72 bg-white dark:bg-gray-800 p-6 flex flex-col space-y-4 fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out z-40 border-r border-gray-200 dark:border-gray-700">
         <!-- Sidebar Header -->
         <div class="flex justify-between items-center mb-4 flex-shrink-0">
             <h2 class="text-xl font-bold text-indigo-600 dark:text-indigo-400">DailyDopamine.Pro</h2>
@@ -140,7 +140,7 @@
     <div id="app-container" class="hidden md:ml-72 flex flex-col min-h-screen transition-all duration-300 ease-in-out relative">
         <div class="w-full max-w-full flex-1 flex flex-col">
             <!-- Header -->
-            <header class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-4 shadow-lg sticky top-0 z-20 w-full">
+            <header class="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-4 sticky top-0 z-20 w-full border-b border-indigo-700">
                 <div class="container mx-auto px-4 flex justify-between items-center max-w-full">
                     <!-- Left side: Hamburger Menu (mobile) + Stats/Theme -->
                     <div class="flex items-center space-x-3">
@@ -148,10 +148,10 @@
                             <i class="fas fa-bars"></i>
                         </button>
                         <div class="hidden md:flex items-center space-x-2"> <!-- Hide on mobile -->
-                            <button id="stats-button" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                            <button id="stats-button" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                 <i class="fas fa-chart-bar"></i>
                             </button>
-                            <button id="add-task-header" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                            <button id="add-task-header" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                 <i class="fas fa-plus"></i>
                             </button>
                         </div>
@@ -175,23 +175,23 @@
                     <!-- Right side: Volume Controls -->
                     <div class="flex items-center space-x-3">
                          <div class="flex items-center space-x-1">
-                             <button id="volume-down" title="Volume Down" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <button id="volume-down" title="Volume Down" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                  <i class="fas fa-volume-down"></i>
                              </button>
                              <input type="range" id="volume-control" title="Volume" min="0" max="100" value="50" class="w-20 md:w-24 h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-indigo-300">
-                             <button id="volume-up" title="Volume Up" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <button id="volume-up" title="Volume Up" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                  <i class="fas fa-volume-up"></i>
                              </button>
-                             <button id="mute-button" title="Mute" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <button id="mute-button" title="Mute" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                  <i class="fas fa-volume-up"></i>
                              </button>
                          </div>
                          <!-- Mobile Only: Stats/Theme Toggles -->
                          <div class="flex items-center space-x-2 md:hidden">
-                             <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                  <i class="fas fa-chart-bar"></i>
                              </button>
-                             <button id="add-task-header-mobile" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition">
+                             <button id="add-task-header-mobile" title="Add Task" class="p-2 hover:bg-indigo-700 rounded-full transition border border-indigo-400">
                                  <i class="fas fa-plus"></i>
                              </button>
                          </div>
@@ -203,7 +203,7 @@
             <main class="flex-grow p-4 md:p-8 w-full overflow-x-hidden">
                 <div class="max-w-full mx-auto">
                     <!-- Active Task Column -->
-                    <div class="card bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-4 md:p-6 mx-auto w-full md:max-w-4xl">
+                    <div class="card bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 md:p-6 mx-auto w-full md:max-w-4xl">
                         <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-indigo-600 dark:text-indigo-400">Current Task</h2>
                         <div id="active-task-container" class="text-center py-4 md:py-8 w-full">
                             <div id="no-task-message" class="text-gray-500 dark:text-gray-400 italic px-2 md:px-4">
@@ -217,7 +217,7 @@
                                     </div>
                                     <p class="text-xs md:text-sm mt-4">Built for ADHD minds and busy brains — this tool helps you stay on track, stress-free.</p>
                                     <p class="text-xs md:text-sm italic">"it works for me."</p>
-                                    <button id="add-first-task" class="mt-4 px-4 md:px-6 py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold text-sm md:text-base">
+                                    <button id="add-first-task" class="mt-4 px-4 md:px-6 py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold text-sm md:text-base border border-indigo-500">
                                         👉 Start now
                                     </button>
                                 </div>
@@ -260,19 +260,19 @@
 
                                     <!-- Control Buttons -->
                                     <div class="flex flex-col space-y-3">
-                                        <button id="start-task" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px]">
+                                        <button id="start-task" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-green-500">
                                             <i class="fas fa-play mr-2"></i> Start
                                         </button>
-                                        <button id="pause-task" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px]">
+                                        <button id="pause-task" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px] border border-yellow-400">
                                             <i class="fas fa-pause mr-2"></i> Pause
                                         </button>
-                                        <button id="resume-task" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px]">
+                                        <button id="resume-task" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px] border border-green-500">
                                             <i class="fas fa-play mr-2"></i> Resume
                                         </button>
-                                        <button id="finish-task" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px]">
+                                        <button id="finish-task" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-blue-500">
                                             <i class="fas fa-check mr-2"></i> Finish
                                         </button>
-                                        <button id="cancel-task" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px]">
+                                        <button id="cancel-task" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-red-500">
                                             <i class="fas fa-times mr-2"></i> Cancel
                                         </button>
                                     </div>
@@ -302,63 +302,63 @@
                                                 <div class="custom-mix">
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Individual Sounds</p>
                                                     <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Rain</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="rain" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Birds</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="birds" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Water</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="water" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Wind</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="wind" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>White Noise</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="whitenoise" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Thunder</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="thunder" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Bonfire</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="bonfire" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Cafe Chatter</span>
                                                                 <span class="channel-value font-medium">0%</span>
                                                             </label>
                                                             <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="chatter" min="0" max="100" value="0">
                                                         </div>
-                                                        <div class="sound-channel">
+                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
                                                             <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
                                                                 <span>Alpha Waves</span>
                                                                 <span class="channel-value font-medium">0%</span>
@@ -428,7 +428,7 @@
 
     <!-- Create Task Modal -->
     <div id="create-task-form-container" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-2xl shadow-xl w-full max-w-[95%] md:max-w-md animate__animated animate__zoomIn">
+        <div class="bg-white dark:bg-gray-800 p-4 md:p-6 rounded-2xl border border-gray-200 dark:border-gray-700 w-full max-w-[95%] md:max-w-md animate__animated animate__zoomIn">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100">Create New Task</h2>
                 <button id="close-create-task-form" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 dark:text-gray-400 transition p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -469,7 +469,7 @@
                         </optgroup>
                     </select>
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 font-semibold text-base md:text-lg">
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 font-semibold text-base md:text-lg border border-indigo-500">
                     Add Task
                 </button>
             </form>
@@ -478,7 +478,7 @@
 
     <!-- Completion Modal -->
     <div id="completion-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
-        <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full animate__animated animate__zoomIn">
+        <div class="modal bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full animate__animated animate__zoomIn">
             <div class="text-center mb-6">
                 <div class="celebration relative">
                     <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
@@ -488,10 +488,10 @@
                 <p id="completed-task-name" class="text-lg mt-2 text-gray-700 dark:text-gray-300"></p>
             </div>
             <div class="flex flex-col space-y-3">
-                <button id="next-task-button" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                <button id="next-task-button" class="w-full bg-indigo-600 text-white py-2.5 px-4 rounded-lg hover:bg-indigo-700 transition font-semibold border border-indigo-500">
                     <i class="fas fa-forward mr-2"></i>Start Next Task
                 </button>
-                <button id="take-break-button" class="w-full bg-green-600 text-white py-2.5 px-4 rounded-lg hover:bg-green-700 transition font-semibold">
+                <button id="take-break-button" class="w-full bg-green-600 text-white py-2.5 px-4 rounded-lg hover:bg-green-700 transition font-semibold border border-green-500">
                     <i class="fas fa-coffee mr-2"></i>Take a 5-min Break
                 </button>
                 <button id="end-session-button" class="w-full border border-gray-300 dark:border-gray-600 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300 font-semibold">
@@ -503,7 +503,7 @@
 
     <!-- Stats Modal -->
      <div id="stats-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
-         <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 max-w-lg w-full max-h-[80vh] flex flex-col">
+         <div class="modal bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6 md:p-8 max-w-lg w-full max-h-[80vh] flex flex-col">
              <div class="flex justify-between items-center mb-4 flex-shrink-0">
                  <h3 class="text-xl font-bold text-indigo-700 dark:text-indigo-400">Your Productivity Stats</h3>
                  <button id="close-stats" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -511,15 +511,15 @@
                  </button>
              </div>
              <div id="stats-content" class="space-y-4 overflow-y-auto pr-2 -mr-2 custom-scrollbar">
-                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                      <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">Today's Focus</h4>
                      <p id="today-focus-time" class="text-lg font-medium text-indigo-600 dark:text-indigo-400">0 minutes</p>
                  </div>
-                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                      <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">Tasks Completed Today</h4>
                      <p id="tasks-completed" class="text-lg font-medium text-indigo-600 dark:text-indigo-400">0 tasks</p>
                  </div>
-                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg">
+                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg border border-gray-200 dark:border-gray-600">
                      <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-1">Most Used Sound</h4>
                      <p id="most-used-sound" class="text-lg font-medium text-indigo-600 dark:text-indigo-400">None</p>
                  </div>
@@ -536,7 +536,7 @@
 
     <!-- Break Timer Modal -->
     <div id="break-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
-        <div class="modal bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <div class="modal bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full">
             <div class="text-center mb-6">
                 <i class="fas fa-coffee text-4xl text-green-500 mb-3"></i>
                 <h3 class="text-2xl font-bold text-indigo-700 dark:text-indigo-400">Break Time!</h3>
@@ -544,7 +544,7 @@
                 <p class="text-gray-600 dark:text-gray-400">Rest and recharge. You've earned it!</p>
             </div>
             <div class="flex justify-center space-x-3">
-                <button id="end-break-button" class="bg-indigo-600 text-white py-2.5 px-6 rounded-lg hover:bg-indigo-700 transition font-semibold">
+                <button id="end-break-button" class="bg-indigo-600 text-white py-2.5 px-6 rounded-lg hover:bg-indigo-700 transition font-semibold border border-indigo-500">
                     End Break Early
                 </button>
             </div>
