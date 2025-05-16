@@ -2246,7 +2246,7 @@ function setupTabs() {
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
             const newTabId = button.dataset.tab;
-            const currentTabId = document.querySelector('.tab-button.active').dataset.tab;
+            const currentTabId = document.querySelector('.tab-button.active')?.dataset.tab;
 
             // If switching to a different tab, handle audio transitions
             if (newTabId !== currentTabId) {
@@ -2307,16 +2307,32 @@ function setupTabs() {
                 }
             }
 
-            // Remove active classes from all buttons and panes
-            tabButtons.forEach(btn => {
-                btn.classList.remove('active', 'text-indigo-600', 'dark:text-indigo-400', 'border-indigo-500');
-                btn.classList.add('text-gray-500', 'dark:text-gray-400');
-            });
+            // First hide all tab panes
             tabPanes.forEach(pane => pane.classList.add('hidden'));
+            
+            // Set all buttons to inactive state
+            tabButtons.forEach(btn => {
+                // Remove active class
+                btn.classList.remove('active');
+                
+                // Remove active styling
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                
+                // Remove the indicator line by removing the after classes completely
+                btn.style.setProperty('--after-opacity', '0');
+                
+                // Set inactive text color
+                btn.classList.add('text-gray-600', 'dark:text-gray-300');
+            });
 
-            // Add active classes to clicked button and corresponding pane
-            button.classList.add('active', 'text-indigo-600', 'dark:text-indigo-400', 'border-indigo-500');
-            button.classList.remove('text-gray-500', 'dark:text-gray-400');
+            // Set active styles for the clicked button
+            button.classList.add('active', 'bg-indigo-600', 'text-white');
+            button.classList.remove('text-gray-600', 'dark:text-gray-300');
+            
+            // Show the indicator line
+            button.style.setProperty('--after-opacity', '1');
+            
+            // Show the corresponding tab content
             document.getElementById(`${newTabId}-tab`).classList.remove('hidden');
 
             // If a task is running, restore audio state for the new tab
