@@ -905,20 +905,53 @@ function setupEventListeners() {
             
             // If no matching tasks found, open the create task modal and populate with search term
             if (visibleTasks === 0) {
-                // Store the search term for later use
-                const storedSearchTerm = searchTerm;
+                // Store the search term
+                const tempSearchTerm = searchTerm;
                 
                 // Clear the search input first
                 this.value = '';
                 filterTaskList('');
                 
-                // Open the task creation modal (this will reset the form)
+                // Open the modal (which now resets the form)
                 openCreateTaskModal();
                 
-                // Use setTimeout to ensure the task name is set after the form is reset
+                // Set the search term to the task name field after modal is open and form is reset
                 setTimeout(() => {
-                    // Now set the task name input field value
-                    DOM.taskNameInput.value = storedSearchTerm;
+                    DOM.taskNameInput.value = tempSearchTerm;
+                }, 0);
+            }
+        }
+    });
+
+    // Add Enter key handler for search to create task
+    DOM.taskSearchInput.addEventListener('keydown', function(e) {
+        // Check if Enter key was pressed
+        if (e.key === 'Enter') {
+            const searchTerm = this.value.trim();
+            
+            // If search term is empty, do nothing
+            if (!searchTerm) return;
+            
+            // Count visible tasks after filtering
+            const visibleTasks = Array.from(DOM.taskList.querySelectorAll('li[data-id]'))
+                .filter(item => item.style.display !== 'none')
+                .length;
+            
+            // If no matching tasks found, open the create task modal and populate with search term
+            if (visibleTasks === 0) {
+                // Store the search term
+                const tempSearchTerm = searchTerm;
+                
+                // Clear the search input first
+                this.value = '';
+                filterTaskList('');
+                
+                // Open the modal (which now resets the form)
+                openCreateTaskModal();
+                
+                // Set the search term to the task name field after modal is open and form is reset
+                setTimeout(() => {
+                    DOM.taskNameInput.value = tempSearchTerm;
                 }, 0);
             }
         }
