@@ -242,7 +242,6 @@ select:focus {
 
 /* Modern buttons */
 button {
-  border-radius: 10px;
   transition: all 0.2s ease;
   font-weight: 500;
   letter-spacing: 0.5px;
