@@ -201,11 +201,11 @@
 
             <!-- Main Content -->
             <main class="flex-grow p-4 md:p-8 w-full overflow-x-hidden">
-                <div class="max-w-full mx-auto">
-                    <!-- Active Task Column -->
-                    <div class="card bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 md:p-6 mx-auto w-full md:max-w-4xl">
-                        <h2 class="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-indigo-600 dark:text-indigo-400">Current Task</h2>
-                        <div id="active-task-container" class="text-center py-4 md:py-8 w-full">
+                <div class="flex flex-col md:flex-row gap-4 md:gap-6 max-w-full mx-auto">
+                    <!-- Active Task Card -->
+                    <div class="card bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 md:p-6 w-full md:w-1/2">
+                        <div id="active-task-container" class="text-center py-4 md:py-6 w-full">
+                            <!-- No Task Selected View -->
                             <div id="no-task-message" class="text-gray-500 dark:text-gray-400 italic px-2 md:px-4">
                                 <div class="text-center space-y-3 md:space-y-4">
                                     <h3 class="text-lg md:text-xl font-bold text-indigo-600 dark:text-indigo-400 break-words">✨ Trouble Focusing on Daily Tasks? </br> Can't start that one task? We got you</h3>
@@ -217,198 +217,206 @@
                                     </div>
                                     <p class="text-xs md:text-sm mt-4">Built for ADHD minds and busy brains — this tool helps you stay on track, stress-free.</p>
                                     <p class="text-xs md:text-sm italic">"it works for me."</p>
-                                    <button id="add-first-task" class="mt-4 px-4 md:px-6 py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold text-sm md:text-base border border-indigo-500">
-                                        👉 Start now
+                                    <div class="flex justify-center">
+                                        <button id="add-first-task" class="mt-4 px-4 md:px-6 py-2 md:py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold text-sm md:text-base border border-indigo-500">
+                                            👉 Start now
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Task Selected View -->
+                            <div id="active-task" class="hidden flex flex-col items-center justify-center">
+                                <!-- Task Name Box with Timer -->
+                                <div class="relative w-full max-w-md mx-auto mb-8 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
+                                    <!-- Task Name -->
+                                    <div class="p-5 text-center">
+                                        <h3 id="active-task-name" class="text-xl md:text-2xl font-bold text-gray-900 dark:text-gray-100 break-words"></h3>
+                                        <!-- Timer Display -->
+                                        <div id="timer-display" class="text-4xl md:text-5xl font-bold text-center text-indigo-600 dark:text-indigo-400 mt-3"></div>
+                                    </div>
+                                    
+                                    <!-- Progress Bar -->
+                                    <div class="h-2 w-full bg-gray-200 dark:bg-gray-700">
+                                        <div id="timer-bar" class="h-full bg-indigo-500 transition-all duration-1000" style="width: 100%;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Control Buttons -->
+                                <div class="flex flex-wrap justify-center gap-4 mt-2 max-w-md mx-auto">
+                                    <button id="start-task" class="px-7 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-green-500">
+                                        <i class="fas fa-play mr-2"></i> Start
+                                    </button>
+                                    <button id="pause-task" class="px-7 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px] border border-yellow-400">
+                                        <i class="fas fa-pause mr-2"></i> Pause
+                                    </button>
+                                    <button id="resume-task" class="px-7 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px] border border-green-500">
+                                        <i class="fas fa-play mr-2"></i> Resume
+                                    </button>
+                                    <button id="finish-task" class="px-7 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-blue-500">
+                                        <i class="fas fa-check mr-2"></i> Finish
+                                    </button>
+                                    <button id="cancel-task" class="px-7 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-red-500">
+                                        <i class="fas fa-times mr-2"></i> Cancel
                                     </button>
                                 </div>
                             </div>
-                            <div id="active-task" class="hidden">
-                                <h3 id="active-task-name" class="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100 break-words"></h3>
-                                <div class="flex items-center justify-center space-x-4">
-                                    <!-- Timer Section -->
-                                    <div class="relative w-64 h-64 flex-shrink-0">
-                                        <!-- Circular Progress -->
-                                        <svg class="w-full h-full transform -rotate-90">
-                                            <circle
-                                                class="text-gray-200 dark:text-gray-700"
-                                                stroke-width="8"
-                                                stroke="currentColor"
-                                                fill="transparent"
-                                                r="110"
-                                                cx="128"
-                                                cy="128"
-                                            />
-                                            <circle
-                                                id="timer-bar"
-                                                class="text-indigo-500 dark:text-indigo-400"
-                                                stroke-width="8"
-                                                stroke-dasharray="691.15"
-                                                stroke-dashoffset="691.15"
-                                                stroke-linecap="round"
-                                                stroke="currentColor"
-                                                fill="transparent"
-                                                r="110"
-                                                cx="128"
-                                                cy="128"
-                                            />
-                                        </svg>
-                                        <!-- Timer Display -->
-                                        <div class="absolute inset-0 flex items-center justify-center">
-                                            <div id="timer-display" class="text-4xl md:text-5xl font-bold text-center text-indigo-600 dark:text-indigo-400"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sound Controls Card -->
+                    <div class="card bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 md:p-6 w-full md:w-1/2">
+                        <div class="audio-controls">
+                            <!-- Tab Navigation -->
+                            <div class="flex justify-center border-b border-gray-200 dark:border-gray-700 mb-4">
+                                <button class="tab-button active mx-1 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 border border-indigo-700 rounded-t-lg shadow-sm" data-tab="sound-mixer">
+                                    Sound Mixer
+                                </button>
+                                <button class="tab-button mx-1 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 border border-indigo-700 rounded-t-lg shadow-sm opacity-80 hover:opacity-100 transition-opacity" data-tab="local-files">
+                                    Local Files
+                                </button>
+                                <button class="tab-button mx-1 px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-indigo-500 border border-indigo-700 rounded-t-lg shadow-sm opacity-80 hover:opacity-100 transition-opacity" data-tab="youtube">
+                                    YouTube
+                                </button>
+                            </div>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <!-- Sound Mixer Tab -->
+                                <div id="sound-mixer-tab" class="tab-pane active">
+                                    <!-- Preset Mixes Section -->
+                                    <div class="preset-mixes mb-4">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Preset</p>
+                                        <div class="flex flex-wrap justify-center gap-1">
+                                            <button class="preset-mix-btn px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors whitespace-nowrap" data-preset="mix_focus">
+                                                Focus
+                                            </button>
+                                            <button class="preset-mix-btn px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors whitespace-nowrap" data-preset="mix_relaxation">
+                                                Relax
+                                            </button>
+                                            <button class="preset-mix-btn px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors whitespace-nowrap" data-preset="mix_sleep">
+                                                Sleep
+                                            </button>
+                                            <button class="preset-mix-btn px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors whitespace-nowrap" data-preset="mix_nature">
+                                                Nature
+                                            </button>
+                                            <button class="preset-mix-btn px-2 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors whitespace-nowrap" data-preset="mix_random">
+                                                Random
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <!-- Control Buttons -->
-                                    <div class="flex flex-col space-y-3">
-                                        <button id="start-task" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-green-500">
-                                            <i class="fas fa-play mr-2"></i> Start
-                                        </button>
-                                        <button id="pause-task" class="px-6 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px] border border-yellow-400">
-                                            <i class="fas fa-pause mr-2"></i> Pause
-                                        </button>
-                                        <button id="resume-task" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden text-sm md:text-base flex items-center justify-center min-w-[120px] border border-green-500">
-                                            <i class="fas fa-play mr-2"></i> Resume
-                                        </button>
-                                        <button id="finish-task" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-blue-500">
-                                            <i class="fas fa-check mr-2"></i> Finish
-                                        </button>
-                                        <button id="cancel-task" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm md:text-base flex items-center justify-center min-w-[120px] border border-red-500">
-                                            <i class="fas fa-times mr-2"></i> Cancel
-                                        </button>
+                                    <!-- Sound Grid -->
+                                    <div class="sound-grid grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="rain">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Rain</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="birds">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Birds</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="water">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Water</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="wind">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Wind</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="whitenoise">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">White Noise</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="thunder">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Thunder</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="bonfire">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Bonfire</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="chatter">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Cafe Chatter</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="alpha">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Alpha Waves</span>
+                                            </label>
+                                        </div>
+                                        <div class="sound-item border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="checkbox" class="sound-checkbox" data-sound="gong">
+                                                <span class="sound-name text-sm text-gray-700 dark:text-gray-300">Gong</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Volume Control Section -->
+                                    <div class="volume-control-section border-t border-gray-200 dark:border-gray-700 pt-4">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span id="selected-sound-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">Select a sound to adjust volume</span>
+                                            <span id="volume-value" class="text-sm text-gray-500 dark:text-gray-400">50%</span>
+                                        </div>
+                                        <input type="range" id="master-volume-slider" class="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" min="0" max="100" value="50">
                                     </div>
                                 </div>
-                                <div class="audio-controls mt-8">
-                                    <!-- Sound Controls -->
-                                    <div class="sound-mixer mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                        <!-- Tab Navigation -->
-                                        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
-                                            <button class="tab-button active px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-500" data-tab="sound-mixer">
-                                                Sound Mixer
-                                            </button>
-                                            <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" data-tab="local-files">
-                                                Local Files
-                                            </button>
-                                            <button class="tab-button px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400" data-tab="youtube">
-                                                YouTube
+
+                                <!-- Local Files Tab -->
+                                <div id="local-files-tab" class="tab-pane hidden">
+                                    <div class="space-y-4">
+                                        <div id="local-music-drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors">
+                                            <i class="fas fa-music text-2xl text-gray-400 dark:text-gray-500 mb-2"></i>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400">Drag & drop your music files here</p>
+                                            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">or click to select files</p>
+                                            <input type="file" id="local-music-input" class="hidden" accept="audio/*" multiple>
+                                        </div>
+                                        
+                                        <div id="local-music-info" class="hidden">
+                                            <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                                <span>Now Playing:</span>
+                                                <span id="current-file-name" class="font-medium truncate max-w-[200px]"></span>
+                                            </div>
+                                            <div class="sound-channel">
+                                                <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                                    <span>Volume</span>
+                                                    <span class="channel-value font-medium">0%</span>
+                                                </label>
+                                                <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="local-music" min="0" max="100" value="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- YouTube Tab -->
+                                <div id="youtube-tab" class="tab-pane hidden">
+                                    <div class="space-y-4">
+                                        <div class="flex items-center space-x-2">
+                                            <input type="text" id="youtube-url" class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Enter YouTube URL">
+                                            <button id="load-youtube" class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
+                                                Load
                                             </button>
                                         </div>
-
-                                        <!-- Tab Content -->
-                                        <div class="tab-content">
-                                            <!-- Sound Mixer Tab -->
-                                            <div id="sound-mixer-tab" class="tab-pane active">
-                                                <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center">Adjust Background Sounds</h4>
-                                                <div id="sound-name" class="text-sm text-gray-500 dark:text-gray-400 text-center mb-4"></div>
-                                                <div class="custom-mix">
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 text-center">Individual Sounds</p>
-                                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-3">
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Rain</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="rain" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Birds</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="birds" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Water</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="water" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Wind</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="wind" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>White Noise</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="whitenoise" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Thunder</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="thunder" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Bonfire</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="bonfire" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Cafe Chatter</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="chatter" min="0" max="100" value="0">
-                                                        </div>
-                                                        <div class="sound-channel border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Alpha Waves</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="alpha" min="0" max="100" value="0">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Local Files Tab -->
-                                            <div id="local-files-tab" class="tab-pane hidden">
-                                                <div class="space-y-4">
-                                                    <div id="local-music-drop-zone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-500 dark:hover:border-indigo-400 transition-colors">
-                                                        <i class="fas fa-music text-2xl text-gray-400 dark:text-gray-500 mb-2"></i>
-                                                        <p class="text-sm text-gray-500 dark:text-gray-400">Drag & drop your music files here</p>
-                                                        <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">or click to select files</p>
-                                                        <input type="file" id="local-music-input" class="hidden" accept="audio/*" multiple>
-                                                    </div>
-                                                    
-                                                    <div id="local-music-info" class="hidden">
-                                                        <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                                            <span>Now Playing:</span>
-                                                            <span id="current-file-name" class="font-medium truncate max-w-[200px]"></span>
-                                                        </div>
-                                                        <div class="sound-channel">
-                                                            <label class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
-                                                                <span>Volume</span>
-                                                                <span class="channel-value font-medium">0%</span>
-                                                            </label>
-                                                            <input type="range" class="channel-slider w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-indigo-500" data-sound="local-music" min="0" max="100" value="0">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- YouTube Tab -->
-                                            <div id="youtube-tab" class="tab-pane hidden">
-                                                <div class="space-y-4">
-                                                    <div class="flex items-center space-x-2">
-                                                        <input type="text" id="youtube-url" class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" placeholder="Enter YouTube URL">
-                                                        <button id="load-youtube" class="px-3 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition">
-                                                            Load
-                                                        </button>
-                                                    </div>
-                                                    <div id="youtube-player" class="aspect-video w-full bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden hidden">
-                                                        <iframe id="youtube-iframe" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        <div id="youtube-player" class="aspect-video w-full bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden hidden">
+                                            <iframe id="youtube-iframe" class="w-full h-full" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                                         </div>
                                     </div>
                                 </div>
@@ -448,7 +456,7 @@
                     <label for="task-sound" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Background Sound</label>
                     <select id="task-sound" class="w-full px-3 py-2 text-base md:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 appearance-none bg-no-repeat bg-right pr-8">
                         <option value="none">None</option>
-                        <optgroup label="Preset Mixes">
+                        <optgroup label="Preset">
                             <option value="mix_focus">Focus Mix</option>
                             <option value="mix_relaxation">Relaxation Mix</option>
                             <option value="mix_sleep">Sleep Mix</option>

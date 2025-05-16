@@ -63,6 +63,149 @@ let youtubeState = {
     currentUrl: null
 };
 
+// Sound mixer state
+let soundVolumes = {
+    rain: 50,
+    birds: 50,
+    water: 50,
+    wind: 50,
+    whitenoise: 50,
+    thunder: 50,
+    bonfire: 50,
+    chatter: 50,
+    alpha: 50
+};
+
+let selectedSound = null;
+let soundElements = {};
+
+// Preset Mixes Configuration
+const presetMixes = {
+    mix_focus: {
+        sounds: ['whitenoise', 'alpha'],
+        volumes: [70, 60]
+    },
+    mix_relaxation: {
+        sounds: ['rain', 'wind', 'birds'],
+        volumes: [60, 40, 50]
+    },
+    mix_sleep: {
+        sounds: ['rain', 'whitenoise', 'alpha'],
+        volumes: [50, 40, 30]
+    },
+    mix_nature: {
+        sounds: ['rain', 'birds', 'water', 'wind'],
+        volumes: [60, 50, 40, 30]
+    },
+    mix_random: {
+        sounds: ['rain', 'birds', 'water', 'wind', 'whitenoise', 'thunder', 'bonfire', 'chatter', 'alpha', 'gong'],
+        volumes: [50, 50, 50, 50, 50, 50, 50, 50, 50, 50]
+    }
+};
+
+// Initialize sound elements
+const sounds = {
+    rain: new Audio('sounds/rain.mp3'),
+    birds: new Audio('sounds/birds.mp3'),
+    water: new Audio('sounds/water.mp3'),
+    wind: new Audio('sounds/wind.mp3'),
+    whitenoise: new Audio('sounds/whitenoise.mp3'),
+    thunder: new Audio('sounds/thunder.mp3'),
+    bonfire: new Audio('sounds/bonfire.mp3'),
+    chatter: new Audio('sounds/chatter.mp3'),
+    alpha: new Audio('sounds/alpha.mp3'),
+    gong: new Audio('sounds/gong.mp3')
+};
+
+// Set all sounds to loop
+Object.values(sounds).forEach(sound => {
+    sound.loop = true;
+});
+
+// Sound state management
+let activeSounds = new Set();
+let currentVolume = 50;
+
+// Handle sound checkbox changes
+document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', (e) => {
+        const soundName = e.target.dataset.sound;
+        const sound = sounds[soundName];
+        
+        if (e.target.checked) {
+            sound.volume = currentVolume / 100;
+            sound.play();
+            activeSounds.add(soundName);
+        } else {
+            sound.pause();
+            sound.currentTime = 0;
+            activeSounds.delete(soundName);
+        }
+        
+        updateVolumeDisplay();
+    });
+});
+
+// Handle master volume slider
+const masterVolumeSlider = document.getElementById('master-volume-slider');
+const volumeValue = document.getElementById('volume-value');
+const selectedSoundName = document.getElementById('selected-sound-name');
+
+masterVolumeSlider.addEventListener('input', (e) => {
+    currentVolume = parseInt(e.target.value);
+    volumeValue.textContent = `${currentVolume}%`;
+    
+    // Update volume for all active sounds
+    activeSounds.forEach(soundName => {
+        sounds[soundName].volume = currentVolume / 100;
+    });
+});
+
+// Handle preset mix buttons
+document.querySelectorAll('.preset-mix-btn').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const presetName = e.target.dataset.preset;
+        const preset = presetMixes[presetName];
+        
+        // Uncheck all sounds first
+        document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
+            checkbox.checked = false;
+            const soundName = checkbox.dataset.sound;
+            sounds[soundName].pause();
+            sounds[soundName].currentTime = 0;
+        });
+        
+        // Clear active sounds
+        activeSounds.clear();
+        
+        // Apply preset
+        preset.sounds.forEach((soundName, index) => {
+            const checkbox = document.querySelector(`[data-sound="${soundName}"]`);
+            checkbox.checked = true;
+            sounds[soundName].volume = preset.volumes[index] / 100;
+            sounds[soundName].play();
+            activeSounds.add(soundName);
+        });
+        
+        // Update volume slider
+        currentVolume = 50;
+        masterVolumeSlider.value = currentVolume;
+        volumeValue.textContent = `${currentVolume}%`;
+        updateVolumeDisplay();
+    });
+});
+
+function updateVolumeDisplay() {
+    if (activeSounds.size === 0) {
+        selectedSoundName.textContent = 'Select a sound to adjust volume';
+    } else if (activeSounds.size === 1) {
+        const soundName = Array.from(activeSounds)[0];
+        selectedSoundName.textContent = `Adjusting volume for ${soundName.charAt(0).toUpperCase() + soundName.slice(1)}`;
+    } else {
+        selectedSoundName.textContent = `Adjusting volume for ${activeSounds.size} active sounds`;
+    }
+}
+
 // DOM Elements
 const DOM = {
     loadingScreen: document.getElementById('loading-screen'),
@@ -115,7 +258,12 @@ const DOM = {
     volumeUpButton: document.getElementById('volume-up'),
     muteButton: document.getElementById('mute-button'),
     themeToggleButton: document.getElementById('theme-toggle'), // Main theme toggle
-    themeToggleButtonMobile: document.getElementById('theme-toggle-mobile') // Mobile theme toggle
+    themeToggleButtonMobile: document.getElementById('theme-toggle-mobile'), // Mobile theme toggle
+    
+    // Sound mixer elements
+    masterVolumeSlider: document.getElementById('master-volume-slider'),
+    volumeValue: document.getElementById('volume-value'),
+    selectedSoundName: document.getElementById('selected-sound-name')
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -127,6 +275,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // If critical elements are missing, show the app anyway
         document.getElementById('app-container')?.classList.remove('hidden');
         return;
+    }
+    
+    // Initialize the task views - make sure only one is visible
+    if (DOM.noTaskMessage && DOM.activeTaskDiv) {
+        // Default state: show no task message, hide active task view
+        DOM.noTaskMessage.style.display = 'block';
+        DOM.activeTaskDiv.style.display = 'none';
     }
     
     // Initialize the app
@@ -271,6 +426,18 @@ function initializeApp() {
     // Initialize UI
     updateTaskList();
     updateStats();
+    
+    // Initialize active task view
+    if (state.activeTaskId && state.tasks.find(t => t.id === state.activeTaskId)) {
+        // If there's an active task, show it
+        setActiveTask(state.activeTaskId);
+    } else {
+        // Otherwise, clear active task and show welcome message
+        clearActiveTask();
+    }
+    
+    // Initialize sound mixer
+    initializeSoundMixer();
     
     // Set up channel slider event listeners
     document.querySelectorAll('.channel-slider').forEach(slider => {
@@ -461,10 +628,80 @@ function stopLocalMusic() {
     isLocalMusicPlaying = false;
 }
 
-// Modify the playAudio function to ensure proper sound playback
+// Helper function to play a preset mix directly
+function playPresetMix(mixId) {
+    if (!mixId.startsWith('mix_')) {
+        console.error('Invalid mix ID: ' + mixId);
+        return;
+    }
+    
+    const mixName = mixId.replace('mix_', '');
+    const preset = presetMixes[mixId];
+    
+    if (!preset) {
+        console.error('Preset mix not found: ' + mixId);
+        return;
+    }
+    
+    console.log('Playing preset mix: ' + mixName, preset);
+    
+    // Clear existing sounds first
+    stopAudio();
+    
+    // For each sound in the mix
+    preset.sounds.forEach((soundId, index) => {
+        const volume = preset.volumes[index] / 100 || 0.5;
+        
+        // Get the audio element
+        const audio = state.audioElements[soundId];
+        if (!audio) {
+            console.error(`Audio file not found: ${soundId}`);
+            return;
+        }
+        
+        // Create a new audio instance
+        const audioInstance = new Audio(audio.src);
+        audioInstance.loop = true;
+        audioInstance._baseVolume = volume; // Store the base volume
+        
+        // Apply the global volume
+        const globalVolume = parseInt(DOM.volumeControl.value) / 100;
+        audioInstance.volume = volume * globalVolume;
+        
+        // Play the audio with error handling
+        const playPromise = audioInstance.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                console.error(`Error playing ${soundId}:`, error);
+            });
+        }
+        
+        // Store in active sounds
+        state.activeSounds[soundId] = audioInstance;
+        
+        // Update checkbox state
+        const checkbox = document.querySelector(`.sound-checkbox[data-sound="${soundId}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+        }
+    });
+    
+    // Add active class to the preset button
+    const presetButton = document.querySelector(`.sound-preset[data-preset="${mixName}"]`);
+    if (presetButton) {
+        document.querySelectorAll('.sound-preset').forEach(btn => {
+            btn.classList.remove('active-preset');
+        });
+        presetButton.classList.add('active-preset');
+    }
+}
+
+// Modify the playAudio function to properly handle preset mixes
 function playAudio(audioId) {
     // If local music is playing, don't play preset sounds
     if (isLocalMusicPlaying) return;
+    
+    console.log('Playing audio: ' + audioId);
     
     // Only stop preset sounds, not local music
     if (state.currentAudio) {
@@ -487,18 +724,7 @@ function playAudio(audioId) {
     
     // Check if it's a preset mix
     if (audioId.startsWith('mix_')) {
-        const mixName = audioId.replace('mix_', '');
-        // Add active class to the current preset button
-        const presetButton = document.querySelector(`.sound-preset[data-preset="${mixName}"]`);
-        if (presetButton) {
-            presetButton.classList.add('active-preset');
-        }
-        
-        if (mixName === 'random') {
-            applyRandomMix();
-        } else {
-            applyPresetMix(mixName);
-        }
+        playPresetMix(audioId);
         return;
     }
     
@@ -634,6 +860,34 @@ function setupEventListeners() {
     
     // Task search
     DOM.taskSearchInput.addEventListener('input', handleSearchInput);
+    
+    // Add Enter key handler for search to create task
+    DOM.taskSearchInput.addEventListener('keydown', function(e) {
+        // Check if Enter key was pressed
+        if (e.key === 'Enter') {
+            const searchTerm = this.value.trim();
+            
+            // If search term is empty, do nothing
+            if (!searchTerm) return;
+            
+            // Count visible tasks after filtering
+            const visibleTasks = Array.from(DOM.taskList.querySelectorAll('li[data-id]'))
+                .filter(item => item.style.display !== 'none')
+                .length;
+            
+            // If no matching tasks found, open the create task modal and populate with search term
+            if (visibleTasks === 0) {
+                openCreateTaskModal();
+                
+                // Pre-fill the task name input with the search term
+                DOM.taskNameInput.value = searchTerm;
+                
+                // Clear the search input
+                this.value = '';
+                filterTaskList('');
+            }
+        }
+    });
 
     // --- New Listeners for Sidebar and Modals ---
 
@@ -674,6 +928,9 @@ function setupEventListeners() {
             }
         });
     }
+
+    // Initialize sound mixer
+    initializeSoundMixer();
 }
 
 // --- Sidebar and Modal Functions ---
@@ -966,60 +1223,188 @@ function findAudioName(audioId) {
 
 // Set the active task
 function setActiveTask(taskId) {
+    // Find the task in the queue
     const task = state.tasks.find(t => t.id === taskId);
-    if (!task) {
-        // If task not found (maybe deleted?), clear active state
-        clearActiveTask();
-        return;
-    }
+    if (!task) return;
 
-    // Clear previous active task timer/audio if switching
-    if (state.activeTaskId && state.activeTaskId !== taskId) {
-        if (state.timerInterval) {
-            clearInterval(state.timerInterval);
-            state.timerInterval = null;
-        }
-        stopAudio();
-        state.isPaused = false;
-    }
-    
+    // Update active task in state
     state.activeTaskId = taskId;
     
-    // Update Active Task UI
-    DOM.noTaskMessage.classList.add('hidden');
-    DOM.activeTaskDiv.classList.remove('hidden');
+    // Update UI
     DOM.activeTaskName.textContent = task.name;
-
-    // Reset timer display and bar
+    DOM.timerDisplay.textContent = formatTime ? formatTime(task.duration * 60) : `${task.duration}:00`;
+    
+    // Hide no task message and show active task view
+    DOM.noTaskMessage.style.display = 'none';
+    DOM.activeTaskDiv.style.display = 'block';
+    
+    // Update task list UI
+    document.querySelectorAll('.task-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.id === taskId) {
+            item.classList.add('active');
+        }
+    });
+    
+    // Reset timer state
+    state.timerRunning = false;
+    state.isPaused = false;
     state.remainingTime = task.duration * 60;
+    
+    // Update timer display
     updateTimerDisplay();
     
-    // Reset circular progress
-    const timerBar = document.getElementById('timer-bar');
-    if (timerBar) {
-        timerBar.style.strokeDashoffset = '691.15'; // Start from full circle
-        timerBar.style.transition = 'none';
-        setTimeout(() => {
-            timerBar.style.transition = 'stroke-dashoffset 1s linear';
-        }, 50);
-    }
-    
-    // Configure audio display (don't play yet)
-    if (task.sound !== 'none') {
-        DOM.soundName.textContent = `Sound: ${findAudioName(task.sound)}`;
-        DOM.soundName.classList.remove('hidden');
-    } else {
-        DOM.soundName.textContent = '';
-        DOM.soundName.classList.add('hidden');
-    }
-
-    // Reset control buttons state
+    // Reset control buttons
     DOM.startTaskButton.classList.remove('hidden');
     DOM.pauseTaskButton.classList.add('hidden');
     DOM.resumeTaskButton.classList.add('hidden');
     
-    // Update task list highlighting
-    updateTaskList();
+    // Set up sound checkboxes based on the task's sound
+    updateSoundCheckboxes(task.sound);
+    
+    // Save state
+    saveToLocalStorage();
+}
+
+// Helper function to update sound checkboxes based on task sound
+function updateSoundCheckboxes(soundId) {
+    console.log('Updating sound checkboxes for:', soundId);
+    
+    // First, uncheck all checkboxes
+    document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // If the sound is none, we're done
+    if (!soundId || soundId === 'none') return;
+    
+    if (soundId.startsWith('mix_')) {
+        // Handle preset mixes
+        const mixName = soundId.replace('mix_', '');
+        
+        if (presetMixes[soundId]) {
+            console.log('Setting up preset mix:', soundId, presetMixes[soundId]);
+            
+            // Check all sounds in the mix
+            presetMixes[soundId].sounds.forEach((sound, index) => {
+                console.log('Setting up sound in mix:', sound);
+                const checkbox = document.querySelector(`.sound-checkbox[data-sound="${sound}"]`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    
+                    // Set volume if available in the preset
+                    if (presetMixes[soundId].volumes && presetMixes[soundId].volumes[index]) {
+                        const volume = presetMixes[soundId].volumes[index];
+                        soundVolumes[sound] = volume;
+                        
+                        // If sound channel sliders exist, update them
+                        const slider = document.querySelector(`.channel-slider[data-sound="${sound}"]`);
+                        if (slider) {
+                            slider.value = volume;
+                            updateSliderValue(slider);
+                        }
+                    }
+                } else {
+                    console.warn('Checkbox not found for sound:', sound);
+                }
+            });
+            
+            // Set master volume to default (50%)
+            if (DOM.masterVolumeSlider) {
+                DOM.masterVolumeSlider.value = 50;
+                if (DOM.volumeValue) {
+                    DOM.volumeValue.textContent = '50%';
+                }
+            }
+            
+            // Add active class to the preset button
+            const presetButton = document.querySelector(`.preset-mix-btn[data-preset="${soundId}"]`);
+            if (presetButton) {
+                document.querySelectorAll('.preset-mix-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                presetButton.classList.add('active');
+            }
+        } else {
+            console.warn('Preset mix not found:', soundId);
+        }
+    } else {
+        // Handle single sound
+        console.log('Setting up single sound:', soundId);
+        const checkbox = document.querySelector(`.sound-checkbox[data-sound="${soundId}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+            
+            // Set this as the selected sound
+            selectedSound = soundId;
+            const soundItem = checkbox.closest('.sound-item');
+            if (soundItem) {
+                document.querySelectorAll('.sound-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                soundItem.classList.add('selected');
+            }
+            
+            // Update master volume slider to show this sound's volume
+            if (DOM.masterVolumeSlider && soundVolumes[soundId]) {
+                DOM.masterVolumeSlider.value = soundVolumes[soundId];
+                if (DOM.volumeValue) {
+                    DOM.volumeValue.textContent = `${soundVolumes[soundId]}%`;
+                }
+            }
+            
+            // Update selected sound name
+            if (DOM.selectedSoundName) {
+                DOM.selectedSoundName.textContent = soundId.charAt(0).toUpperCase() + soundId.slice(1);
+            }
+        } else {
+            console.warn('Checkbox not found for sound:', soundId);
+        }
+    }
+    
+    // Update the volume display
+    updateVolumeDisplay();
+}
+
+function clearActiveTask() {
+    // Clear active task from state
+    state.activeTaskId = null;
+    state.timerRunning = false;
+    state.isPaused = false;
+    state.remainingTime = 0;
+    
+    // Clear timer display
+    DOM.timerDisplay.textContent = '00:00';
+    
+    // Show no task message and hide active task view
+    DOM.noTaskMessage.style.display = 'block';
+    DOM.activeTaskDiv.style.display = 'none';
+    
+    // Update task list UI
+    document.querySelectorAll('.task-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Reset control buttons
+    DOM.startTaskButton.classList.remove('hidden');
+    DOM.pauseTaskButton.classList.add('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
+    
+    // Clear sound checkboxes
+    document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Update volume display
+    if (typeof updateVolumeDisplay === 'function') {
+        updateVolumeDisplay();
+    }
+    
+    // Stop any playing audio
+    stopAudio();
+    
+    // Save state
+    saveToLocalStorage();
 }
 
 // Delete a task
@@ -1037,27 +1422,14 @@ function deleteTask(taskId) {
     updateTaskList();
 }
 
-// Clear the active task view
-function clearActiveTask() {
-    state.activeTaskId = null;
-    DOM.noTaskMessage.classList.remove('hidden');
-    DOM.activeTaskDiv.classList.add('hidden');
-    
-    // Stop any running timers or audio
-    if (state.timerInterval) {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-    }
-    
-    stopAudio();
-}
-
 // Start the active task
 function startTask() {
     if (!state.activeTaskId) return;
     
     const task = state.tasks.find(t => t.id === state.activeTaskId);
     if (!task) return;
+    
+    console.log('Starting task:', task);
     
     // Update UI buttons
     DOM.startTaskButton.classList.add('hidden');
@@ -1088,9 +1460,22 @@ function startTask() {
         isYoutubePlaying = false;
     }
     
-    // Start audio based on active tab
-    if (activeTab === 'sound-mixer' && task.sound !== 'none') {
-        playAudio(task.sound);
+    // Start audio based on active tab and task sound
+    if (activeTab === 'sound-mixer') {
+        // If task has a sound, make sure the checkboxes are set up correctly
+        if (task.sound && task.sound !== 'none') {
+            console.log('Task has sound:', task.sound);
+            
+            // First update the checkboxes (this won't play the sound)
+            updateSoundCheckboxes(task.sound);
+            
+            // Now play the sound
+            if (task.sound.startsWith('mix_')) {
+                playPresetMix(task.sound);
+            } else {
+                playAudio(task.sound);
+            }
+        }
     } else if (activeTab === 'local-files' && localMusicPlayer) {
         if (!isLocalMusicPlaying) {
             playLocalMusic(0);
@@ -1569,6 +1954,13 @@ function updateStats() {
     });
 }
 
+// Helper function to format time for display
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
 // Update timer display
 function updateTimerDisplay() {
     const minutes = Math.floor(state.remainingTime / 60);
@@ -1612,96 +2004,63 @@ function resumeAudio() {
 
 // Modify the applyPresetMix function to update slider positions
 function applyPresetMix(preset) {
-    const presetMixes = {
-        focus: {
-            alpha: 80,
-            whitenoise: 30,
-            rain: 15
-        },
-        relaxation: {
-            water: 70,
-            birds: 40,
-            wind: 20
-        },
-        sleep: {
-            rain: 60,
-            whitenoise: 40,
-            wind: 15
-        },
-        nature: {
-            birds: 70,
-            water: 50,
-            wind: 40,
-            thunder: 10
-        }
-    };
-    
-    // First reset all sliders to 0
-    document.querySelectorAll('.channel-slider').forEach(slider => {
-        slider.value = 0;
-        updateSliderValue(slider);
+    // Reset all checkboxes
+    Object.values(soundElements).forEach(sound => {
+        sound.checkbox.checked = false;
+        stopAudio(sound.checkbox.dataset.sound);
     });
-    
-    const mix = presetMixes[preset];
-    if (mix) {
-        Object.entries(mix).forEach(([sound, volume]) => {
-            const audio = state.audioElements[sound];
-            if (audio) {
-                // Update slider position and value display
-                const slider = document.querySelector(`.channel-slider[data-sound="${sound}"]`);
-                if (slider) {
-                    slider.value = volume;
-                    updateSliderValue(slider);
-                }
-                
-                const audioClone = new Audio(audio.src);
-                audioClone.loop = true;
-                audioClone.volume = volume / 100;
-                audioClone.play().catch(error => {
-                    console.error(`Error playing ${sound}:`, error);
-                });
-                state.activeSounds[sound] = audioClone;
-            }
-        });
+
+    // Apply preset
+    switch (preset) {
+        case 'mix_focus':
+            ['whitenoise', 'alpha'].forEach(sound => {
+                soundElements[sound].checkbox.checked = true;
+                playAudio(sound);
+            });
+            break;
+        case 'mix_relaxation':
+            ['rain', 'wind', 'birds'].forEach(sound => {
+                soundElements[sound].checkbox.checked = true;
+                playAudio(sound);
+            });
+            break;
+        case 'mix_sleep':
+            ['rain', 'whitenoise', 'alpha'].forEach(sound => {
+                soundElements[sound].checkbox.checked = true;
+                playAudio(sound);
+            });
+            break;
+        case 'mix_nature':
+            ['rain', 'birds', 'water', 'wind'].forEach(sound => {
+                soundElements[sound].checkbox.checked = true;
+                playAudio(sound);
+            });
+            break;
+        case 'mix_random':
+            applyRandomMix();
+            break;
     }
 }
 
 // Modify the applyRandomMix function to update slider positions
 function applyRandomMix() {
-    // First reset all sliders to 0
-    document.querySelectorAll('.channel-slider').forEach(slider => {
-        slider.value = 0;
-        updateSliderValue(slider);
+    const sounds = Object.keys(soundElements);
+    const numSounds = Math.floor(Math.random() * 3) + 1; // 1-3 sounds
+    
+    // Reset all checkboxes
+    Object.values(soundElements).forEach(sound => {
+        sound.checkbox.checked = false;
+        stopAudio(sound.checkbox.dataset.sound);
     });
     
-    // Select 2-4 random sounds
-    const allSounds = ['rain', 'birds', 'water', 'wind', 'whitenoise', 'thunder', 'bonfire', 'alpha'];
-    const shuffled = [...allSounds].sort(() => 0.5 - Math.random());
-    const selectedSounds = shuffled.slice(0, Math.floor(Math.random() * 3) + 2);
-    
-    // Play selected sounds at random volumes
-    selectedSounds.forEach(sound => {
-        const audio = state.audioElements[sound];
-        if (audio) {
-            // Generate random volume between 20 and 70
-            const volume = Math.floor(Math.random() * 50 + 20);
-            
-            // Update slider position and value display
-            const slider = document.querySelector(`.channel-slider[data-sound="${sound}"]`);
-            if (slider) {
-                slider.value = volume;
-                updateSliderValue(slider);
-            }
-            
-            const audioClone = new Audio(audio.src);
-            audioClone.loop = true;
-            audioClone.volume = volume / 100;
-            audioClone.play().catch(error => {
-                console.error(`Error playing ${sound}:`, error);
-            });
-            state.activeSounds[sound] = audioClone;
-        }
-    });
+    // Randomly select sounds
+    for (let i = 0; i < numSounds; i++) {
+        const randomIndex = Math.floor(Math.random() * sounds.length);
+        const sound = sounds[randomIndex];
+        soundElements[sound].checkbox.checked = true;
+        playAudio(sound);
+        sounds.splice(randomIndex, 1);
+    }
 }
 
 // Add this helper function if it doesn't exist
@@ -2057,4 +2416,71 @@ function onYouTubePlayerStateChange(event) {
     } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) {
         isYoutubePlaying = false;
     }
-} 
+}
+
+// Initialize sound mixer
+function initializeSoundMixer() {
+    const soundItems = document.querySelectorAll('.sound-item');
+    const masterVolumeSlider = document.getElementById('master-volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    const selectedSoundName = document.getElementById('selected-sound-name');
+
+    // Initialize sound elements
+    soundItems.forEach(item => {
+        const checkbox = item.querySelector('.sound-checkbox');
+        const soundName = checkbox.dataset.sound;
+        soundElements[soundName] = {
+            element: item,
+            checkbox: checkbox,
+            audio: null
+        };
+
+        // Click handler for sound item
+        item.addEventListener('click', (e) => {
+            if (e.target === checkbox) return; // Let checkbox handle its own click
+            
+            // Toggle selection
+            if (selectedSound === soundName) {
+                selectedSound = null;
+                item.classList.remove('selected');
+                selectedSoundName.textContent = 'Select a sound to adjust volume';
+                masterVolumeSlider.value = 50;
+                volumeValue.textContent = '50%';
+            } else {
+                // Remove selection from previous sound
+                if (selectedSound) {
+                    soundElements[selectedSound].element.classList.remove('selected');
+                }
+                
+                // Select new sound
+                selectedSound = soundName;
+                item.classList.add('selected');
+                selectedSoundName.textContent = soundName.charAt(0).toUpperCase() + soundName.slice(1);
+                masterVolumeSlider.value = soundVolumes[soundName];
+                volumeValue.textContent = `${soundVolumes[soundName]}%`;
+            }
+        });
+
+        // Checkbox change handler
+        checkbox.addEventListener('change', () => {
+            if (checkbox.checked) {
+                playAudio(soundName);
+            } else {
+                stopAudio(soundName);
+            }
+        });
+    });
+
+    // Master volume slider handler
+    masterVolumeSlider.addEventListener('input', () => {
+        const volume = parseInt(masterVolumeSlider.value);
+        volumeValue.textContent = `${volume}%`;
+        
+        if (selectedSound) {
+            soundVolumes[selectedSound] = volume;
+            if (soundElements[selectedSound].audio) {
+                soundElements[selectedSound].audio.volume = volume / 100;
+            }
+        }
+    });
+}
