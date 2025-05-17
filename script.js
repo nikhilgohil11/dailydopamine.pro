@@ -865,34 +865,8 @@ function setupEventListeners() {
     DOM.taskSearchInput.addEventListener('keydown', function(e) {
         // Check if Enter key was pressed
         if (e.key === 'Enter') {
-            const searchTerm = this.value.trim();
+            e.preventDefault(); // Prevent default form submission
             
-            // If search term is empty, do nothing
-            if (!searchTerm) return;
-            
-            // Count visible tasks after filtering
-            const visibleTasks = Array.from(DOM.taskList.querySelectorAll('li[data-id]'))
-                .filter(item => item.style.display !== 'none')
-                .length;
-            
-            // If no matching tasks found, open the create task modal and populate with search term
-            if (visibleTasks === 0) {
-                openCreateTaskModal();
-                
-                // Pre-fill the task name input with the search term
-                DOM.taskNameInput.value = searchTerm;
-                
-                // Clear the search input
-                this.value = '';
-                filterTaskList('');
-            }
-        }
-    });
-
-    // Add Enter key handler for search to create task
-    DOM.taskSearchInput.addEventListener('keydown', function(e) {
-        // Check if Enter key was pressed
-        if (e.key === 'Enter') {
             const searchTerm = this.value.trim();
             
             // If search term is empty, do nothing
