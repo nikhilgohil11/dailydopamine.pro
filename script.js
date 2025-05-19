@@ -1246,6 +1246,9 @@ function setActiveTask(taskId) {
     DOM.activeTaskName.textContent = task.name;
     DOM.timerDisplay.textContent = formatTime ? formatTime(task.duration * 60) : `${task.duration}:00`;
     
+    // Reset timer bar to full width
+    DOM.timerBar.style.width = '100%';
+    
     // Hide no task message and show active task view
     DOM.noTaskMessage.style.display = 'none';
     DOM.activeTaskDiv.style.display = 'block';
@@ -1614,8 +1617,9 @@ function startTimerInterval() {
 
         updateTimerDisplay();
 
+        // Update progress bar
         const percentage = Math.max(0, (state.remainingTime / totalSeconds) * 100);
-        DOM.timerBar.style.width = percentage + '%';
+        DOM.timerBar.style.width = `${percentage}%`;
 
         if (state.remainingTime <= 0) {
             clearInterval(state.timerInterval);
@@ -1980,15 +1984,12 @@ function updateTimerDisplay() {
     DOM.timerDisplay.textContent = 
         `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     
-    // Update circular progress
+    // Update progress bar
     const task = state.tasks.find(t => t.id === state.activeTaskId);
     if (task) {
         const totalSeconds = task.duration * 60;
-        const progress = ((totalSeconds - state.remainingTime) / totalSeconds) * 691.15; // 691.15 is the circumference (2 * PI * 110)
-        const timerBar = document.getElementById('timer-bar');
-        if (timerBar) {
-            timerBar.style.strokeDashoffset = 691.15 - progress;
-        }
+        const percentage = Math.max(0, (state.remainingTime / totalSeconds) * 100);
+        DOM.timerBar.style.width = `${percentage}%`;
     }
 }
 
@@ -2240,10 +2241,30 @@ function loadCompletionSound() {
 
 // Play completion sound
 function playCompletionSound() {
-    if (!completionSoundBuffer) return;
+    if (!completionSoundBuffer) {
+        console.warn('Completion sound buffer not loaded');
+        return;
+    }
     
-    initializeAudioContext();
+    // Initialize audio context if needed
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
     
+    // Resume audio context if suspended
+    if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+            playCompletionSoundInternal();
+        }).catch(error => {
+            console.error('Error resuming audio context:', error);
+        });
+    } else {
+        playCompletionSoundInternal();
+    }
+}
+
+// Internal function to play the completion sound
+function playCompletionSoundInternal() {
     const source = audioContext.createBufferSource();
     source.buffer = completionSoundBuffer;
     
@@ -2253,7 +2274,20 @@ function playCompletionSound() {
     source.connect(gainNode);
     gainNode.connect(audioContext.destination);
     
-    source.start(0);
+    // Store the source in state for potential cleanup
+    state.completionSound = source;
+    
+    // Add error handling
+    source.onerror = (error) => {
+        console.error('Error playing completion sound:', error);
+    };
+    
+    // Start the sound
+    try {
+        source.start(0);
+    } catch (error) {
+        console.error('Error starting completion sound:', error);
+    }
 }
 
 // Add this function to handle tab switching

@@ -130,7 +130,7 @@
                 <!-- Tasks will be inserted here by JavaScript -->
             </ul>
             <div id="empty-task-list" class="text-center py-8 text-gray-500 dark:text-gray-400 italic hidden flex-grow flex items-center justify-center">
-                <p>No tasks in queue</p>
+                <p>For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)] hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)] hover:underline">@VikasGohil2</a></p>
             </div>
         </div>
     </aside>
@@ -431,7 +431,6 @@
 
             <!-- Footer -->
             <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-4 px-6 text-center text-sm text-gray-600 dark:text-gray-400 mt-auto w-full">
-                 <p class="mb-2">For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)] hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)] hover:underline">@VikasGohil2</a></p>
                 <p class="text-xs">Data is stored locally in your browser.</p>
             </footer>
         </div>
@@ -487,13 +486,15 @@
         </div>
     </div>
 
+    <!-- Confetti Container -->
+    <div class="confetti-container fixed inset-0 pointer-events-none z-50"></div>
+
     <!-- Completion Modal -->
     <div id="completion-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
         <div class="modal bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full animate__animated animate__zoomIn">
             <div class="text-center mb-6">
                 <div class="celebration relative">
                     <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
-                    <div class="confetti-container absolute inset-0 pointer-events-none"></div>
                 </div>
                 <h3 class="text-2xl font-bold text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)]">Task Complete!</h3>
                 <p id="completed-task-name" class="text-lg mt-2 text-gray-700 dark:text-gray-300"></p>
