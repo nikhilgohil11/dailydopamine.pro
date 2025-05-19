@@ -494,16 +494,16 @@ function setupLocalMusicHandlers() {
     // Handle drag and drop
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropZone.classList.add('border-indigo-500', 'dark:border-indigo-400');
+        dropZone.classList.add('border-[rgb(2,4,3)]', 'dark:border-[rgb(2,4,3)]');
     });
 
     dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
+        dropZone.classList.remove('border-[rgb(2,4,3)]', 'dark:border-[rgb(2,4,3)]');
     });
 
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
-        dropZone.classList.remove('border-indigo-500', 'dark:border-indigo-400');
+        dropZone.classList.remove('border-[rgb(2,4,3)]', 'dark:border-[rgb(2,4,3)]');
         handleLocalMusicFiles(e.dataTransfer.files);
     });
 
@@ -1179,7 +1179,7 @@ function createTaskListItem(task, type) {
         li.classList.add('active');
     }
 
-    const soundIcon = task.sound !== 'none' ? `<i class="fas fa-music mr-1 text-indigo-400"></i>${findAudioName(task.sound)}` : '';
+    const soundIcon = task.sound !== 'none' ? `<i class="fas fa-music mr-1 text-[rgb(2,4,3)]"></i>${findAudioName(task.sound)}` : '';
     const durationInfo = type === 'queued' ? `<i class="far fa-clock mr-1"></i>${task.duration} min` : '';
 
     let statusIcon = '';
@@ -1197,7 +1197,7 @@ function createTaskListItem(task, type) {
             li.innerHTML = `
                 <div class="flex items-center justify-between">
             <div class="min-w-0 flex-1">
-                <h3 class="font-medium truncate ${task.id === state.activeTaskId ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-800 dark:text-gray-200'}">${task.name}</h3>
+                <h3 class="font-medium truncate ${task.id === state.activeTaskId ? 'text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)]' : 'text-gray-800 dark:text-gray-200'}">${task.name}</h3>
                 <div class="task-details flex items-center space-x-3 text-xs mt-1 text-gray-500 dark:text-gray-400">
                     ${statusIcon ? `<span>${statusIcon}${timestamp}</span>` : ''}
                     ${durationInfo ? `<span>${durationInfo}</span>` : ''}
@@ -2334,7 +2334,7 @@ function setupTabs() {
                 btn.classList.remove('active');
                 
                 // Remove active styling
-                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.remove('bg-[rgb(2,4,3)]', 'text-white');
                 
                 // Remove the indicator line by removing the after classes completely
                 btn.style.setProperty('--after-opacity', '0');
@@ -2344,7 +2344,7 @@ function setupTabs() {
             });
 
             // Set active styles for the clicked button
-            button.classList.add('active', 'bg-indigo-600', 'text-white');
+            button.classList.add('active', 'bg-[rgb(2,4,3)]', 'text-white');
             button.classList.remove('text-gray-600', 'dark:text-gray-300');
             
             // Show the indicator line
