@@ -1158,7 +1158,8 @@ function updateTaskList() {
     const hasAnyVisibleContent = hasVisibleQueuedTasks || hasVisibleCompletedTasks || hasVisibleCanceledTasks;
 
     if (!hasAnyTasks) {
-        DOM.emptyTaskList.innerHTML = `<p>No tasks yet!</p><p class="text-sm mt-1">Click the '+' to add one.</p>`;
+        DOM.emptyTaskList.innerHTML = `<p>No tasks yet!</p><p class="text-sm mt-1">Click the '+' to add one.</p>
+        <p>For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-[rgb(18, 105, 227)] dark:text-[rgb(3, 21, 111)] hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-[rgb(18, 105, 227)] dark:text-[rgb(3, 21, 111)] hover:underline">@VikasGohil2</a></p>`;
         DOM.emptyTaskList.classList.remove('hidden');
     } else if (!hasAnyVisibleContent && searchTerm) {
         DOM.emptyTaskList.innerHTML = `<p>No tasks found matching "${searchTerm}"</p>`;
