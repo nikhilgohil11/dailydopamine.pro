@@ -1811,35 +1811,37 @@ function createConfetti() {
 
 // Start the next task in the queue
 function startNextTask() {
-    // Stop completion sound if playing
+    // Stop completion sound if it's playing
     if (state.completionSound) {
-        state.completionSound.pause();
-        state.completionSound.currentTime = 0;
+        try {
+            state.completionSound.stop();
+        } catch (error) {
+            console.warn('Error stopping completion sound:', error);
+        }
         state.completionSound = null;
     }
     
     // Hide completion modal
     DOM.completionModal.classList.add('hidden');
     
-    // Check if there are tasks in the queue
-    if (state.tasks.length === 0) {
-        clearActiveTask();
-        return;
+    // Start next task in queue
+    const nextTask = state.tasks.find(task => !task.completed && !task.canceled);
+    if (nextTask) {
+        setActiveTask(nextTask.id);
+    } else {
+        showNoTaskMessage();
     }
-    
-    // Set the first task as active
-    setActiveTask(state.tasks[0].id);
-    
-    // Automatically start the task
-    startTask();
 }
 
 // Start a break timer
 function startBreak() {
-    // Stop completion sound if playing
+    // Stop completion sound if it's playing
     if (state.completionSound) {
-        state.completionSound.pause();
-        state.completionSound.currentTime = 0;
+        try {
+            state.completionSound.stop();
+        } catch (error) {
+            console.warn('Error stopping completion sound:', error);
+        }
         state.completionSound = null;
     }
     
@@ -1896,10 +1898,13 @@ function endBreak() {
 
 // End the current session
 function endSession() {
-    // Stop completion sound if playing
+    // Stop completion sound if it's playing
     if (state.completionSound) {
-        state.completionSound.pause();
-        state.completionSound.currentTime = 0;
+        try {
+            state.completionSound.stop();
+        } catch (error) {
+            console.warn('Error stopping completion sound:', error);
+        }
         state.completionSound = null;
     }
     
@@ -1908,6 +1913,13 @@ function endSession() {
     
     // Clear active task
     clearActiveTask();
+    
+    // Reset active task
+    state.activeTaskId = null;
+    showNoTaskMessage();
+    
+    // Update stats
+    updateStats();
 }
 
 // Toggle stats modal
