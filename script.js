@@ -1173,9 +1173,17 @@ function filterTaskList(searchTerm) {
 
 // Update the task list in the UI (Sidebar Version)
 function updateTaskList() {
-    DOM.taskList.innerHTML = ''; // Clear current list
+    // Check if task list element exists
+    if (!DOM.taskList) {
+        console.error('Task list element not found');
+        return;
+    }
 
-    const searchTerm = DOM.taskSearchInput.value.toLowerCase().trim();
+    // Clear current list
+    DOM.taskList.innerHTML = '';
+
+    // Get search term if search input exists
+    const searchTerm = DOM.taskSearchInput ? DOM.taskSearchInput.value.toLowerCase().trim() : '';
 
     let hasVisibleQueuedTasks = false;
     let hasVisibleCompletedTasks = false;
@@ -1184,9 +1192,11 @@ function updateTaskList() {
     // Add active tasks to the list
     state.tasks.forEach(task => {
         const li = createTaskListItem(task, 'queued');
-        DOM.taskList.appendChild(li);
-        if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-            hasVisibleQueuedTasks = true;
+        if (li) {
+            DOM.taskList.appendChild(li);
+            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                hasVisibleQueuedTasks = true;
+            }
         }
     });
 
@@ -1197,11 +1207,13 @@ function updateTaskList() {
         completedDivider.innerHTML = 'Completed Tasks';
         DOM.taskList.appendChild(completedDivider);
 
-        state.completedTasks.slice(0, 10).forEach(task => { // Show more completed tasks
+        state.completedTasks.slice(0, 5).forEach(task => {
             const li = createTaskListItem(task, 'completed');
-            DOM.taskList.appendChild(li);
-            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                hasVisibleCompletedTasks = true;
+            if (li) {
+                DOM.taskList.appendChild(li);
+                if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                    hasVisibleCompletedTasks = true;
+                }
             }
         });
     }
@@ -1215,29 +1227,22 @@ function updateTaskList() {
 
         state.canceledTasks.slice(0, 5).forEach(task => {
             const li = createTaskListItem(task, 'canceled');
-            DOM.taskList.appendChild(li);
-            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                hasVisibleCanceledTasks = true;
+            if (li) {
+                DOM.taskList.appendChild(li);
+                if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                    hasVisibleCanceledTasks = true;
+                }
             }
         });
     }
 
-    // Apply current search filter
-    filterTaskList(searchTerm);
-
-    // Show/hide overall empty state message
-    const hasAnyTasks = state.tasks.length > 0 || state.completedTasks.length > 0 || state.canceledTasks.length > 0;
-    const hasAnyVisibleContent = hasVisibleQueuedTasks || hasVisibleCompletedTasks || hasVisibleCanceledTasks;
-
-    if (!hasAnyTasks) {
-        DOM.emptyTaskList.innerHTML = `<p>No tasks yet!</p><p class="text-sm mt-1">Click the '+' to add one.</p>
-        <p>For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-[rgb(18, 105, 227)] dark:text-[rgb(3, 21, 111)] hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-[rgb(18, 105, 227)] dark:text-[rgb(3, 21, 111)] hover:underline">@VikasGohil2</a></p>`;
-        DOM.emptyTaskList.classList.remove('hidden');
-    } else if (!hasAnyVisibleContent && searchTerm) {
-        DOM.emptyTaskList.innerHTML = `<p>No tasks found matching "${searchTerm}"</p>`;
-        DOM.emptyTaskList.classList.remove('hidden');
-    } else {
-        DOM.emptyTaskList.classList.add('hidden');
+    // Update empty task list message visibility
+    if (DOM.emptyTaskList) {
+        if (state.tasks.length === 0 && state.completedTasks.length === 0 && state.canceledTasks.length === 0) {
+            DOM.emptyTaskList.classList.remove('hidden');
+        } else {
+            DOM.emptyTaskList.classList.add('hidden');
+        }
     }
 }
 
