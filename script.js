@@ -245,8 +245,10 @@ function initializeDOMElements() {
         
         // Stats elements
         statsButton: 'stats-button',
-        todayFocusTime: 'today-focus-time',
-        tasksCompleted: 'tasks-completed',
+        statsTodayFocusTime: 'today-focus-time',
+        statsTasksCompleted: 'tasks-completed',
+        statsMostUsedSound: 'most-used-sound',
+        statsRecentTasksList: 'recent-tasks-list',
         completedTaskName: 'completed-task-name'
     };
 
@@ -2024,54 +2026,59 @@ function toggleStatsModal() {
 
 // Update stats display
 function updateStats() {
-    DOM.statsTodayFocusTime.textContent = `${state.stats.todayFocusTime} minutes`;
-    DOM.statsTasksCompleted.textContent = `${state.stats.tasksCompleted} ${state.stats.tasksCompleted === 1 ? 'task' : 'tasks'}`;
+    // Check if stats elements exist before updating
+    if (DOM.statsTodayFocusTime) {
+        DOM.statsTodayFocusTime.textContent = `${state.stats.todayFocusTime} minutes`;
+    }
     
-    // Most used sound
-    let mostUsedSound = 'None';
-    let maxCount = 0;
+    if (DOM.statsTasksCompleted) {
+        DOM.statsTasksCompleted.textContent = `${state.stats.tasksCompleted} tasks`;
+    }
     
-    for (const [sound, count] of Object.entries(state.stats.soundUsage)) {
-        if (count > maxCount) {
-            maxCount = count;
-            mostUsedSound = findAudioName(sound);
+    if (DOM.statsMostUsedSound) {
+        // Find most used sound
+        let mostUsedSound = 'None';
+        let maxUsage = 0;
+        
+        for (const [sound, usage] of Object.entries(state.stats.soundUsage)) {
+            if (usage > maxUsage) {
+                maxUsage = usage;
+                mostUsedSound = findAudioName(sound);
+            }
+        }
+        
+        DOM.statsMostUsedSound.textContent = mostUsedSound;
+    }
+    
+    if (DOM.statsRecentTasksList) {
+        // Clear current list
+        DOM.statsRecentTasksList.innerHTML = '';
+        
+        // Add completed tasks
+        if (state.completedTasks.length === 0) {
+            const li = document.createElement('li');
+            li.className = 'py-3 text-gray-500 dark:text-gray-400 italic';
+            li.textContent = 'No completed tasks yet';
+            DOM.statsRecentTasksList.appendChild(li);
+        } else {
+            state.completedTasks.slice(0, 5).forEach(task => {
+                const li = document.createElement('li');
+                li.className = 'py-3';
+                
+                const date = new Date(task.completedAt);
+                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                li.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium">${task.name}</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400">${timeString}</span>
+                    </div>
+                `;
+                
+                DOM.statsRecentTasksList.appendChild(li);
+            });
         }
     }
-    
-    DOM.statsMostUsedSound.textContent = mostUsedSound;
-    
-    // Recent tasks
-    const recentTasksList = DOM.statsRecentTasksList;
-    recentTasksList.innerHTML = '';
-    
-    if (state.completedTasks.length === 0) {
-        recentTasksList.innerHTML = '<li class="py-3 text-gray-500 italic">No completed tasks yet</li>';
-        return;
-    }
-    
-    // Show last 5 completed tasks
-    state.completedTasks.slice(0, 5).forEach(task => {
-        const li = document.createElement('li');
-        li.className = 'py-3';
-        
-        const date = new Date(task.completedAt);
-        const formattedDate = date.toLocaleDateString();
-        const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        li.innerHTML = `
-            <div class="flex justify-between">
-                <div>
-                    <h4 class="font-medium">${task.name}</h4>
-                    <span class="text-sm text-gray-500">${task.duration} minutes</span>
-                </div>
-                <div class="text-right text-sm text-gray-500">
-                    ${formattedDate}<br>${formattedTime}
-                </div>
-            </div>
-        `;
-        
-        recentTasksList.appendChild(li);
-    });
 }
 
 // Helper function to format time for display
