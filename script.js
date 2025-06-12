@@ -2565,3 +2565,65 @@ function initializeSoundMixer() {
         }
     });
 }
+
+// Extend the current task
+function extendTask(minutes) {
+    if (!state.activeTaskId) return;
+    
+    const task = state.tasks.find(t => t.id === state.activeTaskId);
+    if (!task) return;
+    
+    // Add specified minutes to the task duration
+    task.duration += minutes;
+    
+    // Reset timer state
+    state.remainingTime = task.duration * 60;
+    state.isPaused = false;
+    
+    // Hide completion modal
+    DOM.completionModal.classList.add('hidden');
+    
+    // Show extension indicator
+    const indicator = document.getElementById('extension-indicator');
+    const amountSpan = document.getElementById('extension-amount');
+    amountSpan.textContent = minutes;
+    
+    // Animate indicator in
+    indicator.style.transform = 'translateY(0)';
+    indicator.style.opacity = '1';
+    
+    // Hide indicator after 3 seconds
+    setTimeout(() => {
+        indicator.style.transform = 'translateY(-100%)';
+        indicator.style.opacity = '0';
+    }, 3000);
+    
+    // Update UI
+    updateTimerDisplay();
+    
+    // Reset control buttons
+    DOM.startTaskButton.classList.remove('hidden');
+    DOM.pauseTaskButton.classList.add('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
+    
+    // Save state
+    saveToLocalStorage();
+    
+    // Start the extended task
+    startTask();
+}
+
+// Update event listeners in the initialization section
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing event listeners ...
+    
+    // Add extend task button listeners
+    document.querySelectorAll('.extend-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const minutes = parseInt(button.dataset.minutes);
+            extendTask(minutes);
+        });
+    });
+    
+    // ... rest of the initialization code ...
+});
