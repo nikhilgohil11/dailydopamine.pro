@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Accuracy Test</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <script src="js/timer.js"></script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6 text-center">Timer Accuracy Test</h1>
+        
+        <div class="space-y-4">
+            <div class="text-center">
+                <div id="timer" class="text-4xl font-mono mb-4">00:00</div>
+                <div id="systemTime" class="text-sm text-gray-600 dark:text-gray-400"></div>
+            </div>
+
+            <div class="flex justify-center space-x-4">
+                <button id="startBtn" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Start</button>
+                <button id="stopBtn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Stop</button>
+                <button id="resetBtn" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600">Reset</button>
+            </div>
+
+            <div class="mt-6 p-4 bg-gray-100 dark:bg-gray-700 rounded">
+                <h2 class="font-semibold mb-2">Test Instructions:</h2>
+                <ol class="list-decimal list-inside space-y-2 text-sm">
+                    <li>Start the timer</li>
+                    <li>Switch to another tab for 30 seconds</li>
+                    <li>Return and compare with system time</li>
+                    <li>Timer should remain accurate</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const timer = new Timer();
+        const timerDisplay = document.getElementById('timer');
+        const systemTimeDisplay = document.getElementById('systemTime');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Update timer display
+        timer.onTick((time) => {
+            timerDisplay.textContent = formatTime(time);
+        });
+
+        // Update system time display
+        function updateSystemTime() {
+            const now = new Date();
+            systemTimeDisplay.textContent = `System Time: ${now.toLocaleTimeString()}`;
+        }
+        setInterval(updateSystemTime, 1000);
+        updateSystemTime();
+
+        // Button handlers
+        startBtn.addEventListener('click', () => timer.start());
+        stopBtn.addEventListener('click', () => timer.stop());
+        resetBtn.addEventListener('click', () => timer.reset());
+    </script>
+</body>
+</html> 
