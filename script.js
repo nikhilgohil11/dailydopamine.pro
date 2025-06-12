@@ -315,6 +315,7 @@ function initializeDOMElements() {
 
 // Initialize the app
 function initializeApp() {
+    console.log('Initializing app...');
     try {
         // Initialize DOM elements
         initializeDOMElements();
@@ -344,6 +345,13 @@ function initializeApp() {
         const appContainer = document.getElementById('app-container');
         if (appContainer) {
             appContainer.classList.remove('hidden');
+        }
+
+        // Set active task if exists
+        if (state.activeTaskId) {
+            setActiveTask(state.activeTaskId);
+        } else {
+            clearActiveTask();
         }
     } catch (error) {
         console.error('Error initializing app:', error);
@@ -1468,29 +1476,41 @@ function clearActiveTask() {
     state.isPaused = false;
     state.remainingTime = 0;
     
-    // Clear timer display
-    DOM.timerDisplay.textContent = '00:00';
+    // Clear timer display if element exists
+    if (DOM.timerDisplay) {
+        DOM.timerDisplay.textContent = '00:00';
+    }
     
-    // Show no task message and hide active task view
-    DOM.noTaskMessage.style.display = 'block';
-    DOM.activeTaskDiv.style.display = 'none';
+    // Show no task message and hide active task view if elements exist
+    if (DOM.noTaskMessage && DOM.activeTaskDiv) {
+        DOM.noTaskMessage.style.display = 'block';
+        DOM.activeTaskDiv.style.display = 'none';
+    }
     
     // Update task list UI
-    document.querySelectorAll('.task-item').forEach(item => {
-        item.classList.remove('active');
-    });
+    if (DOM.taskList) {
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.classList.remove('active');
+        });
+    }
     
-    // Reset control buttons
-    DOM.startTaskButton.classList.remove('hidden');
-    DOM.pauseTaskButton.classList.add('hidden');
-    DOM.resumeTaskButton.classList.add('hidden');
+    // Reset control buttons if they exist
+    if (DOM.startTaskButton) {
+        DOM.startTaskButton.classList.remove('hidden');
+    }
+    if (DOM.pauseTaskButton) {
+        DOM.pauseTaskButton.classList.add('hidden');
+    }
+    if (DOM.resumeTaskButton) {
+        DOM.resumeTaskButton.classList.add('hidden');
+    }
     
     // Clear sound checkboxes
     document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
     
-    // Update volume display
+    // Update volume display if function exists
     if (typeof updateVolumeDisplay === 'function') {
         updateVolumeDisplay();
     }
