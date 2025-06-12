@@ -208,62 +208,61 @@ function updateVolumeDisplay() {
 
 // DOM Elements
 const DOM = {
-    loadingScreen: document.getElementById('loading-screen'),
-    loadingBar: document.getElementById('loading-bar'),
-    loadingText: document.getElementById('loading-text'),
-    appContainer: document.getElementById('app-container'),
-    sidebar: document.getElementById('sidebar'),
-    sidebarOverlay: document.getElementById('sidebar-overlay'),
-    menuToggle: document.getElementById('menu-toggle'),
-    addTaskButton: document.getElementById('add-task-button'),
-    createTaskFormContainer: document.getElementById('create-task-form-container'),
-    closeCreateTaskFormButton: document.getElementById('close-create-task-form'),
+    // Task form and inputs
     taskForm: document.getElementById('task-form'),
     taskNameInput: document.getElementById('task-name'),
     taskTimeInput: document.getElementById('task-time'),
     taskSoundInput: document.getElementById('task-sound'),
+    
+    // Task list and controls
     taskList: document.getElementById('task-list'),
-    emptyTaskList: document.getElementById('empty-task-list'),
-    taskSearchInput: document.getElementById('task-search'),
-    activeTaskContainer: document.getElementById('active-task-container'),
-    noTaskMessage: document.getElementById('no-task-message'),
-    activeTaskDiv: document.getElementById('active-task'),
-    activeTaskName: document.getElementById('active-task-name'),
-    timerDisplay: document.getElementById('timer-display'),
-    timerBar: document.getElementById('timer-bar'),
-    soundName: document.getElementById('sound-name'),
     startTaskButton: document.getElementById('start-task'),
     pauseTaskButton: document.getElementById('pause-task'),
     resumeTaskButton: document.getElementById('resume-task'),
     finishTaskButton: document.getElementById('finish-task'),
     cancelTaskButton: document.getElementById('cancel-task'),
-    completionModal: document.getElementById('completion-modal'),
-    completedTaskName: document.getElementById('completed-task-name'),
-    nextTaskButton: document.getElementById('next-task-button'),
-    takeBreakButton: document.getElementById('take-break-button'),
-    endSessionButton: document.getElementById('end-session-button'),
-    statsButton: document.getElementById('stats-button'),
-    statsButtonMobile: document.getElementById('stats-button-mobile'), // Added mobile stats button
-    statsModal: document.getElementById('stats-modal'),
-    closeStatsButton: document.getElementById('close-stats'),
-    statsTodayFocusTime: document.getElementById('today-focus-time'),
-    statsTasksCompleted: document.getElementById('tasks-completed'),
-    statsMostUsedSound: document.getElementById('most-used-sound'),
-    statsRecentTasksList: document.getElementById('recent-tasks-list'),
-    breakModal: document.getElementById('break-modal'),
-    breakTimer: document.getElementById('break-timer'),
-    endBreakButton: document.getElementById('end-break-button'),
-    volumeControl: document.getElementById('master-volume-slider'),
-    volumeDownButton: document.getElementById('volume-down'),
-    volumeUpButton: document.getElementById('volume-up'),
-    muteButton: document.getElementById('mute-button'),
-    themeToggleButton: document.getElementById('theme-toggle'), // Main theme toggle
-    themeToggleButtonMobile: document.getElementById('theme-toggle-mobile'), // Mobile theme toggle
     
-    // Sound mixer elements
+    // Active task display
+    activeTaskDiv: document.getElementById('active-task'),
+    activeTaskName: document.getElementById('active-task-name'),
+    timerDisplay: document.getElementById('timer'),
+    timerBar: document.getElementById('timer-bar'),
+    noTaskMessage: document.getElementById('no-task-message'),
+    
+    // Modals
+    completionModal: document.getElementById('completion-modal'),
+    breakModal: document.getElementById('break-modal'),
+    statsModal: document.getElementById('stats-modal'),
+    
+    // Modal buttons
+    nextTaskButton: document.getElementById('next-task-btn'),
+    breakButton: document.getElementById('break-btn'),
+    endSessionButton: document.getElementById('end-session-btn'),
+    
+    // Stats elements
+    statsButton: document.getElementById('stats-button'),
+    todayFocusTime: document.getElementById('today-focus-time'),
+    tasksCompleted: document.getElementById('tasks-completed'),
+    completedTaskName: document.getElementById('completed-task-name'),
+    
+    // Sound controls
+    soundMixer: document.getElementById('sound-mixer'),
     masterVolumeSlider: document.getElementById('master-volume-slider'),
     volumeValue: document.getElementById('volume-value'),
-    selectedSoundName: document.getElementById('selected-sound-name')
+    
+    // Local files
+    localFilesList: document.getElementById('local-files-list'),
+    uploadButton: document.getElementById('upload-button'),
+    fileInput: document.getElementById('file-input'),
+    
+    // YouTube
+    youtubeSearchForm: document.getElementById('youtube-search-form'),
+    youtubeResults: document.getElementById('youtube-results'),
+    
+    // Sidebar
+    sidebar: document.getElementById('sidebar'),
+    menuToggle: document.getElementById('menu-toggle'),
+    sidebarOverlay: document.getElementById('sidebar-overlay')
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -829,117 +828,98 @@ function setGlobalVolume(volume) {
 
 // Set up all event listeners
 function setupEventListeners() {
-    // Task form submission (inside modal now)
-    DOM.taskForm.addEventListener('submit', handleTaskFormSubmit);
-    
-    // Timer control buttons
-    DOM.startTaskButton.addEventListener('click', startTask);
-    DOM.pauseTaskButton.addEventListener('click', pauseTask);
-    DOM.resumeTaskButton.addEventListener('click', resumeTask);
-    DOM.finishTaskButton.addEventListener('click', finishTask);
-    DOM.cancelTaskButton.addEventListener('click', cancelTask);
-    
-    // Completion modal buttons
-    DOM.nextTaskButton.addEventListener('click', startNextTask);
-    DOM.takeBreakButton.addEventListener('click', startBreak);
-    DOM.endSessionButton.addEventListener('click', endSession);
-    
-    // Break modal button
-    DOM.endBreakButton.addEventListener('click', endBreak);
-    
-    // Stats modal
-    DOM.statsButton.addEventListener('click', toggleStatsModal);
-    DOM.statsButtonMobile.addEventListener('click', toggleStatsModal); // Mobile stats button
-    DOM.closeStatsButton.addEventListener('click', toggleStatsModal);
-    
-    // Audio controls
-    DOM.volumeControl.addEventListener('input', adjustVolume);
-    DOM.volumeUpButton.addEventListener('click', increaseVolume);
-    DOM.volumeDownButton.addEventListener('click', decreaseVolume);
-    DOM.muteButton.addEventListener('click', toggleMute);
-    
-    // Task search
-    DOM.taskSearchInput.addEventListener('input', handleSearchInput);
-    
-    // Add Enter key handler for search to create task
-    DOM.taskSearchInput.addEventListener('keydown', function(e) {
-        // Check if Enter key was pressed
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Prevent default form submission
-            
-            const searchTerm = this.value.trim();
-            
-            // If search term is empty, do nothing
-            if (!searchTerm) return;
-            
-            // Count visible tasks after filtering
-            const visibleTasks = Array.from(DOM.taskList.querySelectorAll('li[data-id]'))
-                .filter(item => item.style.display !== 'none')
-                .length;
-            
-            // If no matching tasks found, open the create task modal and populate with search term
-            if (visibleTasks === 0) {
-                // Store the search term for later use
-                const storedSearchTerm = searchTerm;
-                
-                // Clear the search input first
-                this.value = '';
-                filterTaskList('');
-                
-                // Open the task creation modal (this will reset the form)
-                openCreateTaskModal();
-                
-                // Use setTimeout to ensure the task name is set after the form is reset
-                setTimeout(() => {
-                    // Now set the task name input field value
-                    DOM.taskNameInput.value = storedSearchTerm;
-                }, 0);
-            }
-        }
-    });
-
-    // --- New Listeners for Sidebar and Modals ---
-
-    // Sidebar toggle (mobile)
-    DOM.menuToggle.addEventListener('click', toggleSidebar);
-    DOM.sidebarOverlay.addEventListener('click', toggleSidebar); // Close sidebar on overlay click
-
-    // Create Task Modal
-    DOM.addTaskButton.addEventListener('click', openCreateTaskModal);
-    DOM.closeCreateTaskFormButton.addEventListener('click', closeCreateTaskModal);
-    // Close modal if clicking outside the form container
-    DOM.createTaskFormContainer.addEventListener('click', (e) => {
-        if (e.target === DOM.createTaskFormContainer) {
-            closeCreateTaskModal();
-        }
-    });
-
-    // Delegate task list events (start/delete)
-    DOM.taskList.addEventListener('click', handleTaskListClick);
-
-    // Add event listener for the "Start now" button
-    document.getElementById('add-first-task')?.addEventListener('click', () => {
-        openCreateTaskModal();
-    });
-
-    // Add task header buttons
-    document.getElementById('add-task-header')?.addEventListener('click', openCreateTaskModal);
-    document.getElementById('add-task-header-mobile')?.addEventListener('click', openCreateTaskModal);
-
-    // Add event listener for local music slider
-    const localMusicSlider = document.querySelector('.channel-slider[data-sound="local-music"]');
-    if (localMusicSlider) {
-        localMusicSlider.addEventListener('input', function() {
-            const volume = parseInt(this.value) / 100;
-            if (localMusicPlayer) {
-                localMusicPlayer.volume = volume;
-                updateSliderValue(this);
-            }
-        });
+    // Task form
+    if (DOM.taskForm) {
+        DOM.taskForm.addEventListener('submit', handleTaskFormSubmit);
     }
 
-    // Initialize sound mixer
-    initializeSoundMixer();
+    // Task list
+    if (DOM.taskList) {
+        DOM.taskList.addEventListener('click', handleTaskListClick);
+    }
+
+    // Control buttons
+    if (DOM.startTaskButton) {
+        DOM.startTaskButton.addEventListener('click', startTask);
+    }
+    if (DOM.pauseTaskButton) {
+        DOM.pauseTaskButton.addEventListener('click', pauseTask);
+    }
+    if (DOM.resumeTaskButton) {
+        DOM.resumeTaskButton.addEventListener('click', resumeTask);
+    }
+    if (DOM.finishTaskButton) {
+        DOM.finishTaskButton.addEventListener('click', finishTask);
+    }
+    if (DOM.cancelTaskButton) {
+        DOM.cancelTaskButton.addEventListener('click', cancelTask);
+    }
+
+    // Modal buttons
+    if (DOM.nextTaskButton) {
+        DOM.nextTaskButton.addEventListener('click', startNextTask);
+    }
+    if (DOM.breakButton) {
+        DOM.breakButton.addEventListener('click', startBreak);
+    }
+    if (DOM.endSessionButton) {
+        DOM.endSessionButton.addEventListener('click', endSession);
+    }
+
+    // Add extend task button listeners
+    document.querySelectorAll('.extend-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const minutes = parseInt(button.dataset.minutes);
+            extendTask(minutes);
+        });
+    });
+
+    // Sound mixer controls
+    if (DOM.soundMixer) {
+        DOM.soundMixer.addEventListener('input', handleSoundMixerInput);
+    }
+
+    // Local files controls
+    if (DOM.localFilesList) {
+        DOM.localFilesList.addEventListener('click', handleLocalFileClick);
+    }
+    if (DOM.uploadButton) {
+        DOM.uploadButton.addEventListener('click', () => DOM.fileInput.click());
+    }
+    if (DOM.fileInput) {
+        DOM.fileInput.addEventListener('change', handleFileUpload);
+    }
+
+    // YouTube controls
+    if (DOM.youtubeSearchForm) {
+        DOM.youtubeSearchForm.addEventListener('submit', handleYouTubeSearch);
+    }
+    if (DOM.youtubeResults) {
+        DOM.youtubeResults.addEventListener('click', handleYouTubeResultClick);
+    }
+
+    // Stats button
+    if (DOM.statsButton) {
+        DOM.statsButton.addEventListener('click', toggleStatsModal);
+    }
+
+    // Close modal buttons
+    document.querySelectorAll('.close-modal').forEach(button => {
+        button.addEventListener('click', () => {
+            const modal = button.closest('.modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        });
+    });
+
+    // Tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const tab = button.dataset.tab;
+            switchTab(tab);
+        });
+    });
 }
 
 // --- Sidebar and Modal Functions ---
@@ -1529,14 +1509,20 @@ function startTask() {
 
 // Pause the active task
 function pauseTask() {
-    if (!state.timerInterval) return;
+    if (!state.activeTaskId) return;
     
-    clearInterval(state.timerInterval);
-    state.timerInterval = null;
+    // Clear the timer interval first
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+    }
+    
+    // Update state
     state.isPaused = true;
+    state.timerRunning = false;
     
     // Pause audio based on active tab
-    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+    const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
     
     if (activeTab === 'sound-mixer') {
         pauseAudio();
@@ -1549,71 +1535,78 @@ function pauseTask() {
     // Update UI
     DOM.pauseTaskButton.classList.add('hidden');
     DOM.resumeTaskButton.classList.remove('hidden');
+    
+    // Save state
+    saveToLocalStorage();
+    
+    // Log for debugging
+    console.log('Task paused:', {
+        remainingTime: state.remainingTime,
+        isPaused: state.isPaused,
+        timerRunning: state.timerRunning
+    });
 }
 
 // Resume the paused task
 function resumeTask() {
-    if (!state.isPaused) return;
+    if (!state.activeTaskId || !state.isPaused) return;
+    
+    // Update state
+    state.isPaused = false;
+    state.timerRunning = true;
     
     // Resume audio based on active tab
-    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+    const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
     
     if (activeTab === 'sound-mixer') {
-        const task = state.tasks.find(t => t.id === state.activeTaskId);
-        if (task && task.sound !== 'none') {
-            // Reset all sliders first
-            document.querySelectorAll('.channel-slider').forEach(slider => {
-                slider.value = 0;
-                updateSliderValue(slider);
-            });
-            
-            // Play the task's sound
-            playAudio(task.sound);
-            
-            // If we have stored slider values, restore them
-            if (soundMixerState.sliderValues) {
-                Object.entries(soundMixerState.sliderValues).forEach(([soundId, value]) => {
-                    const slider = document.querySelector(`.channel-slider[data-sound="${soundId}"]`);
-                    if (slider) {
-                        slider.value = value;
-                        updateSliderValue(slider);
-                    }
-                });
-            }
-        }
-    } else if (activeTab === 'local-files') {
-        if (localMusicPlayer) {
-            // If local music was playing before pause, resume it
-            if (isLocalMusicPlaying) {
-                localMusicPlayer.play().catch(error => {
-                    console.error('Error resuming local music:', error);
-                });
-            } else {
-                // If no local music was playing, start playing the first file
-                playLocalMusic(0);
-            }
-        }
+        resumeAudio();
+    } else if (activeTab === 'local-files' && localMusicPlayer && isLocalMusicPlaying) {
+        localMusicPlayer.play().catch(error => {
+            console.error('Error resuming local music:', error);
+        });
     } else if (activeTab === 'youtube' && youtubePlayer && isYoutubePlaying) {
         youtubePlayer.playVideo();
     }
     
     // Update UI
-    DOM.resumeTaskButton.classList.add('hidden');
     DOM.pauseTaskButton.classList.remove('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
     
-    // Restart the timer interval
+    // Start the timer interval
     startTimerInterval();
+    
+    // Save state
+    saveToLocalStorage();
+    
+    // Log for debugging
+    console.log('Task resumed:', {
+        remainingTime: state.remainingTime,
+        isPaused: state.isPaused,
+        timerRunning: state.timerRunning
+    });
 }
 
 // Refactor timer start logic into its own function
 function startTimerInterval() {
-    if (state.timerInterval) clearInterval(state.timerInterval); // Clear existing interval if any
+    // Clear any existing interval first
+    if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+    }
 
     const task = state.tasks.find(t => t.id === state.activeTaskId);
     if (!task) return;
+    
     const totalSeconds = task.duration * 60;
 
     state.timerInterval = setInterval(() => {
+        // Double-check pause state
+        if (state.isPaused) {
+            clearInterval(state.timerInterval);
+            state.timerInterval = null;
+            return;
+        }
+
         state.remainingTime--;
 
         updateTimerDisplay();
@@ -1624,6 +1617,7 @@ function startTimerInterval() {
 
         if (state.remainingTime <= 0) {
             clearInterval(state.timerInterval);
+            state.timerInterval = null;
             completeTask();
         }
     }, 1000);
@@ -2626,4 +2620,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // ... rest of the initialization code ...
+});
+
+// Add visibility change handler to pause when tab is hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && state.timerRunning && !state.isPaused) {
+        pauseTask();
+    }
 });
