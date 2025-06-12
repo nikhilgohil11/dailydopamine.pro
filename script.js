@@ -207,98 +207,190 @@ function updateVolumeDisplay() {
 }
 
 // DOM Elements
-const DOM = {
-    // Task form and inputs
-    taskForm: document.getElementById('task-form'),
-    taskNameInput: document.getElementById('task-name'),
-    taskTimeInput: document.getElementById('task-time'),
-    taskSoundInput: document.getElementById('task-sound'),
-    
-    // Task list and controls
-    taskList: document.getElementById('task-list'),
-    startTaskButton: document.getElementById('start-task'),
-    pauseTaskButton: document.getElementById('pause-task'),
-    resumeTaskButton: document.getElementById('resume-task'),
-    finishTaskButton: document.getElementById('finish-task'),
-    cancelTaskButton: document.getElementById('cancel-task'),
-    
-    // Active task display
-    activeTaskDiv: document.getElementById('active-task'),
-    activeTaskName: document.getElementById('active-task-name'),
-    timerDisplay: document.getElementById('timer'),
-    timerBar: document.getElementById('timer-bar'),
-    noTaskMessage: document.getElementById('no-task-message'),
-    
-    // Modals
-    completionModal: document.getElementById('completion-modal'),
-    breakModal: document.getElementById('break-modal'),
-    statsModal: document.getElementById('stats-modal'),
-    
-    // Modal buttons
-    nextTaskButton: document.getElementById('next-task-btn'),
-    breakButton: document.getElementById('break-btn'),
-    endSessionButton: document.getElementById('end-session-btn'),
-    
-    // Stats elements
-    statsButton: document.getElementById('stats-button'),
-    todayFocusTime: document.getElementById('today-focus-time'),
-    tasksCompleted: document.getElementById('tasks-completed'),
-    completedTaskName: document.getElementById('completed-task-name'),
-    
-    // Sound controls
-    soundMixer: document.getElementById('sound-mixer'),
-    masterVolumeSlider: document.getElementById('master-volume-slider'),
-    volumeValue: document.getElementById('volume-value'),
-    
-    // Local files
-    localFilesList: document.getElementById('local-files-list'),
-    uploadButton: document.getElementById('upload-button'),
-    fileInput: document.getElementById('file-input'),
-    
-    // YouTube
-    youtubeSearchForm: document.getElementById('youtube-search-form'),
-    youtubeResults: document.getElementById('youtube-results'),
-    
-    // Sidebar
-    sidebar: document.getElementById('sidebar'),
-    menuToggle: document.getElementById('menu-toggle'),
-    sidebarOverlay: document.getElementById('sidebar-overlay')
-};
+const DOM = {};
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM Content Loaded');
-    
-    // Ensure all required DOM elements exist
-    if (!DOM.loadingScreen || !DOM.loadingBar || !DOM.loadingText || !DOM.appContainer) {
-        console.error('Required DOM elements not found');
-        // If critical elements are missing, show the app anyway
-        document.getElementById('app-container')?.classList.remove('hidden');
-        return;
-    }
-    
-    // Initialize the task views - make sure only one is visible
-    if (DOM.noTaskMessage && DOM.activeTaskDiv) {
-        // Default state: show no task message, hide active task view
-        DOM.noTaskMessage.style.display = 'block';
-        DOM.activeTaskDiv.style.display = 'none';
-    }
-    
-    // Initialize the app
-    initializeApp();
-    
-    // Preload audio files
-    preloadAudioFiles();
+// Initialize DOM elements with error handling
+function initializeDOMElements() {
+    const requiredElements = {
+        // Task form and inputs
+        taskForm: 'task-form',
+        taskNameInput: 'task-name',
+        taskTimeInput: 'task-time',
+        taskSoundInput: 'task-sound',
+        
+        // Task list and controls
+        taskList: 'task-list',
+        startTaskButton: 'start-task',
+        pauseTaskButton: 'pause-task',
+        resumeTaskButton: 'resume-task',
+        finishTaskButton: 'finish-task',
+        cancelTaskButton: 'cancel-task',
+        
+        // Active task display
+        activeTaskDiv: 'active-task',
+        activeTaskName: 'active-task-name',
+        timerDisplay: 'timer-display',
+        timerBar: 'timer-bar',
+        noTaskMessage: 'no-task-message',
+        
+        // Modals
+        completionModal: 'completion-modal',
+        breakModal: 'break-modal',
+        statsModal: 'stats-modal',
+        
+        // Modal buttons
+        nextTaskButton: 'next-task-btn',
+        breakButton: 'break-btn',
+        endSessionButton: 'end-session-btn',
+        
+        // Stats elements
+        statsButton: 'stats-button',
+        todayFocusTime: 'today-focus-time',
+        tasksCompleted: 'tasks-completed',
+        completedTaskName: 'completed-task-name'
+    };
 
-    initializeAudioContext();
-    loadCompletionSound();
+    const missingElements = [];
     
-    // Add visibility change listener to handle audio context
-    document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            initializeAudioContext();
+    // Initialize required elements
+    for (const [key, id] of Object.entries(requiredElements)) {
+        const element = document.getElementById(id);
+        if (!element) {
+            missingElements.push(id);
+            console.error(`Required element not found: ${id}`);
         }
-    });
-});
+        DOM[key] = element;
+    }
+
+    // Initialize optional elements
+    const optionalElements = {
+        // Loading screen
+        loadingScreen: 'loading-screen',
+        loadingBar: 'loading-bar',
+        loadingText: 'loading-text',
+        
+        // Sidebar
+        sidebar: 'sidebar',
+        sidebarOverlay: 'sidebar-overlay',
+        menuToggle: 'menu-toggle',
+        addTaskButton: 'add-task-button',
+        createTaskFormContainer: 'create-task-form-container',
+        closeCreateTaskFormButton: 'close-create-task-form',
+        
+        // Task search
+        taskSearchInput: 'task-search',
+        emptyTaskList: 'empty-task-list',
+        
+        // Sound controls
+        soundMixer: 'sound-mixer-tab',
+        masterVolumeSlider: 'master-volume-slider',
+        volumeValue: 'volume-value',
+        volumeDownButton: 'volume-down',
+        volumeUpButton: 'volume-up',
+        muteButton: 'mute-button',
+        
+        // Local files
+        localFilesList: 'local-files-tab',
+        uploadButton: 'upload-button',
+        fileInput: 'file-input',
+        
+        // YouTube
+        youtubeSearchForm: 'youtube-search-form',
+        youtubeResults: 'youtube-results'
+    };
+
+    for (const [key, id] of Object.entries(optionalElements)) {
+        const element = document.getElementById(id);
+        if (element) {
+            DOM[key] = element;
+        }
+    }
+
+    if (missingElements.length > 0) {
+        throw new Error(`Missing required elements: ${missingElements.join(', ')}`);
+    }
+}
+
+// Initialize the app
+function initializeApp() {
+    try {
+        // Initialize DOM elements
+        initializeDOMElements();
+        
+        // Load state from localStorage
+        loadFromLocalStorage();
+        
+        // Initialize audio context
+        initializeAudioContext();
+        
+        // Load audio files
+        loadAudioFiles();
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Update UI
+        updateTaskList();
+        updateStats();
+        
+        // Hide loading screen
+        if (DOM.loadingScreen) {
+            DOM.loadingScreen.classList.add('hidden');
+        }
+        
+        // Show app container
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) {
+            appContainer.classList.remove('hidden');
+        }
+    } catch (error) {
+        console.error('Error initializing app:', error);
+        // Show error message to user
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+            loadingScreen.innerHTML = `
+                <div class="text-white text-center">
+                    <h2 class="text-2xl font-bold mb-4">Error Loading App</h2>
+                    <p class="mb-4">${error.message}</p>
+                    <button onclick="window.location.reload()" class="bg-white text-[rgb(2,4,3)] px-4 py-2 rounded-lg hover:bg-gray-100 transition">
+                        Refresh Page
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Show error message to user
+function showError(message) {
+    const loadingScreen = document.getElementById('loading-screen');
+    if (loadingScreen) {
+        loadingScreen.innerHTML = `
+            <div class="text-center">
+                <p class="text-red-500 mb-4">${message}</p>
+                <button onclick="window.location.reload()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Refresh Page
+                </button>
+            </div>
+        `;
+    } else {
+        // If loading screen doesn't exist, create an error message in the body
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50';
+        errorDiv.innerHTML = `
+            <div class="text-center p-6">
+                <p class="text-red-500 mb-4">${message}</p>
+                <button onclick="window.location.reload()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Refresh Page
+                </button>
+            </div>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+}
 
 // Preload all audio files before showing the app
 function preloadAudioFiles() {
