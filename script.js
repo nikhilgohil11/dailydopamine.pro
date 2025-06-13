@@ -25,6 +25,8 @@ const state = {
     timerInterval: null,
     isPaused: false,
     remainingTime: 0,
+    timerStart: null, // <-- add this
+    timerPausedAt: null, // <-- add this
     breakTimerInterval: null,
     soundPreferences: {},
     stats: {
@@ -1266,6 +1268,8 @@ function setActiveTask(taskId) {
     state.timerRunning = false;
     state.isPaused = false;
     state.remainingTime = task.duration * 60;
+    state.timerStart = null; // <-- reset
+    state.timerPausedAt = null; // <-- reset
     
     // Update timer display
     updateTimerDisplay();
@@ -1388,6 +1392,8 @@ function clearActiveTask() {
     state.timerRunning = false;
     state.isPaused = false;
     state.remainingTime = 0;
+    state.timerStart = null;
+    state.timerPausedAt = null;
     
     // Clear timer display
     DOM.timerDisplay.textContent = '00:00';
@@ -1455,7 +1461,16 @@ function startTask() {
     // Reset timer if needed
     if (!state.isPaused) {
         state.remainingTime = task.duration * 60;
+        state.timerStart = Date.now(); // <-- set start time
+        state.timerPausedAt = null;
         updateTimerDisplay();
+    } else {
+        // If resuming from pause, adjust timerStart
+        if (state.timerPausedAt && state.timerStart) {
+            const pausedDuration = Date.now() - state.timerPausedAt;
+            state.timerStart += pausedDuration;
+            state.timerPausedAt = null;
+        }
     }
     
     // Get the active tab
@@ -1534,6 +1549,7 @@ function pauseTask() {
     clearInterval(state.timerInterval);
     state.timerInterval = null;
     state.isPaused = true;
+    state.timerPausedAt = Date.now(); // <-- record pause time
     
     // Pause audio based on active tab
     const activeTab = document.querySelector('.tab-button.active').dataset.tab;
@@ -1601,7 +1617,13 @@ function resumeTask() {
     DOM.resumeTaskButton.classList.add('hidden');
     DOM.pauseTaskButton.classList.remove('hidden');
     
-    // Restart the timer interval
+    // Adjust timerStart to account for pause duration
+    if (state.timerPausedAt && state.timerStart) {
+        const pausedDuration = Date.now() - state.timerPausedAt;
+        state.timerStart += pausedDuration;
+        state.timerPausedAt = null;
+    }
+    state.isPaused = false;
     startTimerInterval();
 }
 
@@ -1614,14 +1636,11 @@ function startTimerInterval() {
     const totalSeconds = task.duration * 60;
 
     state.timerInterval = setInterval(() => {
-        state.remainingTime--;
-
+        // Calculate remaining time based on system time
+        if (!state.timerStart) return;
+        const elapsed = Math.floor((Date.now() - state.timerStart) / 1000);
+        state.remainingTime = Math.max(0, totalSeconds - elapsed);
         updateTimerDisplay();
-
-        // Update progress bar
-        const percentage = Math.max(0, (state.remainingTime / totalSeconds) * 100);
-        DOM.timerBar.style.width = `${percentage}%`;
-
         if (state.remainingTime <= 0) {
             clearInterval(state.timerInterval);
             completeTask();
@@ -1992,15 +2011,17 @@ function formatTime(seconds) {
 
 // Update timer display
 function updateTimerDisplay() {
+    // Use system time-based remainingTime
+    const task = state.tasks.find(t => t.id === state.activeTaskId);
+    let totalSeconds = task ? task.duration * 60 : 0;
+    if (state.timerStart && !state.isPaused) {
+        const elapsed = Math.floor((Date.now() - state.timerStart) / 1000);
+        state.remainingTime = Math.max(0, totalSeconds - elapsed);
+    }
     const minutes = Math.floor(state.remainingTime / 60);
     const seconds = state.remainingTime % 60;
-    DOM.timerDisplay.textContent = 
-        `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-    
-    // Update progress bar
-    const task = state.tasks.find(t => t.id === state.activeTaskId);
+    DOM.timerDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     if (task) {
-        const totalSeconds = task.duration * 60;
         const percentage = Math.max(0, (state.remainingTime / totalSeconds) * 100);
         DOM.timerBar.style.width = `${percentage}%`;
     }
