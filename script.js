@@ -265,7 +265,12 @@ const DOM = {
     // Sound mixer elements
     masterVolumeSlider: document.getElementById('master-volume-slider'),
     volumeValue: document.getElementById('volume-value'),
-    selectedSoundName: document.getElementById('selected-sound-name')
+    selectedSoundName: document.getElementById('selected-sound-name'),
+    // Add to DOM object for easy access
+    add5MinButton: document.getElementById('add-5min'),
+    add10MinButton: document.getElementById('add-10min'),
+    add15MinButton: document.getElementById('add-15min'),
+    add25MinButton: document.getElementById('add-25min')
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -845,6 +850,11 @@ function setupEventListeners() {
     DOM.nextTaskButton.addEventListener('click', startNextTask);
     DOM.takeBreakButton.addEventListener('click', startBreak);
     DOM.endSessionButton.addEventListener('click', endSession);
+    // Add Time buttons
+    if (DOM.add5MinButton) DOM.add5MinButton.addEventListener('click', () => continueTaskWithExtraTime(5));
+    if (DOM.add10MinButton) DOM.add10MinButton.addEventListener('click', () => continueTaskWithExtraTime(10));
+    if (DOM.add15MinButton) DOM.add15MinButton.addEventListener('click', () => continueTaskWithExtraTime(15));
+    if (DOM.add25MinButton) DOM.add25MinButton.addEventListener('click', () => continueTaskWithExtraTime(25));
     
     // Break modal button
     DOM.endBreakButton.addEventListener('click', endBreak);
@@ -909,12 +919,6 @@ function setupEventListeners() {
     // Create Task Modal
     DOM.addTaskButton.addEventListener('click', openCreateTaskModal);
     DOM.closeCreateTaskFormButton.addEventListener('click', closeCreateTaskModal);
-    // Close modal if clicking outside the form container
-    DOM.createTaskFormContainer.addEventListener('click', (e) => {
-        if (e.target === DOM.createTaskFormContainer) {
-            closeCreateTaskModal();
-        }
-    });
 
     // Delegate task list events (start/delete)
     DOM.taskList.addEventListener('click', handleTaskListClick);
@@ -2585,4 +2589,31 @@ function initializeSoundMixer() {
             }
         }
     });
+}
+
+function continueTaskWithExtraTime(minutes) {
+    // Find the just-completed task (top of completedTasks)
+    const lastCompleted = state.completedTasks[0];
+    if (!lastCompleted) return;
+    // Remove from completedTasks
+    state.completedTasks.shift();
+    // Add back to tasks and set as active
+    const newTask = { ...lastCompleted };
+    // Remove completedAt property
+    delete newTask.completedAt;
+    // Set duration to ONLY the selected minutes (replace previous duration)
+    newTask.duration = minutes;
+    // Set as active
+    state.tasks.unshift(newTask);
+    state.activeTaskId = newTask.id;
+    state.isPaused = false;
+    state.remainingTime = minutes * 60;
+    state.timerStart = Date.now();
+    state.timerPausedAt = null;
+    // Hide completion modal, show active task UI
+    DOM.completionModal.classList.add('hidden');
+    setActiveTask(newTask.id);
+    startTask();
+    updateTaskList();
+    saveToLocalStorage();
 }
