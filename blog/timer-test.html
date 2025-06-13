@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer Accuracy Test</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+    <script src="js/timer.js"></script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen flex flex-col items-center justify-center p-4">
     <div class="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
@@ -34,48 +35,31 @@
         </div>
     </div>
 
-    <!-- Load timer.js first -->
-    <script src="js/timer.js"></script>
-    
-    <!-- Then initialize the timer functionality -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const timer = new Timer();
-            const timerDisplay = document.getElementById('timer');
-            const systemTimeDisplay = document.getElementById('systemTime');
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            const resetBtn = document.getElementById('resetBtn');
+        const timer = new Timer();
+        const timerDisplay = document.getElementById('timer');
+        const systemTimeDisplay = document.getElementById('systemTime');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
 
-            // Update timer display
-            timer.onTick((time) => {
-                timerDisplay.textContent = formatTime(time);
-            });
-
-            // Update system time display
-            function updateSystemTime() {
-                const now = new Date();
-                systemTimeDisplay.textContent = `System Time: ${now.toLocaleTimeString()}`;
-            }
-            setInterval(updateSystemTime, 1000);
-            updateSystemTime();
-
-            // Button handlers with console logs for debugging
-            startBtn.addEventListener('click', () => {
-                console.log('Start button clicked');
-                timer.start();
-            });
-            
-            stopBtn.addEventListener('click', () => {
-                console.log('Stop button clicked');
-                timer.stop();
-            });
-            
-            resetBtn.addEventListener('click', () => {
-                console.log('Reset button clicked');
-                timer.reset();
-            });
+        // Update timer display
+        timer.onTick((time) => {
+            timerDisplay.textContent = formatTime(time);
         });
+
+        // Update system time display
+        function updateSystemTime() {
+            const now = new Date();
+            systemTimeDisplay.textContent = `System Time: ${now.toLocaleTimeString()}`;
+        }
+        setInterval(updateSystemTime, 1000);
+        updateSystemTime();
+
+        // Button handlers
+        startBtn.addEventListener('click', () => timer.start());
+        stopBtn.addEventListener('click', () => timer.stop());
+        resetBtn.addEventListener('click', () => timer.reset());
     </script>
 </body>
 </html> 

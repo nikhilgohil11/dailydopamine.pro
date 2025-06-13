@@ -105,16 +105,16 @@ const presetMixes = {
 
 // Initialize sound elements
 const sounds = {
-    rain: new Audio('audio/rain.mp3'),
-    birds: new Audio('audio/birds.mp3'),
-    water: new Audio('audio/water.mp3'),
-    wind: new Audio('audio/wind.mp3'),
-    whitenoise: new Audio('audio/whitenoise.mp3'),
-    thunder: new Audio('audio/thunder.mp3'),
-    bonfire: new Audio('audio/bonfire.mp3'),
-    chatter: new Audio('audio/chatter.mp3'),
-    alpha: new Audio('audio/alpha.mp3'),
-    gong: new Audio('audio/gong.mp3')
+    rain: new Audio('sounds/rain.mp3'),
+    birds: new Audio('sounds/birds.mp3'),
+    water: new Audio('sounds/water.mp3'),
+    wind: new Audio('sounds/wind.mp3'),
+    whitenoise: new Audio('sounds/whitenoise.mp3'),
+    thunder: new Audio('sounds/thunder.mp3'),
+    bonfire: new Audio('sounds/bonfire.mp3'),
+    chatter: new Audio('sounds/chatter.mp3'),
+    alpha: new Audio('sounds/alpha.mp3'),
+    gong: new Audio('sounds/gong.mp3')
 };
 
 // Set all sounds to loop

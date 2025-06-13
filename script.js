@@ -105,16 +105,16 @@ const presetMixes = {
 
 // Initialize sound elements
 const sounds = {
-    rain: new Audio('audio/rain.mp3'),
-    birds: new Audio('audio/birds.mp3'),
-    water: new Audio('audio/water.mp3'),
-    wind: new Audio('audio/wind.mp3'),
-    whitenoise: new Audio('audio/whitenoise.mp3'),
-    thunder: new Audio('audio/thunder.mp3'),
-    bonfire: new Audio('audio/bonfire.mp3'),
-    chatter: new Audio('audio/chatter.mp3'),
-    alpha: new Audio('audio/alpha.mp3'),
-    gong: new Audio('audio/gong.mp3')
+    rain: new Audio('sounds/rain.mp3'),
+    birds: new Audio('sounds/birds.mp3'),
+    water: new Audio('sounds/water.mp3'),
+    wind: new Audio('sounds/wind.mp3'),
+    whitenoise: new Audio('sounds/whitenoise.mp3'),
+    thunder: new Audio('sounds/thunder.mp3'),
+    bonfire: new Audio('sounds/bonfire.mp3'),
+    chatter: new Audio('sounds/chatter.mp3'),
+    alpha: new Audio('sounds/alpha.mp3'),
+    gong: new Audio('sounds/gong.mp3')
 };
 
 // Set all sounds to loop
@@ -207,194 +207,99 @@ function updateVolumeDisplay() {
 }
 
 // DOM Elements
-const DOM = {};
-
-// Initialize DOM elements with error handling
-function initializeDOMElements() {
-    const requiredElements = {
-        // Task form and inputs
-        taskForm: 'task-form',
-        taskNameInput: 'task-name',
-        taskTimeInput: 'task-time',
-        taskSoundInput: 'task-sound',
-        
-        // Task list and controls
-        taskList: 'task-list',
-        startTaskButton: 'start-task',
-        pauseTaskButton: 'pause-task',
-        resumeTaskButton: 'resume-task',
-        finishTaskButton: 'finish-task',
-        cancelTaskButton: 'cancel-task',
-        
-        // Active task display
-        activeTaskDiv: 'active-task',
-        activeTaskName: 'active-task-name',
-        timerDisplay: 'timer-display',
-        timerBar: 'timer-bar',
-        noTaskMessage: 'no-task-message',
-        
-        // Modals
-        completionModal: 'completion-modal',
-        breakModal: 'break-modal',
-        statsModal: 'stats-modal',
-        
-        // Modal buttons
-        nextTaskButton: 'next-task-btn',
-        breakButton: 'break-btn',
-        endSessionButton: 'end-session-btn',
-        
-        // Stats elements
-        statsButton: 'stats-button',
-        statsTodayFocusTime: 'today-focus-time',
-        statsTasksCompleted: 'tasks-completed',
-        statsMostUsedSound: 'most-used-sound',
-        statsRecentTasksList: 'recent-tasks-list',
-        completedTaskName: 'completed-task-name'
-    };
-
-    const missingElements = [];
+const DOM = {
+    loadingScreen: document.getElementById('loading-screen'),
+    loadingBar: document.getElementById('loading-bar'),
+    loadingText: document.getElementById('loading-text'),
+    appContainer: document.getElementById('app-container'),
+    sidebar: document.getElementById('sidebar'),
+    sidebarOverlay: document.getElementById('sidebar-overlay'),
+    menuToggle: document.getElementById('menu-toggle'),
+    addTaskButton: document.getElementById('add-task-button'),
+    createTaskFormContainer: document.getElementById('create-task-form-container'),
+    closeCreateTaskFormButton: document.getElementById('close-create-task-form'),
+    taskForm: document.getElementById('task-form'),
+    taskNameInput: document.getElementById('task-name'),
+    taskTimeInput: document.getElementById('task-time'),
+    taskSoundInput: document.getElementById('task-sound'),
+    taskList: document.getElementById('task-list'),
+    emptyTaskList: document.getElementById('empty-task-list'),
+    taskSearchInput: document.getElementById('task-search'),
+    activeTaskContainer: document.getElementById('active-task-container'),
+    noTaskMessage: document.getElementById('no-task-message'),
+    activeTaskDiv: document.getElementById('active-task'),
+    activeTaskName: document.getElementById('active-task-name'),
+    timerDisplay: document.getElementById('timer-display'),
+    timerBar: document.getElementById('timer-bar'),
+    soundName: document.getElementById('sound-name'),
+    startTaskButton: document.getElementById('start-task'),
+    pauseTaskButton: document.getElementById('pause-task'),
+    resumeTaskButton: document.getElementById('resume-task'),
+    finishTaskButton: document.getElementById('finish-task'),
+    cancelTaskButton: document.getElementById('cancel-task'),
+    completionModal: document.getElementById('completion-modal'),
+    completedTaskName: document.getElementById('completed-task-name'),
+    nextTaskButton: document.getElementById('next-task-button'),
+    takeBreakButton: document.getElementById('take-break-button'),
+    endSessionButton: document.getElementById('end-session-button'),
+    statsButton: document.getElementById('stats-button'),
+    statsButtonMobile: document.getElementById('stats-button-mobile'), // Added mobile stats button
+    statsModal: document.getElementById('stats-modal'),
+    closeStatsButton: document.getElementById('close-stats'),
+    statsTodayFocusTime: document.getElementById('today-focus-time'),
+    statsTasksCompleted: document.getElementById('tasks-completed'),
+    statsMostUsedSound: document.getElementById('most-used-sound'),
+    statsRecentTasksList: document.getElementById('recent-tasks-list'),
+    breakModal: document.getElementById('break-modal'),
+    breakTimer: document.getElementById('break-timer'),
+    endBreakButton: document.getElementById('end-break-button'),
+    volumeControl: document.getElementById('master-volume-slider'),
+    volumeDownButton: document.getElementById('volume-down'),
+    volumeUpButton: document.getElementById('volume-up'),
+    muteButton: document.getElementById('mute-button'),
+    themeToggleButton: document.getElementById('theme-toggle'), // Main theme toggle
+    themeToggleButtonMobile: document.getElementById('theme-toggle-mobile'), // Mobile theme toggle
     
-    // Initialize required elements
-    for (const [key, id] of Object.entries(requiredElements)) {
-        const element = document.getElementById(id);
-        if (!element) {
-            missingElements.push(id);
-            console.error(`Required element not found: ${id}`);
-        }
-        DOM[key] = element;
+    // Sound mixer elements
+    masterVolumeSlider: document.getElementById('master-volume-slider'),
+    volumeValue: document.getElementById('volume-value'),
+    selectedSoundName: document.getElementById('selected-sound-name')
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM Content Loaded');
+    
+    // Ensure all required DOM elements exist
+    if (!DOM.loadingScreen || !DOM.loadingBar || !DOM.loadingText || !DOM.appContainer) {
+        console.error('Required DOM elements not found');
+        // If critical elements are missing, show the app anyway
+        document.getElementById('app-container')?.classList.remove('hidden');
+        return;
     }
-
-    // Initialize optional elements
-    const optionalElements = {
-        // Loading screen
-        loadingScreen: 'loading-screen',
-        loadingBar: 'loading-bar',
-        loadingText: 'loading-text',
-        
-        // Sidebar
-        sidebar: 'sidebar',
-        sidebarOverlay: 'sidebar-overlay',
-        menuToggle: 'menu-toggle',
-        addTaskButton: 'add-task-button',
-        createTaskFormContainer: 'create-task-form-container',
-        closeCreateTaskFormButton: 'close-create-task-form',
-        
-        // Task search
-        taskSearchInput: 'task-search',
-        emptyTaskList: 'empty-task-list',
-        
-        // Sound controls
-        soundMixer: 'sound-mixer-tab',
-        masterVolumeSlider: 'master-volume-slider',
-        volumeValue: 'volume-value',
-        volumeDownButton: 'volume-down',
-        volumeUpButton: 'volume-up',
-        muteButton: 'mute-button',
-        
-        // Local files
-        localFilesList: 'local-files-tab',
-        uploadButton: 'upload-button',
-        fileInput: 'file-input',
-        
-        // YouTube
-        youtubeSearchForm: 'youtube-search-form',
-        youtubeResults: 'youtube-results'
-    };
-
-    for (const [key, id] of Object.entries(optionalElements)) {
-        const element = document.getElementById(id);
-        if (element) {
-            DOM[key] = element;
-        }
+    
+    // Initialize the task views - make sure only one is visible
+    if (DOM.noTaskMessage && DOM.activeTaskDiv) {
+        // Default state: show no task message, hide active task view
+        DOM.noTaskMessage.style.display = 'block';
+        DOM.activeTaskDiv.style.display = 'none';
     }
+    
+    // Initialize the app
+    initializeApp();
+    
+    // Preload audio files
+    preloadAudioFiles();
 
-    if (missingElements.length > 0) {
-        throw new Error(`Missing required elements: ${missingElements.join(', ')}`);
-    }
-}
-
-// Initialize the app
-function initializeApp() {
-    console.log('Initializing app...');
-    try {
-        // Wait for DOM to be fully loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                console.log('DOM fully loaded, continuing initialization...');
-                continueInitialization();
-            });
-        } else {
-            console.log('DOM already loaded, continuing initialization...');
-            continueInitialization();
+    initializeAudioContext();
+    loadCompletionSound();
+    
+    // Add visibility change listener to handle audio context
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            initializeAudioContext();
         }
-    } catch (error) {
-        console.error('Error in initialization:', error);
-        showError('Error initializing the application. Please refresh the page.');
-    }
-}
-
-// Continue initialization after DOM is loaded
-function continueInitialization() {
-    try {
-        // Initialize DOM elements
-        initializeDOMElements();
-        
-        // Load state from localStorage
-        loadFromLocalStorage();
-        
-        // Initialize audio context
-        initializeAudioContext();
-        
-        // Load audio files
-        loadAudioFiles();
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Update UI
-        updateTaskList();
-        updateStats();
-        
-        // Hide loading screen
-        if (DOM.loadingScreen) {
-            DOM.loadingScreen.classList.add('hidden');
-        }
-        
-        // Show app container
-        const appContainer = document.getElementById('app-container');
-        if (appContainer) {
-            appContainer.classList.remove('hidden');
-        }
-
-        // Set active task if exists
-        if (state.activeTaskId) {
-            setActiveTask(state.activeTaskId);
-        } else {
-            clearActiveTask();
-        }
-    } catch (error) {
-        console.error('Error in continueInitialization:', error);
-        showError('Error initializing the application. Please refresh the page.');
-    }
-}
-
-// Show error message to user
-function showError(message) {
-    const loadingScreen = document.getElementById('loading-screen');
-    if (loadingScreen) {
-        loadingScreen.innerHTML = `
-            <div class="text-white text-center">
-                <h2 class="text-2xl font-bold mb-4">Error Loading App</h2>
-                <p class="mb-4">${message}</p>
-                <button onclick="window.location.reload()" class="bg-white text-[rgb(2,4,3)] px-4 py-2 rounded-lg hover:bg-gray-100 transition">
-                    Refresh Page
-                </button>
-            </div>
-        `;
-    } else {
-        console.error('Error message:', message);
-    }
-}
+    });
+});
 
 // Preload all audio files before showing the app
 function preloadAudioFiles() {
@@ -924,98 +829,117 @@ function setGlobalVolume(volume) {
 
 // Set up all event listeners
 function setupEventListeners() {
-    // Task form
-    if (DOM.taskForm) {
-        DOM.taskForm.addEventListener('submit', handleTaskFormSubmit);
-    }
-
-    // Task list
-    if (DOM.taskList) {
-        DOM.taskList.addEventListener('click', handleTaskListClick);
-    }
-
-    // Control buttons
-    if (DOM.startTaskButton) {
-        DOM.startTaskButton.addEventListener('click', startTask);
-    }
-    if (DOM.pauseTaskButton) {
-        DOM.pauseTaskButton.addEventListener('click', pauseTask);
-    }
-    if (DOM.resumeTaskButton) {
-        DOM.resumeTaskButton.addEventListener('click', resumeTask);
-    }
-    if (DOM.finishTaskButton) {
-        DOM.finishTaskButton.addEventListener('click', finishTask);
-    }
-    if (DOM.cancelTaskButton) {
-        DOM.cancelTaskButton.addEventListener('click', cancelTask);
-    }
-
-    // Modal buttons
-    if (DOM.nextTaskButton) {
-        DOM.nextTaskButton.addEventListener('click', startNextTask);
-    }
-    if (DOM.breakButton) {
-        DOM.breakButton.addEventListener('click', startBreak);
-    }
-    if (DOM.endSessionButton) {
-        DOM.endSessionButton.addEventListener('click', endSession);
-    }
-
-    // Add extend task button listeners
-    document.querySelectorAll('.extend-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const minutes = parseInt(button.dataset.minutes);
-            extendTask(minutes);
-        });
+    // Task form submission (inside modal now)
+    DOM.taskForm.addEventListener('submit', handleTaskFormSubmit);
+    
+    // Timer control buttons
+    DOM.startTaskButton.addEventListener('click', startTask);
+    DOM.pauseTaskButton.addEventListener('click', pauseTask);
+    DOM.resumeTaskButton.addEventListener('click', resumeTask);
+    DOM.finishTaskButton.addEventListener('click', finishTask);
+    DOM.cancelTaskButton.addEventListener('click', cancelTask);
+    
+    // Completion modal buttons
+    DOM.nextTaskButton.addEventListener('click', startNextTask);
+    DOM.takeBreakButton.addEventListener('click', startBreak);
+    DOM.endSessionButton.addEventListener('click', endSession);
+    
+    // Break modal button
+    DOM.endBreakButton.addEventListener('click', endBreak);
+    
+    // Stats modal
+    DOM.statsButton.addEventListener('click', toggleStatsModal);
+    DOM.statsButtonMobile.addEventListener('click', toggleStatsModal); // Mobile stats button
+    DOM.closeStatsButton.addEventListener('click', toggleStatsModal);
+    
+    // Audio controls
+    DOM.volumeControl.addEventListener('input', adjustVolume);
+    DOM.volumeUpButton.addEventListener('click', increaseVolume);
+    DOM.volumeDownButton.addEventListener('click', decreaseVolume);
+    DOM.muteButton.addEventListener('click', toggleMute);
+    
+    // Task search
+    DOM.taskSearchInput.addEventListener('input', handleSearchInput);
+    
+    // Add Enter key handler for search to create task
+    DOM.taskSearchInput.addEventListener('keydown', function(e) {
+        // Check if Enter key was pressed
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent default form submission
+            
+            const searchTerm = this.value.trim();
+            
+            // If search term is empty, do nothing
+            if (!searchTerm) return;
+            
+            // Count visible tasks after filtering
+            const visibleTasks = Array.from(DOM.taskList.querySelectorAll('li[data-id]'))
+                .filter(item => item.style.display !== 'none')
+                .length;
+            
+            // If no matching tasks found, open the create task modal and populate with search term
+            if (visibleTasks === 0) {
+                // Store the search term for later use
+                const storedSearchTerm = searchTerm;
+                
+                // Clear the search input first
+                this.value = '';
+                filterTaskList('');
+                
+                // Open the task creation modal (this will reset the form)
+                openCreateTaskModal();
+                
+                // Use setTimeout to ensure the task name is set after the form is reset
+                setTimeout(() => {
+                    // Now set the task name input field value
+                    DOM.taskNameInput.value = storedSearchTerm;
+                }, 0);
+            }
+        }
     });
 
-    // Sound mixer controls
-    if (DOM.soundMixer) {
-        DOM.soundMixer.addEventListener('input', handleSoundMixerInput);
-    }
+    // --- New Listeners for Sidebar and Modals ---
 
-    // Local files controls
-    if (DOM.localFilesList) {
-        DOM.localFilesList.addEventListener('click', handleLocalFileClick);
-    }
-    if (DOM.uploadButton) {
-        DOM.uploadButton.addEventListener('click', () => DOM.fileInput.click());
-    }
-    if (DOM.fileInput) {
-        DOM.fileInput.addEventListener('change', handleFileUpload);
-    }
+    // Sidebar toggle (mobile)
+    DOM.menuToggle.addEventListener('click', toggleSidebar);
+    DOM.sidebarOverlay.addEventListener('click', toggleSidebar); // Close sidebar on overlay click
 
-    // YouTube controls
-    if (DOM.youtubeSearchForm) {
-        DOM.youtubeSearchForm.addEventListener('submit', handleYouTubeSearch);
-    }
-    if (DOM.youtubeResults) {
-        DOM.youtubeResults.addEventListener('click', handleYouTubeResultClick);
-    }
+    // Create Task Modal
+    DOM.addTaskButton.addEventListener('click', openCreateTaskModal);
+    DOM.closeCreateTaskFormButton.addEventListener('click', closeCreateTaskModal);
+    // Close modal if clicking outside the form container
+    DOM.createTaskFormContainer.addEventListener('click', (e) => {
+        if (e.target === DOM.createTaskFormContainer) {
+            closeCreateTaskModal();
+        }
+    });
 
-    // Stats button
-    if (DOM.statsButton) {
-        DOM.statsButton.addEventListener('click', toggleStatsModal);
-    }
+    // Delegate task list events (start/delete)
+    DOM.taskList.addEventListener('click', handleTaskListClick);
 
-    // Close modal buttons
-    document.querySelectorAll('.close-modal').forEach(button => {
-        button.addEventListener('click', () => {
-            const modal = button.closest('.modal');
-            if (modal) {
-                modal.classList.add('hidden');
+    // Add event listener for the "Start now" button
+    document.getElementById('add-first-task')?.addEventListener('click', () => {
+        openCreateTaskModal();
+    });
+
+    // Add task header buttons
+    document.getElementById('add-task-header')?.addEventListener('click', openCreateTaskModal);
+    document.getElementById('add-task-header-mobile')?.addEventListener('click', openCreateTaskModal);
+
+    // Add event listener for local music slider
+    const localMusicSlider = document.querySelector('.channel-slider[data-sound="local-music"]');
+    if (localMusicSlider) {
+        localMusicSlider.addEventListener('input', function() {
+            const volume = parseInt(this.value) / 100;
+            if (localMusicPlayer) {
+                localMusicPlayer.volume = volume;
+                updateSliderValue(this);
             }
         });
-    });
+    }
 
-    // Tab buttons
-    document.querySelectorAll('.tab-button').forEach(button => {
-        button.addEventListener('click', () => {
-            const tab = button.dataset.tab;
-            switchTab(tab);
-        });
-    });
+    // Initialize sound mixer
+    initializeSoundMixer();
 }
 
 // --- Sidebar and Modal Functions ---
@@ -1177,80 +1101,71 @@ function filterTaskList(searchTerm) {
 
 // Update the task list in the UI (Sidebar Version)
 function updateTaskList() {
-    // Check if task list element exists
-    if (!DOM.taskList) {
-        console.error('Task list element not found');
-        return;
-    }
+    DOM.taskList.innerHTML = ''; // Clear current list
 
-    try {
-        // Clear current list
-        DOM.taskList.innerHTML = '';
+    const searchTerm = DOM.taskSearchInput.value.toLowerCase().trim();
 
-        // Get search term if search input exists
-        const searchTerm = DOM.taskSearchInput ? DOM.taskSearchInput.value.toLowerCase().trim() : '';
+    let hasVisibleQueuedTasks = false;
+    let hasVisibleCompletedTasks = false;
+    let hasVisibleCanceledTasks = false;
 
-        let hasVisibleQueuedTasks = false;
-        let hasVisibleCompletedTasks = false;
-        let hasVisibleCanceledTasks = false;
+    // Add active tasks to the list
+    state.tasks.forEach(task => {
+        const li = createTaskListItem(task, 'queued');
+        DOM.taskList.appendChild(li);
+        if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+            hasVisibleQueuedTasks = true;
+        }
+    });
 
-        // Add active tasks to the list
-        state.tasks.forEach(task => {
-            const li = createTaskListItem(task, 'queued');
-            if (li) {
-                DOM.taskList.appendChild(li);
-                if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                    hasVisibleQueuedTasks = true;
-                }
+    // Add completed tasks section
+    if (state.completedTasks.length > 0) {
+        const completedDivider = document.createElement('li');
+        completedDivider.className = 'task-divider completed-divider';
+        completedDivider.innerHTML = 'Completed Tasks';
+        DOM.taskList.appendChild(completedDivider);
+
+        state.completedTasks.slice(0, 10).forEach(task => { // Show more completed tasks
+            const li = createTaskListItem(task, 'completed');
+            DOM.taskList.appendChild(li);
+            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                hasVisibleCompletedTasks = true;
             }
         });
+    }
 
-        // Add completed tasks section
-        if (state.completedTasks.length > 0) {
-            const completedDivider = document.createElement('li');
-            completedDivider.className = 'task-divider completed-divider';
-            completedDivider.innerHTML = 'Completed Tasks';
-            DOM.taskList.appendChild(completedDivider);
+    // Add canceled tasks section
+    if (state.canceledTasks.length > 0) {
+        const canceledDivider = document.createElement('li');
+        canceledDivider.className = 'task-divider canceled-divider';
+        canceledDivider.innerHTML = 'Canceled Tasks';
+        DOM.taskList.appendChild(canceledDivider);
 
-            state.completedTasks.slice(0, 5).forEach(task => {
-                const li = createTaskListItem(task, 'completed');
-                if (li) {
-                    DOM.taskList.appendChild(li);
-                    if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                        hasVisibleCompletedTasks = true;
-                    }
-                }
-            });
-        }
-
-        // Add canceled tasks section
-        if (state.canceledTasks.length > 0) {
-            const canceledDivider = document.createElement('li');
-            canceledDivider.className = 'task-divider canceled-divider';
-            canceledDivider.innerHTML = 'Canceled Tasks';
-            DOM.taskList.appendChild(canceledDivider);
-
-            state.canceledTasks.slice(0, 5).forEach(task => {
-                const li = createTaskListItem(task, 'canceled');
-                if (li) {
-                    DOM.taskList.appendChild(li);
-                    if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                        hasVisibleCanceledTasks = true;
-                    }
-                }
-            });
-        }
-
-        // Update empty task list message visibility
-        if (DOM.emptyTaskList) {
-            if (state.tasks.length === 0 && state.completedTasks.length === 0 && state.canceledTasks.length === 0) {
-                DOM.emptyTaskList.classList.remove('hidden');
-            } else {
-                DOM.emptyTaskList.classList.add('hidden');
+        state.canceledTasks.slice(0, 5).forEach(task => {
+            const li = createTaskListItem(task, 'canceled');
+            DOM.taskList.appendChild(li);
+            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                hasVisibleCanceledTasks = true;
             }
-        }
-    } catch (error) {
-        console.error('Error updating task list:', error);
+        });
+    }
+
+    // Apply current search filter
+    filterTaskList(searchTerm);
+
+    // Show/hide overall empty state message
+    const hasAnyTasks = state.tasks.length > 0 || state.completedTasks.length > 0 || state.canceledTasks.length > 0;
+    const hasAnyVisibleContent = hasVisibleQueuedTasks || hasVisibleCompletedTasks || hasVisibleCanceledTasks;
+
+    if (!hasAnyTasks) {
+        DOM.emptyTaskList.innerHTML = `<p>No tasks yet!</p><p class="text-sm mt-1">Click the '+' to add one.</p>
+        <p>For feature requests, contact <a href="https://x.com/nikhilgohil11" target="_blank" class="text-[rgb(18, 105, 227)] dark:text-[rgb(3, 21, 111)] hover:underline">@nikhilgohil11</a> or <a href="https://x.com/VikasGohil2" target="_blank" class="text-[rgb(18, 105, 227)] dark:text-[rgb(3, 21, 111)] hover:underline">@VikasGohil2</a></p>`;
+        DOM.emptyTaskList.classList.remove('hidden');
+    } else if (!hasAnyVisibleContent && searchTerm) {
+        DOM.emptyTaskList.innerHTML = `<p>No tasks found matching "${searchTerm}"</p>`;
+        DOM.emptyTaskList.classList.remove('hidden');
+    } else {
+        DOM.emptyTaskList.classList.add('hidden');
     }
 }
 
@@ -1474,41 +1389,29 @@ function clearActiveTask() {
     state.isPaused = false;
     state.remainingTime = 0;
     
-    // Clear timer display if element exists
-    if (DOM.timerDisplay) {
-        DOM.timerDisplay.textContent = '00:00';
-    }
+    // Clear timer display
+    DOM.timerDisplay.textContent = '00:00';
     
-    // Show no task message and hide active task view if elements exist
-    if (DOM.noTaskMessage && DOM.activeTaskDiv) {
-        DOM.noTaskMessage.style.display = 'block';
-        DOM.activeTaskDiv.style.display = 'none';
-    }
+    // Show no task message and hide active task view
+    DOM.noTaskMessage.style.display = 'block';
+    DOM.activeTaskDiv.style.display = 'none';
     
     // Update task list UI
-    if (DOM.taskList) {
-        document.querySelectorAll('.task-item').forEach(item => {
-            item.classList.remove('active');
-        });
-    }
+    document.querySelectorAll('.task-item').forEach(item => {
+        item.classList.remove('active');
+    });
     
-    // Reset control buttons if they exist
-    if (DOM.startTaskButton) {
-        DOM.startTaskButton.classList.remove('hidden');
-    }
-    if (DOM.pauseTaskButton) {
-        DOM.pauseTaskButton.classList.add('hidden');
-    }
-    if (DOM.resumeTaskButton) {
-        DOM.resumeTaskButton.classList.add('hidden');
-    }
+    // Reset control buttons
+    DOM.startTaskButton.classList.remove('hidden');
+    DOM.pauseTaskButton.classList.add('hidden');
+    DOM.resumeTaskButton.classList.add('hidden');
     
     // Clear sound checkboxes
     document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
         checkbox.checked = false;
     });
     
-    // Update volume display if function exists
+    // Update volume display
     if (typeof updateVolumeDisplay === 'function') {
         updateVolumeDisplay();
     }
@@ -1626,20 +1529,14 @@ function startTask() {
 
 // Pause the active task
 function pauseTask() {
-    if (!state.activeTaskId) return;
+    if (!state.timerInterval) return;
     
-    // Clear the timer interval first
-    if (state.timerInterval) {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-    }
-    
-    // Update state
+    clearInterval(state.timerInterval);
+    state.timerInterval = null;
     state.isPaused = true;
-    state.timerRunning = false;
     
     // Pause audio based on active tab
-    const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
     
     if (activeTab === 'sound-mixer') {
         pauseAudio();
@@ -1652,78 +1549,71 @@ function pauseTask() {
     // Update UI
     DOM.pauseTaskButton.classList.add('hidden');
     DOM.resumeTaskButton.classList.remove('hidden');
-    
-    // Save state
-    saveToLocalStorage();
-    
-    // Log for debugging
-    console.log('Task paused:', {
-        remainingTime: state.remainingTime,
-        isPaused: state.isPaused,
-        timerRunning: state.timerRunning
-    });
 }
 
 // Resume the paused task
 function resumeTask() {
-    if (!state.activeTaskId || !state.isPaused) return;
-    
-    // Update state
-    state.isPaused = false;
-    state.timerRunning = true;
+    if (!state.isPaused) return;
     
     // Resume audio based on active tab
-    const activeTab = document.querySelector('.tab-button.active')?.dataset.tab;
+    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
     
     if (activeTab === 'sound-mixer') {
-        resumeAudio();
-    } else if (activeTab === 'local-files' && localMusicPlayer && isLocalMusicPlaying) {
-        localMusicPlayer.play().catch(error => {
-            console.error('Error resuming local music:', error);
-        });
+        const task = state.tasks.find(t => t.id === state.activeTaskId);
+        if (task && task.sound !== 'none') {
+            // Reset all sliders first
+            document.querySelectorAll('.channel-slider').forEach(slider => {
+                slider.value = 0;
+                updateSliderValue(slider);
+            });
+            
+            // Play the task's sound
+            playAudio(task.sound);
+            
+            // If we have stored slider values, restore them
+            if (soundMixerState.sliderValues) {
+                Object.entries(soundMixerState.sliderValues).forEach(([soundId, value]) => {
+                    const slider = document.querySelector(`.channel-slider[data-sound="${soundId}"]`);
+                    if (slider) {
+                        slider.value = value;
+                        updateSliderValue(slider);
+                    }
+                });
+            }
+        }
+    } else if (activeTab === 'local-files') {
+        if (localMusicPlayer) {
+            // If local music was playing before pause, resume it
+            if (isLocalMusicPlaying) {
+                localMusicPlayer.play().catch(error => {
+                    console.error('Error resuming local music:', error);
+                });
+            } else {
+                // If no local music was playing, start playing the first file
+                playLocalMusic(0);
+            }
+        }
     } else if (activeTab === 'youtube' && youtubePlayer && isYoutubePlaying) {
         youtubePlayer.playVideo();
     }
     
     // Update UI
-    DOM.pauseTaskButton.classList.remove('hidden');
     DOM.resumeTaskButton.classList.add('hidden');
+    DOM.pauseTaskButton.classList.remove('hidden');
     
-    // Start the timer interval
+    // Restart the timer interval
     startTimerInterval();
-    
-    // Save state
-    saveToLocalStorage();
-    
-    // Log for debugging
-    console.log('Task resumed:', {
-        remainingTime: state.remainingTime,
-        isPaused: state.isPaused,
-        timerRunning: state.timerRunning
-    });
 }
 
 // Refactor timer start logic into its own function
 function startTimerInterval() {
-    // Clear any existing interval first
-    if (state.timerInterval) {
-        clearInterval(state.timerInterval);
-        state.timerInterval = null;
-    }
+    if (state.timerInterval) clearInterval(state.timerInterval); // Clear existing interval if any
 
     const task = state.tasks.find(t => t.id === state.activeTaskId);
     if (!task) return;
-    
     const totalSeconds = task.duration * 60;
 
     state.timerInterval = setInterval(() => {
-        // Double-check pause state
-        if (state.isPaused) {
-            clearInterval(state.timerInterval);
-            state.timerInterval = null;
-            return;
-        }
-
         state.remainingTime--;
 
         updateTimerDisplay();
@@ -1734,7 +1624,6 @@ function startTimerInterval() {
 
         if (state.remainingTime <= 0) {
             clearInterval(state.timerInterval);
-            state.timerInterval = null;
             completeTask();
         }
     }, 1000);
@@ -2044,59 +1933,54 @@ function toggleStatsModal() {
 
 // Update stats display
 function updateStats() {
-    // Check if stats elements exist before updating
-    if (DOM.statsTodayFocusTime) {
-        DOM.statsTodayFocusTime.textContent = `${state.stats.todayFocusTime} minutes`;
-    }
+    DOM.statsTodayFocusTime.textContent = `${state.stats.todayFocusTime} minutes`;
+    DOM.statsTasksCompleted.textContent = `${state.stats.tasksCompleted} ${state.stats.tasksCompleted === 1 ? 'task' : 'tasks'}`;
     
-    if (DOM.statsTasksCompleted) {
-        DOM.statsTasksCompleted.textContent = `${state.stats.tasksCompleted} tasks`;
-    }
+    // Most used sound
+    let mostUsedSound = 'None';
+    let maxCount = 0;
     
-    if (DOM.statsMostUsedSound) {
-        // Find most used sound
-        let mostUsedSound = 'None';
-        let maxUsage = 0;
-        
-        for (const [sound, usage] of Object.entries(state.stats.soundUsage)) {
-            if (usage > maxUsage) {
-                maxUsage = usage;
-                mostUsedSound = findAudioName(sound);
-            }
-        }
-        
-        DOM.statsMostUsedSound.textContent = mostUsedSound;
-    }
-    
-    if (DOM.statsRecentTasksList) {
-        // Clear current list
-        DOM.statsRecentTasksList.innerHTML = '';
-        
-        // Add completed tasks
-        if (state.completedTasks.length === 0) {
-            const li = document.createElement('li');
-            li.className = 'py-3 text-gray-500 dark:text-gray-400 italic';
-            li.textContent = 'No completed tasks yet';
-            DOM.statsRecentTasksList.appendChild(li);
-        } else {
-            state.completedTasks.slice(0, 5).forEach(task => {
-                const li = document.createElement('li');
-                li.className = 'py-3';
-                
-                const date = new Date(task.completedAt);
-                const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                
-                li.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <span class="font-medium">${task.name}</span>
-                        <span class="text-sm text-gray-500 dark:text-gray-400">${timeString}</span>
-                    </div>
-                `;
-                
-                DOM.statsRecentTasksList.appendChild(li);
-            });
+    for (const [sound, count] of Object.entries(state.stats.soundUsage)) {
+        if (count > maxCount) {
+            maxCount = count;
+            mostUsedSound = findAudioName(sound);
         }
     }
+    
+    DOM.statsMostUsedSound.textContent = mostUsedSound;
+    
+    // Recent tasks
+    const recentTasksList = DOM.statsRecentTasksList;
+    recentTasksList.innerHTML = '';
+    
+    if (state.completedTasks.length === 0) {
+        recentTasksList.innerHTML = '<li class="py-3 text-gray-500 italic">No completed tasks yet</li>';
+        return;
+    }
+    
+    // Show last 5 completed tasks
+    state.completedTasks.slice(0, 5).forEach(task => {
+        const li = document.createElement('li');
+        li.className = 'py-3';
+        
+        const date = new Date(task.completedAt);
+        const formattedDate = date.toLocaleDateString();
+        const formattedTime = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        li.innerHTML = `
+            <div class="flex justify-between">
+                <div>
+                    <h4 class="font-medium">${task.name}</h4>
+                    <span class="text-sm text-gray-500">${task.duration} minutes</span>
+                </div>
+                <div class="text-right text-sm text-gray-500">
+                    ${formattedDate}<br>${formattedTime}
+                </div>
+            </div>
+        `;
+        
+        recentTasksList.appendChild(li);
+    });
 }
 
 // Helper function to format time for display
@@ -2681,72 +2565,3 @@ function initializeSoundMixer() {
         }
     });
 }
-
-// Extend the current task
-function extendTask(minutes) {
-    if (!state.activeTaskId) return;
-    
-    const task = state.tasks.find(t => t.id === state.activeTaskId);
-    if (!task) return;
-    
-    // Add specified minutes to the task duration
-    task.duration += minutes;
-    
-    // Reset timer state
-    state.remainingTime = task.duration * 60;
-    state.isPaused = false;
-    
-    // Hide completion modal
-    DOM.completionModal.classList.add('hidden');
-    
-    // Show extension indicator
-    const indicator = document.getElementById('extension-indicator');
-    const amountSpan = document.getElementById('extension-amount');
-    amountSpan.textContent = minutes;
-    
-    // Animate indicator in
-    indicator.style.transform = 'translateY(0)';
-    indicator.style.opacity = '1';
-    
-    // Hide indicator after 3 seconds
-    setTimeout(() => {
-        indicator.style.transform = 'translateY(-100%)';
-        indicator.style.opacity = '0';
-    }, 3000);
-    
-    // Update UI
-    updateTimerDisplay();
-    
-    // Reset control buttons
-    DOM.startTaskButton.classList.remove('hidden');
-    DOM.pauseTaskButton.classList.add('hidden');
-    DOM.resumeTaskButton.classList.add('hidden');
-    
-    // Save state
-    saveToLocalStorage();
-    
-    // Start the extended task
-    startTask();
-}
-
-// Update event listeners in the initialization section
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing event listeners ...
-    
-    // Add extend task button listeners
-    document.querySelectorAll('.extend-btn').forEach(button => {
-        button.addEventListener('click', () => {
-            const minutes = parseInt(button.dataset.minutes);
-            extendTask(minutes);
-        });
-    });
-    
-    // ... rest of the initialization code ...
-});
-
-// Add visibility change handler to pause when tab is hidden
-document.addEventListener('visibilitychange', () => {
-    if (document.hidden && state.timerRunning && !state.isPaused) {
-        pauseTask();
-    }
-});

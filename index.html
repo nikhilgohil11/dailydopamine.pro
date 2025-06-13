@@ -155,33 +155,20 @@
                             </button>
                         </div>
                     </div>
-
-                    <!-- Center: Ad Placeholder -->
-                    <div class="flex-1 flex justify-center px-4">
-                        <!-- <a href="https://nas.io/checkout-global?communityId=67f44d8f9bc2972b9825b1c0&communityCode=DAILY_DOPAMINE_PRO&requestor=signupRequestor&linkClicked=https%3A%2F%2Fnas.io%2Fportal%2Fproducts%2F67f44ebc91ef51b127ea2da5&sourceInfoType=folder&sourceInfoOrigin=67f44ebc91ef51b127ea2da5"
-                           target="_blank"
-                           class="border-2 border-dashed border-white/30 rounded-lg px-4 py-1.5 flex items-center space-x-3 hover:bg-white/10 transition text-sm">
-                            <div class="w-6 h-6 bg-white/10 rounded flex items-center justify-center">
-                                <i class="fas fa-ad text-white/70 text-xs"></i>
-                            </div>
-                            <div class="hidden sm:flex items-center space-x-1">
-                                <span class="text-white/70">Advertise Here</span>
-                                <i class="fas fa-plus text-white/70 text-xs"></i>
-                            </div>
-                        </a> -->
+                    <!-- Center: Product Hunt Badge -->
+                    <div class="hidden md:flex flex-1 justify-center">
+                        <a href="https://www.producthunt.com/products/daily-dopamine-pro?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-daily&#0045;dopamine&#0045;pro" target="_blank" class="inline-flex"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=976849&theme=light&t=1749612830318" alt="Daily&#0032;Dopamine&#0032;Pro - Set&#0032;Your&#0032;Rhythm&#0044;&#0032;Achieve&#0032;Your&#0032;Goals | Product Hunt" style="width: 260px; height: 56px;" width="260" height="56" /></a>
                     </div>
-
                     <!-- Right side: Mobile Controls -->
                     <div class="flex items-center space-x-3">
-                         <!-- Mobile Only: Stats/Theme Toggles -->
-                         <div class="flex items-center space-x-2">
-                             <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-[rgb(2,4,3)]/80 rounded-full transition border border-[rgb(2,4,3)] md:hidden">
-                                 <i class="fas fa-chart-bar"></i>
-                             </button>
-                             <button id="add-task-header-mobile" title="Add Task" class="p-2 hover:bg-[rgb(2,4,3)]/80 rounded-full transition border border-[rgb(2,4,3)] md:hidden">
-                                 <i class="fas fa-plus"></i>
-                             </button>
-                         </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="stats-button-mobile" title="View Stats" class="p-2 hover:bg-[rgb(2,4,3)]/80 rounded-full transition border border-[rgb(2,4,3)] md:hidden">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                            <button id="add-task-header-mobile" title="Add Task" class="p-2 hover:bg-[rgb(2,4,3)]/80 rounded-full transition border border-[rgb(2,4,3)] md:hidden">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -454,7 +441,7 @@
                 </div>
                 <div>
                     <label for="task-time" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Duration (minutes)</label>
-                    <input type="number" id="task-time" class="w-full px-3 py-2 text-base md:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" min="1" value="25" required>
+                    <input type="number" id="task-time" class="w-full px-3 py-2 text-base md:text-lg border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100" min="1" max="120" value="25" required>
                 </div>
                 <div>
                     <label for="task-sound" class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Background Sound</label>
@@ -491,46 +478,28 @@
     <!-- Confetti Container -->
     <div class="confetti-container fixed inset-0 pointer-events-none z-50"></div>
 
-    <!-- Task Completion Modal -->
-    <div id="completion-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
-            <h2 class="text-2xl font-bold mb-4 text-center">Task Completed! 🎉</h2>
-            <p class="text-center mb-6">Great job completing <span id="completed-task-name" class="font-semibold"></span>!</p>
-            <div class="space-y-3">
-                <button id="next-task-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+    <!-- Completion Modal -->
+    <div id="completion-modal" class="fixed inset-0 bg-black bg-opacity-30 backdrop-blur-sm flex items-center justify-center z-40 hidden p-4">
+        <div class="modal bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full animate__animated animate__zoomIn">
+            <div class="text-center mb-6">
+                <div class="celebration relative">
+                    <i class="fas fa-check-circle text-5xl text-green-500 mb-3"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-[rgb(2,4,3)] dark:text-[rgb(2,4,3)]">Task Complete!</h3>
+                <p id="completed-task-name" class="text-lg mt-2 text-gray-700 dark:text-gray-300"></p>
+            </div>
+            <div class="flex flex-col space-y-3">
+                <button id="next-task-button" class="w-full bg-[rgb(2,4,3)] text-white py-2.5 px-4 rounded-lg hover:bg-[rgb(2,4,3)]/80 transition font-semibold border border-[rgb(2,4,3)]">
                     <i class="fas fa-forward mr-2"></i>Start Next Task
                 </button>
-                
-                <!-- Extension Options -->
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">Extend Task:</p>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button class="extend-btn px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition" data-minutes="5">
-                            +5 min
-                        </button>
-                        <button class="extend-btn px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition" data-minutes="15">
-                            +15 min
-                        </button>
-                        <button class="extend-btn px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition" data-minutes="30">
-                            +30 min
-                        </button>
-                    </div>
-                </div>
-
-                <button id="break-btn" class="w-full px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition">
-                    <i class="fas fa-coffee mr-2"></i>Take 5-Min Break
+                <button id="take-break-button" class="w-full bg-green-600 text-white py-2.5 px-4 rounded-lg hover:bg-green-700 transition font-semibold border border-green-500">
+                    <i class="fas fa-coffee mr-2"></i>Take a 5-min Break
                 </button>
-                <button id="end-session-btn" class="w-full px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition">
-                    <i class="fas fa-stop mr-2"></i>End Session
+                <button id="end-session-button" class="w-full border border-gray-300 dark:border-gray-600 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300 font-semibold">
+                    <i class="fas fa-flag-checkered mr-2"></i>End Session
                 </button>
             </div>
         </div>
-    </div>
-
-    <!-- Extension Indicator -->
-    <div id="extension-indicator" class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-[-100%] opacity-0 transition-all duration-300 z-50">
-        <i class="fas fa-plus-circle mr-2"></i>
-        <span id="extension-amount"></span> minutes added to task
     </div>
 
     <!-- Stats Modal -->
