@@ -317,6 +317,25 @@ function initializeDOMElements() {
 function initializeApp() {
     console.log('Initializing app...');
     try {
+        // Wait for DOM to be fully loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                console.log('DOM fully loaded, continuing initialization...');
+                continueInitialization();
+            });
+        } else {
+            console.log('DOM already loaded, continuing initialization...');
+            continueInitialization();
+        }
+    } catch (error) {
+        console.error('Error in initialization:', error);
+        showError('Error initializing the application. Please refresh the page.');
+    }
+}
+
+// Continue initialization after DOM is loaded
+function continueInitialization() {
+    try {
         // Initialize DOM elements
         initializeDOMElements();
         
@@ -354,51 +373,26 @@ function initializeApp() {
             clearActiveTask();
         }
     } catch (error) {
-        console.error('Error initializing app:', error);
-        // Show error message to user
-        const loadingScreen = document.getElementById('loading-screen');
-        if (loadingScreen) {
-            loadingScreen.innerHTML = `
-                <div class="text-white text-center">
-                    <h2 class="text-2xl font-bold mb-4">Error Loading App</h2>
-                    <p class="mb-4">${error.message}</p>
-                    <button onclick="window.location.reload()" class="bg-white text-[rgb(2,4,3)] px-4 py-2 rounded-lg hover:bg-gray-100 transition">
-                        Refresh Page
-                    </button>
-                </div>
-            `;
-        }
+        console.error('Error in continueInitialization:', error);
+        showError('Error initializing the application. Please refresh the page.');
     }
 }
-
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', initializeApp);
 
 // Show error message to user
 function showError(message) {
     const loadingScreen = document.getElementById('loading-screen');
     if (loadingScreen) {
         loadingScreen.innerHTML = `
-            <div class="text-center">
-                <p class="text-red-500 mb-4">${message}</p>
-                <button onclick="window.location.reload()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+            <div class="text-white text-center">
+                <h2 class="text-2xl font-bold mb-4">Error Loading App</h2>
+                <p class="mb-4">${message}</p>
+                <button onclick="window.location.reload()" class="bg-white text-[rgb(2,4,3)] px-4 py-2 rounded-lg hover:bg-gray-100 transition">
                     Refresh Page
                 </button>
             </div>
         `;
     } else {
-        // If loading screen doesn't exist, create an error message in the body
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'fixed inset-0 flex items-center justify-center bg-white dark:bg-gray-900 z-50';
-        errorDiv.innerHTML = `
-            <div class="text-center p-6">
-                <p class="text-red-500 mb-4">${message}</p>
-                <button onclick="window.location.reload()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                    Refresh Page
-                </button>
-            </div>
-        `;
-        document.body.appendChild(errorDiv);
+        console.error('Error message:', message);
     }
 }
 
@@ -1189,70 +1183,74 @@ function updateTaskList() {
         return;
     }
 
-    // Clear current list
-    DOM.taskList.innerHTML = '';
+    try {
+        // Clear current list
+        DOM.taskList.innerHTML = '';
 
-    // Get search term if search input exists
-    const searchTerm = DOM.taskSearchInput ? DOM.taskSearchInput.value.toLowerCase().trim() : '';
+        // Get search term if search input exists
+        const searchTerm = DOM.taskSearchInput ? DOM.taskSearchInput.value.toLowerCase().trim() : '';
 
-    let hasVisibleQueuedTasks = false;
-    let hasVisibleCompletedTasks = false;
-    let hasVisibleCanceledTasks = false;
+        let hasVisibleQueuedTasks = false;
+        let hasVisibleCompletedTasks = false;
+        let hasVisibleCanceledTasks = false;
 
-    // Add active tasks to the list
-    state.tasks.forEach(task => {
-        const li = createTaskListItem(task, 'queued');
-        if (li) {
-            DOM.taskList.appendChild(li);
-            if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                hasVisibleQueuedTasks = true;
-            }
-        }
-    });
-
-    // Add completed tasks section
-    if (state.completedTasks.length > 0) {
-        const completedDivider = document.createElement('li');
-        completedDivider.className = 'task-divider completed-divider';
-        completedDivider.innerHTML = 'Completed Tasks';
-        DOM.taskList.appendChild(completedDivider);
-
-        state.completedTasks.slice(0, 5).forEach(task => {
-            const li = createTaskListItem(task, 'completed');
+        // Add active tasks to the list
+        state.tasks.forEach(task => {
+            const li = createTaskListItem(task, 'queued');
             if (li) {
                 DOM.taskList.appendChild(li);
                 if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                    hasVisibleCompletedTasks = true;
+                    hasVisibleQueuedTasks = true;
                 }
             }
         });
-    }
 
-    // Add canceled tasks section
-    if (state.canceledTasks.length > 0) {
-        const canceledDivider = document.createElement('li');
-        canceledDivider.className = 'task-divider canceled-divider';
-        canceledDivider.innerHTML = 'Canceled Tasks';
-        DOM.taskList.appendChild(canceledDivider);
+        // Add completed tasks section
+        if (state.completedTasks.length > 0) {
+            const completedDivider = document.createElement('li');
+            completedDivider.className = 'task-divider completed-divider';
+            completedDivider.innerHTML = 'Completed Tasks';
+            DOM.taskList.appendChild(completedDivider);
 
-        state.canceledTasks.slice(0, 5).forEach(task => {
-            const li = createTaskListItem(task, 'canceled');
-            if (li) {
-                DOM.taskList.appendChild(li);
-                if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
-                    hasVisibleCanceledTasks = true;
+            state.completedTasks.slice(0, 5).forEach(task => {
+                const li = createTaskListItem(task, 'completed');
+                if (li) {
+                    DOM.taskList.appendChild(li);
+                    if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                        hasVisibleCompletedTasks = true;
+                    }
                 }
-            }
-        });
-    }
-
-    // Update empty task list message visibility
-    if (DOM.emptyTaskList) {
-        if (state.tasks.length === 0 && state.completedTasks.length === 0 && state.canceledTasks.length === 0) {
-            DOM.emptyTaskList.classList.remove('hidden');
-        } else {
-            DOM.emptyTaskList.classList.add('hidden');
+            });
         }
+
+        // Add canceled tasks section
+        if (state.canceledTasks.length > 0) {
+            const canceledDivider = document.createElement('li');
+            canceledDivider.className = 'task-divider canceled-divider';
+            canceledDivider.innerHTML = 'Canceled Tasks';
+            DOM.taskList.appendChild(canceledDivider);
+
+            state.canceledTasks.slice(0, 5).forEach(task => {
+                const li = createTaskListItem(task, 'canceled');
+                if (li) {
+                    DOM.taskList.appendChild(li);
+                    if (!searchTerm || task.name.toLowerCase().includes(searchTerm)) {
+                        hasVisibleCanceledTasks = true;
+                    }
+                }
+            });
+        }
+
+        // Update empty task list message visibility
+        if (DOM.emptyTaskList) {
+            if (state.tasks.length === 0 && state.completedTasks.length === 0 && state.canceledTasks.length === 0) {
+                DOM.emptyTaskList.classList.remove('hidden');
+            } else {
+                DOM.emptyTaskList.classList.add('hidden');
+            }
+        }
+    } catch (error) {
+        console.error('Error updating task list:', error);
     }
 }
 
