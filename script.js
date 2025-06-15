@@ -920,7 +920,7 @@ function setupEventListeners() {
     DOM.addTaskButton.addEventListener('click', openCreateTaskModal);
     DOM.closeCreateTaskFormButton.addEventListener('click', closeCreateTaskModal);
 
-    // Delegate task list events (start/delete)
+    // Delegate task list events (start/delete/edit)
     DOM.taskList.addEventListener('click', handleTaskListClick);
 
     // Add event listener for the "Start now" button
@@ -962,16 +962,26 @@ function toggleSidebar() {
 }
 
 function openCreateTaskModal() {
-    // Reset the form first to clear any previous inputs
+    editTaskId = null;
     DOM.taskForm.reset();
-    
     DOM.createTaskFormContainer.classList.remove('hidden');
-    DOM.taskNameInput.focus(); // Focus the first input field
+    // Restore modal title/button
+    const modalTitle = DOM.createTaskFormContainer.querySelector('h2');
+    if (modalTitle) modalTitle.textContent = 'Create New Task';
+    const submitBtn = DOM.taskForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Add Task';
+    DOM.taskNameInput.focus();
 }
 
 function closeCreateTaskModal() {
     DOM.createTaskFormContainer.classList.add('hidden');
-    DOM.taskForm.reset(); // Clear the form when closing
+    DOM.taskForm.reset();
+    editTaskId = null;
+    // Restore modal title/button
+    const modalTitle = DOM.createTaskFormContainer.querySelector('h2');
+    if (modalTitle) modalTitle.textContent = 'Create New Task';
+    const submitBtn = DOM.taskForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Add Task';
 }
 
 // --- Modified Event Handlers ---
@@ -979,18 +989,30 @@ function closeCreateTaskModal() {
 // Handle task form submission
 function handleTaskFormSubmit(e) {
     e.preventDefault();
-    
     const taskName = DOM.taskNameInput.value.trim();
     const taskTime = parseInt(DOM.taskTimeInput.value);
     const taskSound = DOM.taskSoundInput.value;
-    
     if (!taskName || !taskTime || taskTime <= 0) {
-        // Add some validation feedback if needed
         console.warn('Invalid task input');
         return;
     }
-    
-    // Create new task
+    if (editTaskId) {
+        // Edit mode: update existing task
+        const task = state.tasks.find(t => t.id === editTaskId);
+        if (task) {
+            task.name = taskName;
+            task.duration = taskTime;
+            task.sound = taskSound;
+            saveToLocalStorage();
+            updateTaskList();
+            if (state.activeTaskId === editTaskId) {
+                setActiveTask(editTaskId);
+            }
+        }
+        closeCreateTaskModal();
+        return;
+    }
+    // Create new task (original logic)
     const newTask = {
         id: Date.now().toString(),
         name: taskName,
@@ -998,25 +1020,13 @@ function handleTaskFormSubmit(e) {
         sound: taskSound,
         createdAt: Date.now()
     };
-    
-    // Add to tasks array
     state.tasks.push(newTask);
-    
-    // Save to localStorage
     saveToLocalStorage();
-    
-    // Update UI
     updateTaskList();
-    
-    // Close the modal and clear form
     closeCreateTaskModal();
-    
-    // If this is the first task or no task is active, set it active
     if (!state.activeTaskId) {
         setActiveTask(newTask.id);
     }
-    
-    // Close sidebar if open on mobile after adding task
     if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
         toggleSidebar();
     }
@@ -1025,24 +1035,28 @@ function handleTaskFormSubmit(e) {
 // Handle clicks within the task list (delegation)
 function handleTaskListClick(e) {
     const startButton = e.target.closest('.start-button');
+    const editButton = e.target.closest('.edit-button');
     const deleteButton = e.target.closest('.delete-button');
     const taskItem = e.target.closest('.task-item');
 
     if (startButton) {
         const taskId = startButton.dataset.id;
         setActiveTask(taskId);
-        startTask(); // Optionally auto-start when clicked from sidebar
-        // Close sidebar if open on mobile after starting task
+        startTask();
         if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
             toggleSidebar();
         }
-        return; // Prevent task item click logic below
+        return;
+    }
+
+    if (editButton) {
+        const taskId = editButton.dataset.id;
+        openEditTaskModal(taskId);
+        return;
     }
 
     if (deleteButton) {
         const taskId = deleteButton.dataset.id;
-        // Add confirmation dialog?
-        // if (confirm('Are you sure you want to delete this task?')) { ... }
         if (taskItem.classList.contains('completed')) {
             deleteCompletedTask(taskId);
         } else if (taskItem.classList.contains('canceled')) {
@@ -1050,15 +1064,13 @@ function handleTaskListClick(e) {
         } else {
             deleteTask(taskId);
         }
-        return; // Prevent task item click logic below
+        return;
     }
 
-    // Handle clicking anywhere else on the task item (to make it active)
     if (taskItem && !taskItem.classList.contains('active') && !taskItem.classList.contains('completed') && !taskItem.classList.contains('canceled')) {
         const taskId = taskItem.dataset.id;
         setActiveTask(taskId);
-         // Close sidebar if open on mobile after selecting task
-         if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
+        if (window.innerWidth < 768 && DOM.sidebar.classList.contains('open')) {
             toggleSidebar();
         }
     }
@@ -1210,16 +1222,19 @@ function createTaskListItem(task, type) {
                     ${durationInfo ? `<span>${durationInfo}</span>` : ''}
                     ${soundIcon ? `<span class="truncate">${soundIcon}</span>` : ''}
                         </div>
-                    </div>
             <div class="task-actions flex items-center ml-2">
                 ${type === 'queued' && task.id !== state.activeTaskId ? `
                     <button title="Start Task" class="start-button p-1 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-full" data-id="${task.id}">
                         <i class="fas fa-play fa-xs"></i>
                     </button>
+                    <button title="Edit Task" class="edit-button p-1 bg-gray-100 dark:bg-gray-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-full" data-id="${task.id}">
+                        <i class="fas fa-pen fa-xs"></i>
+                    </button>
                 ` : ''}
                 <button title="Delete Task" class="delete-button p-1 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-full" data-id="${task.id}">
                     <i class="fas fa-trash-alt fa-xs"></i>
                         </button>
+                    </div>
                     </div>
                 </div>
             `;
@@ -2616,4 +2631,23 @@ function continueTaskWithExtraTime(minutes) {
     startTask();
     updateTaskList();
     saveToLocalStorage();
+}
+
+let editTaskId = null; // Track which task is being edited
+
+function openEditTaskModal(taskId) {
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    editTaskId = taskId;
+    DOM.taskForm.reset();
+    DOM.createTaskFormContainer.classList.remove('hidden');
+    DOM.taskNameInput.value = task.name;
+    DOM.taskTimeInput.value = task.duration;
+    DOM.taskSoundInput.value = task.sound;
+    // Change modal title/button
+    const modalTitle = DOM.createTaskFormContainer.querySelector('h2');
+    if (modalTitle) modalTitle.textContent = 'Edit Task';
+    const submitBtn = DOM.taskForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Save Changes';
+    DOM.taskNameInput.focus();
 }
