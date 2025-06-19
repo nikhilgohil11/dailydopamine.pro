@@ -165,9 +165,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     activeSounds.delete(soundName);
                 }
             } else {
+                // Only stop the unchecked sound, leave others playing
                 sound.pause();
                 sound.currentTime = 0;
                 activeSounds.delete(soundName);
+                
+                // Make sure other sounds keep playing
+                activeSounds.forEach(activeSound => {
+                    if (activeSound !== soundName && sounds[activeSound]) {
+                        if (sounds[activeSound].paused) {
+                            sounds[activeSound].play().catch(error => {
+                                console.error(`Error resuming ${activeSound}:`, error);
+                            });
+                        }
+                    }
+                });
             }
             
             updateVolumeDisplay();
