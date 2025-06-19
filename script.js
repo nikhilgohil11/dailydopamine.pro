@@ -106,47 +106,81 @@ const presetMixes = {
 };
 
 // Initialize sound elements
-const sounds = {
-    rain: new Audio('sounds/rain.mp3'),
-    birds: new Audio('sounds/birds.mp3'),
-    water: new Audio('sounds/water.mp3'),
-    wind: new Audio('sounds/wind.mp3'),
-    whitenoise: new Audio('sounds/whitenoise.mp3'),
-    thunder: new Audio('sounds/thunder.mp3'),
-    bonfire: new Audio('sounds/bonfire.mp3'),
-    chatter: new Audio('sounds/chatter.mp3'),
-    alpha: new Audio('sounds/alpha.mp3'),
-    gong: new Audio('sounds/gong.mp3')
-};
+const sounds = {};
 
-// Set all sounds to loop
-Object.values(sounds).forEach(sound => {
-    sound.loop = true;
+// Function to create and initialize audio elements
+function initializeSoundElements() {
+    AUDIO_FILES.forEach(file => {
+        sounds[file.id] = new Audio();
+        sounds[file.id].src = file.path;
+        sounds[file.id].loop = true;
+        sounds[file.id].preload = 'none'; // Don't preload on mobile
+    });
+}
+
+// Initialize sounds after DOM content loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSoundElements();
+    
+    // Handle sound checkbox changes
+    document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', async (e) => {
+            const soundName = e.target.dataset.sound;
+            const sound = sounds[soundName];
+            
+            if (!sound) {
+                console.error('Sound not found:', soundName);
+                e.target.checked = false;
+                return;
+            }
+            
+            if (e.target.checked) {
+                try {
+                    sound.volume = currentVolume / 100;
+                    // Load the audio first
+                    await sound.load();
+                    // Then try to play
+                    await sound.play().catch(error => {
+                        console.error('Error playing sound:', error);
+                        // Reset checkbox if audio fails to play
+                        e.target.checked = false;
+                        activeSounds.delete(soundName);
+                        
+                        if (error.name === 'NotSupportedError' || error.name === 'NotAllowedError') {
+                            // Handle mobile browser restrictions
+                            sound.pause();
+                            sound.currentTime = 0;
+                            // Show a user-friendly message
+                            const message = error.name === 'NotAllowedError' 
+                                ? 'Please interact with the page first to enable sound.'
+                                : 'Sound playback is not supported on this device.';
+                            console.log(message);
+                        }
+                    });
+                    activeSounds.add(soundName);
+                } catch (error) {
+                    console.error('Error in sound playback:', error);
+                    // Reset checkbox state
+                    e.target.checked = false;
+                    activeSounds.delete(soundName);
+                }
+            } else {
+                sound.pause();
+                sound.currentTime = 0;
+                activeSounds.delete(soundName);
+            }
+            
+            updateVolumeDisplay();
+        });
+    });
 });
+
+// Remove the old sound initialization code
+// ... existing code ...
 
 // Sound state management
 let activeSounds = new Set();
 let currentVolume = 50;
-
-// Handle sound checkbox changes
-document.querySelectorAll('.sound-checkbox').forEach(checkbox => {
-    checkbox.addEventListener('change', (e) => {
-        const soundName = e.target.dataset.sound;
-        const sound = sounds[soundName];
-        
-        if (e.target.checked) {
-            sound.volume = currentVolume / 100;
-            sound.play();
-            activeSounds.add(soundName);
-        } else {
-            sound.pause();
-            sound.currentTime = 0;
-            activeSounds.delete(soundName);
-        }
-        
-        updateVolumeDisplay();
-    });
-});
 
 // Handle master volume slider
 const masterVolumeSlider = document.getElementById('master-volume-slider');
@@ -443,40 +477,53 @@ function initializeApp() {
         clearActiveTask();
     }
     
-    // Initialize sound mixer
-    initializeSoundMixer();
-    
-    // Set up channel slider event listeners
-    document.querySelectorAll('.channel-slider').forEach(slider => {
-        slider.addEventListener('input', function() {
-            const soundId = this.dataset.sound;
-            const volume = parseInt(this.value) / 100;
-            
-            // Update value display
-            updateSliderValue(this);
-            
-            // If sound is already playing, update its volume
-            if (state.activeSounds[soundId]) {
-                state.activeSounds[soundId].volume = volume;
-            } else if (volume > 0) {
-                // If sound isn't playing and volume > 0, start playing it
-                const audio = new Audio(state.audioElements[soundId].src);
-                audio.loop = true;
-                audio.volume = volume;
-                audio.play().catch(error => {
-                    console.error(`Error playing ${soundId}:`, error);
-                });
-                state.activeSounds[soundId] = audio;
-            }
-            
-            // If volume is 0, stop the sound
-            if (volume === 0 && state.activeSounds[soundId]) {
-                state.activeSounds[soundId].pause();
-                state.activeSounds[soundId].currentTime = 0;
-                delete state.activeSounds[soundId];
-            }
+    // Initialize sound mixer with error handling
+    try {
+        initializeSoundMixer();
+        
+        // Set up channel slider event listeners
+        document.querySelectorAll('.channel-slider').forEach(slider => {
+            slider.addEventListener('input', function() {
+                const soundId = this.dataset.sound;
+                const volume = parseInt(this.value) / 100;
+                
+                // Update value display
+                updateSliderValue(this);
+                
+                // If sound is already playing, update its volume
+                if (state.activeSounds[soundId]) {
+                    state.activeSounds[soundId].volume = volume;
+                } else if (volume > 0) {
+                    // If sound isn't playing and volume > 0, start playing it
+                    const audio = new Audio(state.audioElements[soundId].src);
+                    audio.loop = true;
+                    audio.volume = volume;
+                    audio.play().catch(error => {
+                        console.error(`Error playing ${soundId}:`, error);
+                        if (error.name === 'AbortError' || error.name === 'NotAllowedError') {
+                            // Reset the slider to 0 if audio couldn't play
+                            this.value = 0;
+                            updateSliderValue(this);
+                            // Remove from active sounds if it was added
+                            if (state.activeSounds[soundId]) {
+                                delete state.activeSounds[soundId];
+                            }
+                        }
+                    });
+                    state.activeSounds[soundId] = audio;
+                }
+                
+                // If volume is 0, stop the sound
+                if (volume === 0 && state.activeSounds[soundId]) {
+                    state.activeSounds[soundId].pause();
+                    state.activeSounds[soundId].currentTime = 0;
+                    delete state.activeSounds[soundId];
+                }
+            });
         });
-    });
+    } catch (error) {
+        console.error('Error initializing sound mixer:', error);
+    }
 
     // Set up local music handlers
     setupLocalMusicHandlers();
