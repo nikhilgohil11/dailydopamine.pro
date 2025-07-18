@@ -310,7 +310,13 @@ const DOM = {
     add5MinButton: document.getElementById('add-5min'),
     add10MinButton: document.getElementById('add-10min'),
     add15MinButton: document.getElementById('add-15min'),
-    add25MinButton: document.getElementById('add-25min')
+    add25MinButton: document.getElementById('add-25min'),
+    
+    // Clear all tasks elements
+    clearAllTasksButton: document.getElementById('clear-all-tasks-button'),
+    clearAllTasksModal: document.getElementById('clear-all-tasks-modal'),
+    confirmClearAllTasks: document.getElementById('confirm-clear-all-tasks'),
+    cancelClearAllTasks: document.getElementById('cancel-clear-all-tasks')
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -697,6 +703,11 @@ function setupEventListeners() {
     document.getElementById('add-first-task')?.addEventListener('click', () => openCreateTaskModal());
     document.getElementById('add-task-header')?.addEventListener('click', openCreateTaskModal);
     document.getElementById('add-task-header-mobile')?.addEventListener('click', openCreateTaskModal);
+    
+    // Clear all tasks event listeners
+    DOM.clearAllTasksButton?.addEventListener('click', openClearAllTasksModal);
+    DOM.confirmClearAllTasks?.addEventListener('click', clearAllTasks);
+    DOM.cancelClearAllTasks?.addEventListener('click', closeClearAllTasksModal);
 }
 
 function toggleSidebar() {
@@ -985,6 +996,59 @@ function deleteTask(taskId) {
     state.tasks = state.tasks.filter(task => task.id !== taskId);
     saveToLocalStorage();
     updateTaskList();
+}
+
+function openClearAllTasksModal() {
+    // Only show modal if there are tasks to clear
+    if (state.tasks.length === 0) {
+        return;
+    }
+    DOM.clearAllTasksModal.classList.remove('hidden');
+}
+
+function closeClearAllTasksModal() {
+    DOM.clearAllTasksModal.classList.add('hidden');
+}
+
+function clearAllTasks() {
+    // Clear any active task first
+    if (state.activeTaskId) {
+        clearActiveTask();
+    }
+    
+    // Clear all tasks in the queue
+    state.tasks = [];
+    
+    // Save to localStorage
+    saveToLocalStorage();
+    
+    // Update the task list display
+    updateTaskList();
+    
+    // Close the modal
+    closeClearAllTasksModal();
+    
+    // Show a brief success message
+    showClearAllSuccessMessage();
+}
+
+function showClearAllSuccessMessage() {
+    // Create a temporary success message
+    const successMessage = document.createElement('div');
+    successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate__animated animate__fadeInRight';
+    successMessage.innerHTML = '<i class="fas fa-check mr-2"></i>All tasks cleared successfully';
+    
+    document.body.appendChild(successMessage);
+    
+    // Remove the message after 3 seconds
+    setTimeout(() => {
+        successMessage.classList.add('animate__fadeOutRight');
+        setTimeout(() => {
+            if (successMessage.parentNode) {
+                successMessage.parentNode.removeChild(successMessage);
+            }
+        }, 300);
+    }, 3000);
 }
 
 function startTask() {
