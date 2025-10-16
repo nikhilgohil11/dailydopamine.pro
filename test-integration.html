@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Dopamine Pro - Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #3730a3;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        .config-section {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .config-input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Daily Dopamine Pro - Integration Test</h1>
+    
+    <div class="config-section">
+        <h3>Configuration</h3>
+        <p>Enter your Supabase credentials to test the integration:</p>
+        <input type="text" id="supabase-url" class="config-input" placeholder="Supabase URL (https://your-project.supabase.co)">
+        <input type="text" id="supabase-key" class="config-input" placeholder="Supabase Anon Key">
+        <button class="test-button" onclick="updateConfig()">Update Configuration</button>
+    </div>
+
+    <div class="test-section">
+        <h3>Authentication Tests</h3>
+        <button class="test-button" onclick="testAuthInit()">Test Auth Initialization</button>
+        <button class="test-button" onclick="testSignUp()">Test Sign Up</button>
+        <button class="test-button" onclick="testSignIn()">Test Sign In</button>
+        <button class="test-button" onclick="testSignOut()">Test Sign Out</button>
+        <div id="auth-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Database Tests</h3>
+        <button class="test-button" onclick="testDatabaseConnection()">Test Database Connection</button>
+        <button class="test-button" onclick="testCreateTask()">Test Create Task</button>
+        <button class="test-button" onclick="testSyncData()">Test Sync Data</button>
+        <div id="db-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Integration Tests</h3>
+        <button class="test-button" onclick="testFullFlow()">Test Full User Flow</button>
+        <button class="test-button" onclick="testOfflineMode()">Test Offline Mode</button>
+        <button class="test-button" onclick="testMigration()">Test Data Migration</button>
+        <div id="integration-results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Results Summary</h3>
+        <div id="summary-results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="supabase-config.js"></script>
+    <script src="auth-manager.js"></script>
+    <script src="sync-manager.js"></script>
+    
+    <script>
+        let testResults = {
+            auth: [],
+            database: [],
+            integration: []
+        };
+
+        function updateConfig() {
+            const url = document.getElementById('supabase-url').value;
+            const key = document.getElementById('supabase-key').value;
+            
+            if (url && key) {
+                window.appConfig.supabase.url = url;
+                window.appConfig.supabase.anonKey = key;
+                
+                // Reinitialize Supabase
+                if (window.supabaseConfig) {
+                    window.supabaseConfig.supabase = supabase.createClient(url, key);
+                }
+                
+                addResult('auth-results', 'Configuration updated successfully', 'success');
+            } else {
+                addResult('auth-results', 'Please enter both URL and Key', 'error');
+            }
+        }
+
+        async function testAuthInit() {
+            try {
+                await window.authManager.init();
+                addResult('auth-results', 'Auth initialization successful', 'success');
+                testResults.auth.push({ test: 'Auth Init', status: 'success' });
+            } catch (error) {
+                addResult('auth-results', 'Auth initialization failed: ' + error.message, 'error');
+                testResults.auth.push({ test: 'Auth Init', status: 'error', error: error.message });
+            }
+        }
+
+        async function testSignUp() {
+            try {
+                const testEmail = 'test@example.com';
+                const testPassword = 'testpassword123';
+                
+                const result = await window.authManager.signUp(testEmail, testPassword);
+                if (result.success) {
+                    addResult('auth-results', 'Sign up successful: ' + result.message, 'success');
+                    testResults.auth.push({ test: 'Sign Up', status: 'success' });
+                } else {
+                    addResult('auth-results', 'Sign up failed: ' + result.message, 'error');
+                    testResults.auth.push({ test: 'Sign Up', status: 'error', error: result.message });
+                }
+            } catch (error) {
+                addResult('auth-results', 'Sign up error: ' + error.message, 'error');
+                testResults.auth.push({ test: 'Sign Up', status: 'error', error: error.message });
+            }
+        }
+
+        async function testSignIn() {
+            try {
+                const testEmail = 'test@example.com';
+                const testPassword = 'testpassword123';
+                
+                const result = await window.authManager.signIn(testEmail, testPassword);
+                if (result.success) {
+                    addResult('auth-results', 'Sign in successful: ' + result.message, 'success');
+                    testResults.auth.push({ test: 'Sign In', status: 'success' });
+                } else {
+                    addResult('auth-results', 'Sign in failed: ' + result.message, 'error');
+                    testResults.auth.push({ test: 'Sign In', status: 'error', error: result.message });
+                }
+            } catch (error) {
+                addResult('auth-results', 'Sign in error: ' + error.message, 'error');
+                testResults.auth.push({ test: 'Sign In', status: 'error', error: error.message });
+            }
+        }
+
+        async function testSignOut() {
+            try {
+                const result = await window.authManager.signOut();
+                if (result.success) {
+                    addResult('auth-results', 'Sign out successful: ' + result.message, 'success');
+                    testResults.auth.push({ test: 'Sign Out', status: 'success' });
+                } else {
+                    addResult('auth-results', 'Sign out failed: ' + result.message, 'error');
+                    testResults.auth.push({ test: 'Sign Out', status: 'error', error: result.message });
+                }
+            } catch (error) {
+                addResult('auth-results', 'Sign out error: ' + error.message, 'error');
+                testResults.auth.push({ test: 'Sign Out', status: 'error', error: error.message });
+            }
+        }
+
+        async function testDatabaseConnection() {
+            try {
+                if (!window.supabaseConfig || !window.supabaseConfig.supabase) {
+                    throw new Error('Supabase not configured');
+                }
+                
+                const { data, error } = await window.supabaseConfig.supabase.from('tasks').select('count').limit(1);
+                
+                if (error) throw error;
+                
+                addResult('db-results', 'Database connection successful', 'success');
+                testResults.database.push({ test: 'DB Connection', status: 'success' });
+            } catch (error) {
+                addResult('db-results', 'Database connection failed: ' + error.message, 'error');
+                testResults.database.push({ test: 'DB Connection', status: 'error', error: error.message });
+            }
+        }
+
+        async function testCreateTask() {
+            try {
+                if (!window.authManager.isLoggedIn()) {
+                    addResult('db-results', 'Please sign in first to test task creation', 'info');
+                    return;
+                }
+
+                const testTask = {
+                    id: 'test-' + Date.now(),
+                    name: 'Test Task',
+                    duration: 25,
+                    sound: 'rain',
+                    created_at: Date.now()
+                };
+
+                const { data, error } = await window.supabaseConfig.supabase
+                    .from('tasks')
+                    .insert([{ ...testTask, user_id: window.authManager.getUserId() }]);
+
+                if (error) throw error;
+
+                addResult('db-results', 'Task creation successful', 'success');
+                testResults.database.push({ test: 'Create Task', status: 'success' });
+            } catch (error) {
+                addResult('db-results', 'Task creation failed: ' + error.message, 'error');
+                testResults.database.push({ test: 'Create Task', status: 'error', error: error.message });
+            }
+        }
+
+        async function testSyncData() {
+            try {
+                await window.syncManager.init();
+                const result = await window.syncManager.syncFromSupabase();
+                
+                if (result.success) {
+                    addResult('db-results', 'Sync successful: ' + result.message, 'success');
+                    testResults.database.push({ test: 'Sync Data', status: 'success' });
+                } else {
+                    addResult('db-results', 'Sync failed: ' + result.message, 'error');
+                    testResults.database.push({ test: 'Sync Data', status: 'error', error: result.message });
+                }
+            } catch (error) {
+                addResult('db-results', 'Sync error: ' + error.message, 'error');
+                testResults.database.push({ test: 'Sync Data', status: 'error', error: error.message });
+            }
+        }
+
+        async function testFullFlow() {
+            try {
+                // Test complete user flow
+                await window.authManager.init();
+                await window.syncManager.init();
+                
+                addResult('integration-results', 'Full flow initialization successful', 'success');
+                testResults.integration.push({ test: 'Full Flow', status: 'success' });
+            } catch (error) {
+                addResult('integration-results', 'Full flow failed: ' + error.message, 'error');
+                testResults.integration.push({ test: 'Full Flow', status: 'error', error: error.message });
+            }
+        }
+
+        function testOfflineMode() {
+            try {
+                // Simulate offline mode
+                const originalOnline = navigator.onLine;
+                Object.defineProperty(navigator, 'onLine', {
+                    writable: true,
+                    value: false
+                });
+
+                // Test offline functionality
+                window.syncManager.queueOperation('test_offline');
+                
+                // Restore online status
+                Object.defineProperty(navigator, 'onLine', {
+                    writable: true,
+                    value: originalOnline
+                });
+
+                addResult('integration-results', 'Offline mode test successful', 'success');
+                testResults.integration.push({ test: 'Offline Mode', status: 'success' });
+            } catch (error) {
+                addResult('integration-results', 'Offline mode test failed: ' + error.message, 'error');
+                testResults.integration.push({ test: 'Offline Mode', status: 'error', error: error.message });
+            }
+        }
+
+        async function testMigration() {
+            try {
+                // Create some test local data
+                const testData = {
+                    tasks: [{ id: 'test1', name: 'Test Task 1', duration: 25, sound: 'rain', created_at: Date.now() }],
+                    completedTasks: [],
+                    canceledTasks: [],
+                    stats: { todayFocusTime: 25, tasksCompleted: 0, soundUsage: {} }
+                };
+                
+                localStorage.setItem('focusflow_data', JSON.stringify(testData));
+                
+                if (window.authManager.isLoggedIn()) {
+                    const result = await window.syncManager.migrateLocalDataToSupabase();
+                    if (result.success) {
+                        addResult('integration-results', 'Migration test successful', 'success');
+                        testResults.integration.push({ test: 'Migration', status: 'success' });
+                    } else {
+                        addResult('integration-results', 'Migration failed: ' + result.message, 'error');
+                        testResults.integration.push({ test: 'Migration', status: 'error', error: result.message });
+                    }
+                } else {
+                    addResult('integration-results', 'Please sign in to test migration', 'info');
+                }
+            } catch (error) {
+                addResult('integration-results', 'Migration test error: ' + error.message, 'error');
+                testResults.integration.push({ test: 'Migration', status: 'error', error: error.message });
+            }
+        }
+
+        function addResult(containerId, message, type) {
+            const container = document.getElementById(containerId);
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${type}`;
+            resultDiv.textContent = message;
+            container.appendChild(resultDiv);
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-results');
+            const totalTests = testResults.auth.length + testResults.database.length + testResults.integration.length;
+            const successfulTests = [...testResults.auth, ...testResults.database, ...testResults.integration]
+                .filter(test => test.status === 'success').length;
+            
+            summary.innerHTML = `
+                <div class="test-result ${successfulTests === totalTests ? 'success' : 'info'}">
+                    <strong>Test Summary:</strong> ${successfulTests}/${totalTests} tests passed
+                </div>
+            `;
+        }
+
+        // Update summary when tests are run
+        setInterval(updateSummary, 1000);
+    </script>
+</body>
+</html>

@@ -35,7 +35,13 @@ const state = {
         soundUsage: {}
     },
     activeSounds: {},
-    completionSound: null
+    completionSound: null,
+    // New auth and sync properties
+    currentUser: null,
+    isGuest: true,
+    pendingSyncOperations: [],
+    lastSyncTime: null,
+    isOnline: navigator.onLine
 };
 
 // Add these variables at the top with other state variables
@@ -316,7 +322,43 @@ const DOM = {
     clearAllTasksButton: document.getElementById('clear-all-tasks-button'),
     clearAllTasksModal: document.getElementById('clear-all-tasks-modal'),
     confirmClearAllTasks: document.getElementById('confirm-clear-all-tasks'),
-    cancelClearAllTasks: document.getElementById('cancel-clear-all-tasks')
+    cancelClearAllTasks: document.getElementById('cancel-clear-all-tasks'),
+    
+    // Auth elements
+    authModal: document.getElementById('auth-modal'),
+    authForm: document.getElementById('auth-form'),
+    authTitle: document.getElementById('auth-title'),
+    authEmail: document.getElementById('auth-email'),
+    authPassword: document.getElementById('auth-password'),
+    authConfirmPassword: document.getElementById('auth-confirm-password'),
+    authConfirmPasswordContainer: document.getElementById('auth-confirm-password-container'),
+    authSubmitBtn: document.getElementById('auth-submit-btn'),
+    authToggleMode: document.getElementById('auth-toggle-mode'),
+    authForgotPassword: document.getElementById('auth-forgot-password'),
+    forgotPasswordBtn: document.getElementById('forgot-password-btn'),
+    continueAsGuest: document.getElementById('continue-as-guest'),
+    closeAuthModal: document.getElementById('close-auth-modal'),
+    authError: document.getElementById('auth-error'),
+    authErrorText: document.getElementById('auth-error-text'),
+    authSuccess: document.getElementById('auth-success'),
+    authSuccessText: document.getElementById('auth-success-text'),
+    
+    // User menu elements
+    userMenuButton: document.getElementById('user-menu-button'),
+    userMenu: document.getElementById('user-menu'),
+    userEmail: document.getElementById('user-email'),
+    userStatus: document.getElementById('user-status'),
+    syncNowBtn: document.getElementById('sync-now-btn'),
+    loginBtn: document.getElementById('login-btn'),
+    logoutBtn: document.getElementById('logout-btn'),
+    
+    // Guest banner and sync status
+    guestBanner: document.getElementById('guest-banner'),
+    loginFromBanner: document.getElementById('login-from-banner'),
+    dismissGuestBanner: document.getElementById('dismiss-guest-banner'),
+    syncStatus: document.getElementById('sync-status'),
+    syncStatusText: document.getElementById('sync-status-text'),
+    syncSpinner: document.getElementById('sync-spinner')
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -422,24 +464,18 @@ function preloadAudioFiles() {
     });
 }
 
-function initializeApp() {
+async function initializeApp() {
     console.log('Initializing app...');
     
     try {
         localStorage.setItem('test', 'test');
         localStorage.removeItem('test');
-        loadFromLocalStorage();
     } catch (error) {
         console.warn('localStorage is not available:', error);
-        state.tasks = [];
-        state.completedTasks = [];
-        state.canceledTasks = [];
-        state.stats = {
-            todayFocusTime: 0,
-            tasksCompleted: 0,
-            soundUsage: {}
-        };
     }
+    
+    // Initialize authentication and sync
+    await initializeAuthAndSync();
     
     setupEventListeners();
     updateTaskList();
@@ -460,6 +496,220 @@ function initializeApp() {
     setupLocalMusicHandlers();
     setupTabs();
     setupYouTubePlayer();
+    setupAuthEventListeners();
+    updateUserInterface();
+}
+
+// Initialize authentication and sync
+async function initializeAuthAndSync() {
+    try {
+        // Initialize auth manager
+        await window.authManager.init();
+        
+        // Initialize sync manager
+        await window.syncManager.init();
+        
+        // Check if user is logged in
+        const user = window.authManager.getCurrentUser();
+        if (user) {
+            state.currentUser = user;
+            state.isGuest = false;
+            console.log('User logged in:', user.email);
+            
+            // Sync data from Supabase
+            const syncResult = await window.syncManager.syncFromSupabase();
+            if (!syncResult.success) {
+                console.warn('Failed to sync from Supabase:', syncResult.message);
+                // Fallback to localStorage
+                loadFromLocalStorage();
+            }
+        } else {
+            // User is not logged in, load from localStorage
+            state.currentUser = null;
+            state.isGuest = true;
+            loadFromLocalStorage();
+        }
+        
+        // Set up auth state listeners
+        window.authManager.addAuthListener(handleAuthStateChange);
+        
+        // Set up sync listeners
+        window.syncManager.addSyncListener(handleSyncStateChange);
+        
+    } catch (error) {
+        console.error('Error initializing auth and sync:', error);
+        // Fallback to localStorage
+        loadFromLocalStorage();
+    }
+}
+
+// Handle authentication state changes
+function handleAuthStateChange(event, user) {
+    console.log('Auth state changed:', event, user?.email);
+    
+    if (event === 'login' && user) {
+        state.currentUser = user;
+        state.isGuest = false;
+        
+        // Check if there's local data to migrate
+        const localData = getLocalStorageData();
+        if (localData && (localData.tasks?.length > 0 || localData.completedTasks?.length > 0)) {
+            showMigrationPrompt();
+        } else {
+            // No local data, sync from cloud
+            window.syncManager.syncFromSupabase();
+        }
+    } else if (event === 'logout') {
+        state.currentUser = null;
+        state.isGuest = true;
+        
+        // Save current data to localStorage before switching to guest mode
+        saveToLocalStorage();
+    }
+    
+    updateUserInterface();
+}
+
+// Handle sync state changes
+function handleSyncStateChange(event, data) {
+    console.log('Sync state changed:', event, data);
+    
+    switch (event) {
+        case 'sync_start':
+            showSyncStatus('Syncing...', true);
+            break;
+        case 'sync_complete':
+            showSyncStatus('Synced', false);
+            setTimeout(() => hideSyncStatus(), 2000);
+            break;
+        case 'sync_error':
+            showSyncStatus('Sync failed', false);
+            setTimeout(() => hideSyncStatus(), 3000);
+            break;
+    }
+}
+
+// Get local storage data
+function getLocalStorageData() {
+    try {
+        const savedData = localStorage.getItem('focusflow_data');
+        return savedData ? JSON.parse(savedData) : null;
+    } catch (error) {
+        console.error('Error loading local data:', error);
+        return null;
+    }
+}
+
+// Show migration prompt
+function showMigrationPrompt() {
+    const localData = getLocalStorageData();
+    if (!localData) return;
+    
+    const taskCount = (localData.tasks?.length || 0) + 
+                     (localData.completedTasks?.length || 0) + 
+                     (localData.canceledTasks?.length || 0);
+    
+    if (taskCount === 0) return;
+    
+    // Create migration modal
+    const migrationModal = document.createElement('div');
+    migrationModal.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+    migrationModal.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 max-w-md w-full">
+            <div class="text-center mb-6">
+                <i class="fas fa-cloud-upload-alt text-4xl text-[rgb(2,4,3)] mb-4"></i>
+                <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100 mb-2">Upload Your Tasks?</h3>
+                <p class="text-gray-600 dark:text-gray-400">You have ${taskCount} tasks stored locally. Would you like to upload them to the cloud so you can access them on any device?</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="migrate-yes" class="flex-1 bg-[rgb(2,4,3)] text-white py-2.5 px-4 rounded-lg hover:bg-[rgb(2,4,3)]/80 transition font-semibold">
+                    <i class="fas fa-upload mr-2"></i>Upload to Cloud
+                </button>
+                <button id="migrate-no" class="flex-1 border border-gray-300 dark:border-gray-600 py-2.5 px-4 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-700 dark:text-gray-300 font-semibold">
+                    Keep Local Only
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(migrationModal);
+    
+    // Handle migration choice
+    document.getElementById('migrate-yes').addEventListener('click', async () => {
+        const result = await window.syncManager.migrateLocalDataToSupabase();
+        if (result.success) {
+            showNotification('Tasks uploaded successfully!', 'success');
+            // Sync from cloud to get the latest data
+            await window.syncManager.syncFromSupabase();
+        } else {
+            showNotification('Failed to upload tasks: ' + result.message, 'error');
+        }
+        document.body.removeChild(migrationModal);
+    });
+    
+    document.getElementById('migrate-no').addEventListener('click', () => {
+        document.body.removeChild(migrationModal);
+        // Just sync from cloud without migrating
+        window.syncManager.syncFromSupabase();
+    });
+}
+
+// Show notification
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-500 text-white' :
+        type === 'error' ? 'bg-red-500 text-white' :
+        'bg-blue-500 text-white'
+    }`;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Show sync status
+function showSyncStatus(message, showSpinner = false) {
+    if (DOM.syncStatusText) DOM.syncStatusText.textContent = message;
+    if (DOM.syncSpinner) {
+        DOM.syncSpinner.classList.toggle('hidden', !showSpinner);
+    }
+    if (DOM.syncStatus) DOM.syncStatus.classList.remove('hidden');
+}
+
+// Hide sync status
+function hideSyncStatus() {
+    if (DOM.syncStatus) DOM.syncStatus.classList.add('hidden');
+}
+
+// Update user interface based on auth state
+function updateUserInterface() {
+    const isLoggedIn = !state.isGuest && state.currentUser;
+    
+    // Update user menu
+    if (isLoggedIn) {
+        if (DOM.userEmail) DOM.userEmail.textContent = state.currentUser.email;
+        if (DOM.userStatus) DOM.userStatus.textContent = 'Synced';
+        if (DOM.loginBtn) DOM.loginBtn.classList.add('hidden');
+        if (DOM.logoutBtn) DOM.logoutBtn.classList.remove('hidden');
+        if (DOM.syncNowBtn) DOM.syncNowBtn.classList.remove('hidden');
+    } else {
+        if (DOM.userEmail) DOM.userEmail.textContent = 'Guest Mode';
+        if (DOM.userStatus) DOM.userStatus.textContent = 'Local only';
+        if (DOM.loginBtn) DOM.loginBtn.classList.remove('hidden');
+        if (DOM.logoutBtn) DOM.logoutBtn.classList.add('hidden');
+        if (DOM.syncNowBtn) DOM.syncNowBtn.classList.add('hidden');
+    }
+    
+    // Show/hide guest banner
+    if (DOM.guestBanner) {
+        DOM.guestBanner.classList.toggle('hidden', isLoggedIn);
+    }
 }
 
 function setupLocalMusicHandlers() {
@@ -708,6 +958,239 @@ function setupEventListeners() {
     DOM.clearAllTasksButton?.addEventListener('click', openClearAllTasksModal);
     DOM.confirmClearAllTasks?.addEventListener('click', clearAllTasks);
     DOM.cancelClearAllTasks?.addEventListener('click', closeClearAllTasksModal);
+}
+
+// Setup authentication event listeners
+function setupAuthEventListeners() {
+    // Auth modal controls
+    DOM.userMenuButton?.addEventListener('click', toggleUserMenu);
+    DOM.closeAuthModal?.addEventListener('click', closeAuthModal);
+    DOM.continueAsGuest?.addEventListener('click', closeAuthModal);
+    DOM.loginFromBanner?.addEventListener('click', openAuthModal);
+    DOM.dismissGuestBanner?.addEventListener('click', () => {
+        if (DOM.guestBanner) DOM.guestBanner.classList.add('hidden');
+    });
+    
+    // Auth form
+    DOM.authForm?.addEventListener('submit', handleAuthFormSubmit);
+    DOM.authToggleMode?.addEventListener('click', toggleAuthMode);
+    DOM.forgotPasswordBtn?.addEventListener('click', handleForgotPassword);
+    
+    // User menu
+    DOM.loginBtn?.addEventListener('click', openAuthModal);
+    DOM.logoutBtn?.addEventListener('click', handleLogout);
+    DOM.syncNowBtn?.addEventListener('click', handleSyncNow);
+    
+    // Close user menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (DOM.userMenu && !DOM.userMenu.contains(e.target) && !DOM.userMenuButton?.contains(e.target)) {
+            DOM.userMenu.classList.add('hidden');
+        }
+    });
+}
+
+// Toggle user menu
+function toggleUserMenu() {
+    if (DOM.userMenu) {
+        DOM.userMenu.classList.toggle('hidden');
+    }
+}
+
+// Open auth modal
+function openAuthModal() {
+    if (DOM.authModal) {
+        DOM.authModal.classList.remove('hidden');
+        DOM.authEmail?.focus();
+    }
+}
+
+// Close auth modal
+function closeAuthModal() {
+    if (DOM.authModal) {
+        DOM.authModal.classList.add('hidden');
+        DOM.authForm?.reset();
+        hideAuthMessages();
+    }
+}
+
+// Toggle between login and signup
+function toggleAuthMode() {
+    const isLogin = DOM.authTitle?.textContent === 'Sign In';
+    
+    if (isLogin) {
+        // Switch to signup
+        DOM.authTitle.textContent = 'Sign Up';
+        DOM.authSubmitBtn.textContent = 'Sign Up';
+        DOM.authToggleMode.textContent = 'Already have an account? Sign in';
+        DOM.authConfirmPasswordContainer.classList.remove('hidden');
+        DOM.authConfirmPassword.required = true;
+        DOM.authForgotPassword.classList.add('hidden');
+    } else {
+        // Switch to login
+        DOM.authTitle.textContent = 'Sign In';
+        DOM.authSubmitBtn.textContent = 'Sign In';
+        DOM.authToggleMode.textContent = 'Don\'t have an account? Sign up';
+        DOM.authConfirmPasswordContainer.classList.add('hidden');
+        DOM.authConfirmPassword.required = false;
+        DOM.authForgotPassword.classList.remove('hidden');
+    }
+    
+    hideAuthMessages();
+}
+
+// Handle auth form submission
+async function handleAuthFormSubmit(e) {
+    e.preventDefault();
+    
+    const email = DOM.authEmail?.value.trim();
+    const password = DOM.authPassword?.value;
+    const confirmPassword = DOM.authConfirmPassword?.value;
+    const isSignup = DOM.authTitle?.textContent === 'Sign Up';
+    
+    if (!email || !password) {
+        showAuthError('Please fill in all required fields');
+        return;
+    }
+    
+    if (isSignup && password !== confirmPassword) {
+        showAuthError('Passwords do not match');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showAuthError('Password must be at least 6 characters long');
+        return;
+    }
+    
+    showAuthLoading(true);
+    hideAuthMessages();
+    
+    try {
+        let result;
+        if (isSignup) {
+            result = await window.authManager.signUp(email, password);
+        } else {
+            result = await window.authManager.signIn(email, password);
+        }
+        
+        if (result.success) {
+            showAuthSuccess(result.message);
+            setTimeout(() => {
+                closeAuthModal();
+                updateUserInterface();
+            }, 1500);
+        } else {
+            showAuthError(result.message);
+        }
+    } catch (error) {
+        showAuthError('An unexpected error occurred');
+        console.error('Auth error:', error);
+    } finally {
+        showAuthLoading(false);
+    }
+}
+
+// Handle forgot password
+async function handleForgotPassword() {
+    const email = DOM.authEmail?.value.trim();
+    
+    if (!email) {
+        showAuthError('Please enter your email address first');
+        return;
+    }
+    
+    showAuthLoading(true);
+    hideAuthMessages();
+    
+    try {
+        const result = await window.authManager.resetPassword(email);
+        if (result.success) {
+            showAuthSuccess(result.message);
+        } else {
+            showAuthError(result.message);
+        }
+    } catch (error) {
+        showAuthError('Failed to send reset email');
+        console.error('Password reset error:', error);
+    } finally {
+        showAuthLoading(false);
+    }
+}
+
+// Handle logout
+async function handleLogout() {
+    try {
+        const result = await window.authManager.signOut();
+        if (result.success) {
+            showNotification('Logged out successfully', 'success');
+            updateUserInterface();
+        } else {
+            showNotification('Failed to logout: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Failed to logout', 'error');
+        console.error('Logout error:', error);
+    }
+    
+    if (DOM.userMenu) DOM.userMenu.classList.add('hidden');
+}
+
+// Handle sync now
+async function handleSyncNow() {
+    if (state.isGuest) {
+        showNotification('Please login to sync data', 'error');
+        return;
+    }
+    
+    try {
+        const result = await window.syncManager.syncToSupabase();
+        if (result.success) {
+            showNotification('Data synced successfully', 'success');
+        } else {
+            showNotification('Sync failed: ' + result.message, 'error');
+        }
+    } catch (error) {
+        showNotification('Sync failed', 'error');
+        console.error('Sync error:', error);
+    }
+}
+
+// Show auth error
+function showAuthError(message) {
+    if (DOM.authError && DOM.authErrorText) {
+        DOM.authErrorText.textContent = message;
+        DOM.authError.classList.remove('hidden');
+    }
+    if (DOM.authSuccess) DOM.authSuccess.classList.add('hidden');
+}
+
+// Show auth success
+function showAuthSuccess(message) {
+    if (DOM.authSuccess && DOM.authSuccessText) {
+        DOM.authSuccessText.textContent = message;
+        DOM.authSuccess.classList.remove('hidden');
+    }
+    if (DOM.authError) DOM.authError.classList.add('hidden');
+}
+
+// Hide auth messages
+function hideAuthMessages() {
+    if (DOM.authError) DOM.authError.classList.add('hidden');
+    if (DOM.authSuccess) DOM.authSuccess.classList.add('hidden');
+}
+
+// Show auth loading
+function showAuthLoading(loading) {
+    if (DOM.authSubmitBtn) {
+        DOM.authSubmitBtn.disabled = loading;
+        if (loading) {
+            DOM.authSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Please wait...';
+        } else {
+            // Reset button text based on current mode
+            const isLogin = DOM.authTitle?.textContent === 'Sign In';
+            DOM.authSubmitBtn.innerHTML = isLogin ? 'Sign In' : 'Sign Up';
+        }
+    }
 }
 
 function toggleSidebar() {
@@ -1375,6 +1858,11 @@ function saveToLocalStorage() {
             stats: state.stats
         };
         localStorage.setItem('focusflow_data', JSON.stringify(dataToSave));
+        
+        // If user is logged in, queue sync operation
+        if (!state.isGuest && window.syncManager) {
+            window.syncManager.queueOperation('full_sync');
+        }
     } catch (error) {
         console.warn('Could not save data to localStorage:', error);
     }
