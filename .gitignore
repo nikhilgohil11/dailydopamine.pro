@@ -1,0 +1,23 @@
+# Docs (doesn't affect runtime)
+docs/
+
+# Config with secrets (use config.sample.js as template)
+
+# Dependencies
+node_modules/
+
+# IDE / Editor
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env / Logs
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*

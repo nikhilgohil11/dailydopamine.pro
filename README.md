@@ -10,6 +10,7 @@ FocusFlow is a browser-based task management application designed specifically f
 - **Task Completion**: Celebration animations upon task completion
 - **Statistics**: View your productivity stats and task history
 - **Local Storage**: All data is stored locally in your browser
+- **Sign In / Sync**: Optional account to sync tasks across devices (Supabase)
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## How to Use
@@ -29,8 +30,11 @@ As a browser-based application, FocusFlow requires no installation. Simply open 
 ### Running Locally
 
 1. Clone or download this repository
-2. Open `index.html` in your browser
-3. Start adding and completing tasks!
+2. (Optional) Copy `config.sample.js` to `config.js` and add your Supabase URL and anon key for auth and cloud sync
+3. Run `supabase-schema.sql` in your Supabase project to create the `task_state` table
+4. For password reset: add your app URL (e.g. `http://localhost:3000` or `https://yoursite.com`) to Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
+5. Open `index.html` in your browser
+6. Start adding and completing tasks!
 
 ## Audio Credits
 
@@ -50,9 +54,10 @@ The application includes various ambient audio tracks:
 ## Technical Details
 
 - Built with HTML5, CSS3, and JavaScript
+- [Audio & Media (Local Music, YouTube) – Technical Overview](docs/AUDIO-AND-MEDIA.md)
 - Uses LocalStorage API for data persistence
+- Optional Supabase for auth and cloud sync (tasks, stats)
 - HTML5 Audio API for sound management
-- No external dependencies or server-side requirements
 
 ## Designed For
 
