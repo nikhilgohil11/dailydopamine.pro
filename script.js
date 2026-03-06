@@ -43,6 +43,9 @@ let audioContext = null;
 let completionSoundBuffer = null;
 let localMusicFiles = [];
 let localMusicPlayer = null;
+let pendingTaskLocalMusicFiles = [];
+const LOCAL_MUSIC_DB = 'dailydopamine_local_music';
+const LOCAL_MUSIC_STORE = 'task_files';
 let isLocalMusicPlaying = false;
 let youtubePlayer = null;
 let isYoutubePlaying = false;
@@ -264,6 +267,11 @@ const DOM = {
     taskNameInput: document.getElementById('task-name'),
     taskTimeInput: document.getElementById('task-time'),
     taskSoundInput: document.getElementById('task-sound'),
+    taskYoutubeUrlInput: document.getElementById('task-youtube-url'),
+    taskLocalMusicSection: document.getElementById('task-local-music-section'),
+    taskLocalMusicInput: document.getElementById('task-local-music-input'),
+    taskLocalMusicBtn: document.getElementById('task-local-music-btn'),
+    taskLocalMusicLabel: document.getElementById('task-local-music-label'),
     taskList: document.getElementById('task-list'),
     emptyTaskList: document.getElementById('empty-task-list'),
     taskSearchInput: document.getElementById('task-search'),
@@ -316,8 +324,451 @@ const DOM = {
     clearAllTasksButton: document.getElementById('clear-all-tasks-button'),
     clearAllTasksModal: document.getElementById('clear-all-tasks-modal'),
     confirmClearAllTasks: document.getElementById('confirm-clear-all-tasks'),
-    cancelClearAllTasks: document.getElementById('cancel-clear-all-tasks')
+    cancelClearAllTasks: document.getElementById('cancel-clear-all-tasks'),
+
+    // Auth elements
+    authButton: document.getElementById('auth-button'),
+    authButtonMobile: document.getElementById('auth-button-mobile'),
+    authButtonText: document.getElementById('auth-button-text'),
+    authButtonTextMobile: document.getElementById('auth-button-text-mobile'),
+    authModal: document.getElementById('auth-modal'),
+    closeAuthModal: document.getElementById('close-auth-modal'),
+    authTabs: document.querySelectorAll('.auth-tab'),
+    authPanes: document.querySelectorAll('.auth-pane'),
+    authSigninForm: document.getElementById('auth-signin-form'),
+    authSignupForm: document.getElementById('auth-signup-form'),
+    authResetForm: document.getElementById('auth-reset-form'),
+    authResetNewForm: document.getElementById('auth-reset-new-form'),
+    authResetNewPane: document.getElementById('auth-reset-new'),
+    authTabsContainer: document.getElementById('auth-tabs-container'),
+    authResetNewError: document.getElementById('auth-reset-new-error'),
+    authResetNewSuccess: document.getElementById('auth-reset-new-success'),
+    authError: document.getElementById('auth-error'),
+    authSignupError: document.getElementById('auth-signup-error'),
+    authSignupSuccess: document.getElementById('auth-signup-success'),
+    authResetError: document.getElementById('auth-reset-error'),
+    authResetSuccess: document.getElementById('auth-reset-success')
 };
+
+// Supabase client (null when not configured)
+let supabaseClient = null;
+
+function initSupabase() {
+    const url = typeof window.SUPABASE_URL === 'string' && window.SUPABASE_URL.length > 0 ? window.SUPABASE_URL : null;
+    const key = typeof window.SUPABASE_ANON_KEY === 'string' && window.SUPABASE_ANON_KEY.length > 0 ? window.SUPABASE_ANON_KEY : null;
+    if (url && key && typeof supabase !== 'undefined') {
+        supabaseClient = supabase.createClient(url, key);
+        return true;
+    }
+    return false;
+}
+
+function showAuthError(el, msg) {
+    if (!el) return;
+    el.textContent = msg || '';
+    el.classList.toggle('hidden', !msg);
+}
+
+function switchAuthTab(tabName) {
+    if (!DOM.authTabs || !DOM.authPanes) return;
+    const isRecovery = tabName === 'reset-new';
+    if (DOM.authTabsContainer) DOM.authTabsContainer.classList.toggle('hidden', isRecovery);
+    DOM.authTabs.forEach(t => {
+        const active = t.dataset.tab === tabName && !isRecovery;
+        t.classList.toggle('bg-[rgb(2,4,3)]', active);
+        t.classList.toggle('text-white', active);
+        t.classList.toggle('text-gray-600', !active);
+        t.classList.toggle('dark:text-gray-400', !active);
+        t.classList.toggle('hover:bg-gray-200', !active);
+        t.classList.toggle('dark:hover:bg-gray-600', !active);
+    });
+    DOM.authPanes.forEach(p => {
+        const id = p.id;
+        const visible = (id === 'auth-signin' && tabName === 'signin') ||
+            (id === 'auth-signup' && tabName === 'signup') ||
+            (id === 'auth-reset' && tabName === 'reset') ||
+            (id === 'auth-reset-new' && tabName === 'reset-new');
+        p.classList.toggle('hidden', !visible);
+    });
+    showAuthError(DOM.authError);
+    showAuthError(DOM.authSignupError);
+    showAuthError(DOM.authResetError);
+    if (DOM.authSignupSuccess) {
+        DOM.authSignupSuccess.classList.add('hidden');
+        DOM.authSignupSuccess.textContent = '';
+    }
+    if (DOM.authResetSuccess) {
+        DOM.authResetSuccess.classList.add('hidden');
+        DOM.authResetSuccess.textContent = '';
+    }
+}
+
+function updateAuthButtonUI(user) {
+    const btn = DOM.authButton;
+    const btnMobile = DOM.authButtonMobile;
+    const txt = DOM.authButtonText;
+    const txtMobile = DOM.authButtonTextMobile;
+    const iconDesktop = btn?.querySelector('.auth-btn-icon');
+    const iconMobile = btnMobile?.querySelector('.auth-btn-icon-mobile');
+    const show = !!supabaseClient;
+    if (btn) btn.style.display = show ? '' : 'none';
+    if (btnMobile) btnMobile.style.display = show ? '' : 'none';
+    if (user) {
+        const email = user.email || 'Signed in';
+        if (txt) { txt.textContent = email; txt.classList.remove('hidden'); }
+        if (txtMobile) { txtMobile.textContent = email; txtMobile.classList.remove('hidden'); }
+        if (iconDesktop) iconDesktop.classList.add('hidden');
+        if (iconMobile) iconMobile.classList.add('hidden');
+        if (btn) { btn.classList.remove('w-10'); btn.classList.add('w-auto', 'px-3'); btn.title = 'Click to sign out'; }
+        if (btnMobile) { btnMobile.classList.remove('w-10'); btnMobile.classList.add('w-auto', 'px-2'); btnMobile.title = 'Click to sign out'; }
+    } else {
+        if (txt) txt.classList.add('hidden');
+        if (txtMobile) txtMobile.classList.add('hidden');
+        if (iconDesktop) iconDesktop.classList.remove('hidden');
+        if (iconMobile) iconMobile.classList.remove('hidden');
+        if (btn) { btn.classList.add('w-10'); btn.classList.remove('w-auto', 'px-3'); btn.title = 'Sign in or create account'; }
+        if (btnMobile) { btnMobile.classList.add('w-10'); btnMobile.classList.remove('w-auto', 'px-2'); btnMobile.title = 'Sign in or create account'; }
+    }
+}
+
+function initAuth() {
+    if (!initSupabase()) {
+        updateAuthButtonUI(null);
+        return;
+    }
+
+    supabaseClient.auth.getUser().then(({ data }) => {
+        updateAuthButtonUI(data?.user ?? null);
+        if (data?.user) onSignedIn();
+        else loadDataForAnonymous();
+    });
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+        updateAuthButtonUI(session?.user ?? null);
+        if (event === 'PASSWORD_RECOVERY') {
+            if (DOM.authModal) DOM.authModal.classList.remove('hidden');
+            switchAuthTab('reset-new');
+        } else if (session?.user) {
+            onSignedIn();
+        } else {
+            onSignedOut();
+        }
+    });
+
+    function onAuthButtonClick() {
+        supabaseClient.auth.getUser().then(({ data }) => {
+            if (data?.user) {
+                supabaseClient.auth.signOut();
+            } else if (DOM.authModal) {
+                DOM.authModal.classList.remove('hidden');
+                switchAuthTab('signin');
+            }
+        });
+    }
+
+    [DOM.authButton, DOM.authButtonMobile].forEach(btn => {
+        if (btn) btn.addEventListener('click', onAuthButtonClick);
+    });
+
+    // Close auth modal
+    if (DOM.closeAuthModal) {
+        DOM.closeAuthModal.addEventListener('click', () => {
+            if (DOM.authModal) DOM.authModal.classList.add('hidden');
+        });
+    }
+    if (DOM.authModal) {
+        DOM.authModal.addEventListener('click', (e) => {
+            if (e.target === DOM.authModal) DOM.authModal.classList.add('hidden');
+        });
+    }
+
+    // Auth tab switching
+    if (DOM.authTabs) {
+        DOM.authTabs.forEach(t => {
+            t.addEventListener('click', () => switchAuthTab(t.dataset.tab));
+        });
+    }
+
+    // Sign in
+    if (DOM.authSigninForm) {
+        DOM.authSigninForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email')?.value?.trim();
+            const password = document.getElementById('auth-password')?.value;
+            if (!email || !password || !supabaseClient) return;
+            showAuthError(DOM.authError);
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                if (DOM.authModal) DOM.authModal.classList.add('hidden');
+            } catch (err) {
+                showAuthError(DOM.authError, err.message || 'Sign in failed');
+            }
+        });
+    }
+
+    // Sign up
+    if (DOM.authSignupForm) {
+        DOM.authSignupForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-signup-email')?.value?.trim();
+            const password = document.getElementById('auth-signup-password')?.value;
+            if (!email || !password || !supabaseClient) return;
+            showAuthError(DOM.authSignupError);
+            if (DOM.authSignupSuccess) DOM.authSignupSuccess.classList.add('hidden');
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) throw error;
+                if (DOM.authSignupSuccess) {
+                    DOM.authSignupSuccess.textContent = 'Check your email to confirm your account.';
+                    DOM.authSignupSuccess.classList.remove('hidden');
+                }
+            } catch (err) {
+                showAuthError(DOM.authSignupError, err.message || 'Sign up failed');
+            }
+        });
+    }
+
+    // Reset password
+    if (DOM.authResetForm) {
+        DOM.authResetForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-reset-email')?.value?.trim();
+            if (!email || !supabaseClient) return;
+            showAuthError(DOM.authResetError);
+            if (DOM.authResetSuccess) DOM.authResetSuccess.classList.add('hidden');
+            try {
+                const redirectTo = window.location.origin + (window.location.pathname || '/');
+                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+                if (error) throw error;
+                if (DOM.authResetSuccess) {
+                    DOM.authResetSuccess.textContent = 'Check your email for the reset link.';
+                    DOM.authResetSuccess.classList.remove('hidden');
+                }
+            } catch (err) {
+                showAuthError(DOM.authResetError, err.message || 'Reset failed');
+            }
+        });
+    }
+
+    // Set new password (when user returns from reset link)
+    if (DOM.authResetNewForm) {
+        DOM.authResetNewForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const password = document.getElementById('auth-reset-new-password')?.value;
+            const confirm = document.getElementById('auth-reset-new-confirm')?.value;
+            if (!password || !confirm || !supabaseClient) return;
+            if (password !== confirm) {
+                showAuthError(DOM.authResetNewError, 'Passwords do not match');
+                return;
+            }
+            if (password.length < 6) {
+                showAuthError(DOM.authResetNewError, 'Password must be at least 6 characters');
+                return;
+            }
+            showAuthError(DOM.authResetNewError);
+            if (DOM.authResetNewSuccess) DOM.authResetNewSuccess.classList.add('hidden');
+            try {
+                const { error } = await supabaseClient.auth.updateUser({ password });
+                if (error) throw error;
+                if (DOM.authResetNewSuccess) {
+                    DOM.authResetNewSuccess.textContent = 'Password updated! You can sign in now.';
+                    DOM.authResetNewSuccess.classList.remove('hidden');
+                }
+                window.history.replaceState(null, '', window.location.pathname || '/');
+                setTimeout(() => {
+                    if (DOM.authModal) DOM.authModal.classList.add('hidden');
+                    switchAuthTab('signin');
+                    if (DOM.authTabsContainer) DOM.authTabsContainer.classList.remove('hidden');
+                }, 1500);
+            } catch (err) {
+                showAuthError(DOM.authResetNewError, err.message || 'Update failed');
+            }
+        });
+    }
+
+}
+
+// --- Cloud sync (Supabase task_state) ---
+let syncDebounceTimer = null;
+let currentUserId = null;
+const SYNC_DEBOUNCE_MS = 800;
+
+function getStorageKey(userId) {
+    return userId ? `focusflow_data_${userId}` : 'focusflow_data';
+}
+
+function getTaskTimestamp(task, bucket) {
+    if (bucket === 'completed') return task.completedAt || 0;
+    if (bucket === 'canceled') return task.canceledAt || 0;
+    return task.updatedAt || task.createdAt || 0;
+}
+
+function mergeCloudWithLocal(cloud, local) {
+    const mergeBucket = (localArr, cloudArr, bucket) => {
+        const byId = {};
+        (localArr || []).forEach(t => { byId[t.id] = t; });
+        (cloudArr || []).forEach(t => {
+            const existing = byId[t.id];
+            if (!existing || getTaskTimestamp(t, bucket) > getTaskTimestamp(existing, bucket)) byId[t.id] = t;
+        });
+        return Object.values(byId);
+    };
+
+    const mergedTasks = mergeBucket(local?.tasks, cloud?.tasks, 'queued');
+    const mergedCompleted = mergeBucket(local?.completedTasks, cloud?.completed_tasks, 'completed');
+    const mergedCanceled = mergeBucket(local?.canceledTasks, cloud?.canceled_tasks, 'canceled');
+
+    const completedIds = new Set(mergedCompleted.map(t => t.id));
+    const canceledIds = new Set(mergedCanceled.map(t => t.id));
+    const finalTasks = mergedTasks.filter(t => !completedIds.has(t.id) && !canceledIds.has(t.id));
+
+    const completedMap = new Map(mergedCompleted.map(t => [t.id, t]));
+    const canceledMap = new Map(mergedCanceled.map(t => [t.id, t]));
+    const finalCompleted = [];
+    const finalCanceled = [];
+    for (const id of new Set([...completedMap.keys(), ...canceledMap.keys()])) {
+        const c = completedMap.get(id);
+        const t = canceledMap.get(id);
+        if (c && t) {
+            if ((c.completedAt || 0) >= (t.canceledAt || 0)) finalCompleted.push(c);
+            else finalCanceled.push(t);
+        } else if (c) finalCompleted.push(c);
+        else finalCanceled.push(t);
+    }
+
+    const cStats = cloud?.stats || {};
+    const lStats = local?.stats || {};
+    const mergedStats = {
+        todayFocusTime: Math.max(cStats.todayFocusTime || 0, lStats.todayFocusTime || 0),
+        tasksCompleted: Math.max(cStats.tasksCompleted || 0, lStats.tasksCompleted || 0),
+        soundUsage: { ...(lStats.soundUsage || {}), ...(cStats.soundUsage || {}) }
+    };
+    return { tasks: finalTasks, completedTasks: finalCompleted, canceledTasks: finalCanceled, stats: mergedStats };
+}
+
+async function pullFromCloud() {
+    if (!supabaseClient) return null;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return null;
+    const { data, error } = await supabaseClient.from('task_state').select('*').eq('user_id', user.id).single();
+    if (error && error.code !== 'PGRST116') {
+        console.warn('Cloud pull failed:', error.message);
+        return null;
+    }
+    return data;
+}
+
+async function pushToCloud() {
+    if (!supabaseClient) return;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const payload = {
+        user_id: user.id,
+        tasks: state.tasks,
+        completed_tasks: state.completedTasks,
+        canceled_tasks: state.canceledTasks,
+        stats: state.stats,
+        updated_at: new Date().toISOString()
+    };
+    const { error } = await supabaseClient.from('task_state').upsert(payload, { onConflict: 'user_id' });
+    if (error) console.warn('Cloud push failed:', error.message);
+}
+
+function scheduleSyncToCloud() {
+    if (!supabaseClient) return;
+    clearTimeout(syncDebounceTimer);
+    syncDebounceTimer = setTimeout(() => {
+        pushToCloud();
+    }, SYNC_DEBOUNCE_MS);
+}
+
+function getAnonymousData() {
+    try {
+        const key = getStorageKey(null);
+        const savedData = localStorage.getItem(key);
+        if (savedData) {
+            const parsed = JSON.parse(savedData);
+            if (parsed && typeof parsed === 'object') {
+                return {
+                    tasks: parsed.tasks || [],
+                    completedTasks: parsed.completedTasks || [],
+                    canceledTasks: parsed.canceledTasks || [],
+                    stats: parsed.stats || { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} }
+                };
+            }
+        }
+    } catch (_) {}
+    return null;
+}
+
+async function onSignedIn() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    currentUserId = user.id;
+
+    const anonymousData = getAnonymousData();
+    loadFromLocalStorage(user.id);
+    const userLocal = { tasks: state.tasks, completedTasks: state.completedTasks, canceledTasks: state.canceledTasks, stats: state.stats };
+    const cloud = await pullFromCloud();
+
+    let local = userLocal;
+    if (anonymousData && (anonymousData.tasks?.length > 0 || anonymousData.completedTasks?.length > 0 || anonymousData.canceledTasks?.length > 0)) {
+        local = mergeCloudWithLocal(userLocal, anonymousData);
+        try {
+            localStorage.removeItem(getStorageKey(null));
+        } catch (_) {}
+    }
+
+    const merged = mergeCloudWithLocal(cloud, local);
+    state.tasks = merged.tasks;
+    state.completedTasks = merged.completedTasks;
+    state.canceledTasks = merged.canceledTasks;
+    state.stats = merged.stats;
+    saveToLocalStorage();
+    updateTaskList();
+    updateStats();
+    if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) clearActiveTask();
+    else if (state.activeTaskId) setActiveTask(state.activeTaskId);
+    pushToCloud();
+}
+
+function loadDataForAnonymous() {
+    currentUserId = null;
+    loadFromLocalStorage(null);
+    updateTaskList();
+    updateStats();
+    if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) clearActiveTask();
+    else if (state.activeTaskId) setActiveTask(state.activeTaskId);
+}
+
+function onSignedOut() {
+    currentUserId = null;
+    loadFromLocalStorage(null);
+    updateTaskList();
+    updateStats();
+    if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) clearActiveTask();
+    else if (state.activeTaskId) setActiveTask(state.activeTaskId);
+}
+
+async function syncFromCloudOnTabFocus() {
+    if (!supabaseClient) return;
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const cloud = await pullFromCloud();
+    if (!cloud) return;
+    const local = { tasks: state.tasks, completedTasks: state.completedTasks, canceledTasks: state.canceledTasks, stats: state.stats };
+    const merged = mergeCloudWithLocal(cloud, local);
+    state.tasks = merged.tasks;
+    state.completedTasks = merged.completedTasks;
+    state.canceledTasks = merged.canceledTasks;
+    state.stats = merged.stats;
+    saveToLocalStorage();
+    updateTaskList();
+    updateStats();
+    if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) clearActiveTask();
+    else if (state.activeTaskId) setActiveTask(state.activeTaskId);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM Content Loaded');
@@ -335,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     initializeApp();
+    initAuth();
     preloadAudioFiles();
     initializeAudioContext();
     loadCompletionSound();
@@ -342,6 +794,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
             initializeAudioContext();
+            syncFromCloudOnTabFocus();
         }
     });
 });
@@ -428,7 +881,10 @@ function initializeApp() {
     try {
         localStorage.setItem('test', 'test');
         localStorage.removeItem('test');
-        loadFromLocalStorage();
+        if (!initSupabase()) {
+            currentUserId = null;
+            loadFromLocalStorage(null);
+        }
     } catch (error) {
         console.warn('localStorage is not available:', error);
         state.tasks = [];
@@ -479,60 +935,84 @@ function setupLocalMusicHandlers() {
         handleLocalMusicFiles(e.dataTransfer.files);
     });
     dropZone.addEventListener('click', () => fileInput.click());
+
+    const playBtn = document.getElementById('local-music-play-btn');
+    const stopBtn = document.getElementById('local-music-stop-btn');
+    if (playBtn) playBtn.addEventListener('click', () => {
+        if (localMusicFiles.length > 0) {
+            if (isLocalMusicPlaying && localMusicPlayer && !localMusicPlayer.paused) {
+                localMusicPlayer.pause();
+                isLocalMusicPlaying = false;
+            } else {
+                playLocalMusic(0);
+            }
+        }
+    });
+    if (stopBtn) stopBtn.addEventListener('click', stopLocalMusic);
+
+    const localSlider = document.querySelector('.channel-slider[data-sound="local-music"]');
+    if (localSlider) {
+        localSlider.addEventListener('input', function() {
+            const channelVol = parseInt(this.value) / 100;
+            const masterVol = (parseInt(DOM.volumeControl?.value) || 50) / 100;
+            if (localMusicPlayer) {
+                localMusicPlayer.volume = channelVol * masterVol || 0.01;
+                updateSliderValue(this);
+            }
+        });
+    }
 }
 
 function handleLocalMusicFiles(files) {
-    localMusicFiles = Array.from(files).filter(file => file.type.startsWith('audio/'));
-    
+    const audioExtensions = /\.(mp3|wav|ogg|m4a|aac|flac|webm)(\?|$)/i;
+    localMusicFiles = Array.from(files).filter(file =>
+        file.type.startsWith('audio/') || audioExtensions.test(file.name || '')
+    );
+
     if (localMusicFiles.length > 0) {
         stopAudio();
-        
+
         const localMusicControl = document.getElementById('local-music-info');
         localMusicControl.classList.remove('hidden');
-        
+
         const slider = localMusicControl.querySelector('.channel-slider');
         if (slider) {
-            slider.value = parseInt(DOM.volumeControl.value);
+            slider.value = parseInt(DOM.volumeControl?.value) || 50;
             updateSliderValue(slider);
-            slider.addEventListener('input', function() {
-                const volume = parseInt(this.value) / 100;
-                if (localMusicPlayer) {
-                    localMusicPlayer.volume = volume;
-                    updateSliderValue(this);
-                }
-            });
         }
-        
-        const file = localMusicFiles[0];
-        const url = URL.createObjectURL(file);
-        
-        localMusicPlayer = new Audio(url);
-        localMusicPlayer.volume = parseInt(DOM.volumeControl.value) / 100;
-        isLocalMusicPlaying = false;
-        
-        localMusicPlayer.addEventListener('ended', () => playNextLocalMusic(0));
-        
+
         const fileNameDisplay = document.getElementById('current-file-name');
-        if (fileNameDisplay) fileNameDisplay.textContent = file.name;
+        if (fileNameDisplay) fileNameDisplay.textContent = localMusicFiles[0].name || 'Track';
+
+        playLocalMusic(0);
     }
 }
 
 function playLocalMusic(index) {
     if (index >= localMusicFiles.length) index = 0;
 
-    const file = localMusicFiles[index];
-    const url = URL.createObjectURL(file);
-    
+    const item = localMusicFiles[index];
+    const blob = item.blob || item;
+    const url = URL.createObjectURL(blob);
+
     if (localMusicPlayer) {
         localMusicPlayer.pause();
         URL.revokeObjectURL(localMusicPlayer.src);
     }
 
+    const slider = document.querySelector('.channel-slider[data-sound="local-music"]');
+    const channelVol = (slider ? parseInt(slider.value) : 50) / 100;
+    const masterVol = (parseInt(DOM.volumeControl?.value) ?? 50) / 100;
+    const volume = channelVol * masterVol;
+
     localMusicPlayer = new Audio(url);
-    localMusicPlayer.volume = parseInt(DOM.volumeControl.value) / 100;
+    localMusicPlayer.volume = volume;
     isLocalMusicPlaying = true;
-    localMusicPlayer.play().catch(error => console.error('Error playing local music:', error));
     localMusicPlayer.addEventListener('ended', () => playNextLocalMusic(index));
+
+    initializeAudioContext();
+    localMusicPlayer.play()
+        .catch(error => console.error('Error playing local music (try clicking Play):', error));
 }
 
 function playNextLocalMusic(currentIndex) {
@@ -628,11 +1108,12 @@ function stopAudio() {
     }
 
     // Stop YouTube if it's playing
-    if (youtubePlayer && isYoutubePlaying) {
-        youtubePlayer.pauseVideo();
-        youtubePlayer.seekTo(0);
+    if (youtubePlayer && typeof youtubePlayer.pauseVideo === 'function') {
+        try { youtubePlayer.pauseVideo(); youtubePlayer.seekTo(0); } catch (_) {}
         isYoutubePlaying = false;
     }
+    const youtubeIframe = document.getElementById('youtube-iframe');
+    if (youtubeIframe) youtubeIframe.src = '';
 }
 
 
@@ -656,6 +1137,15 @@ function setGlobalVolume(volume) {
 
 function setupEventListeners() {
     DOM.taskForm.addEventListener('submit', handleTaskFormSubmit);
+    DOM.taskSoundInput?.addEventListener('change', toggleTaskLocalMusicSection);
+    if (DOM.taskLocalMusicBtn) DOM.taskLocalMusicBtn.addEventListener('click', () => DOM.taskLocalMusicInput?.click());
+    DOM.taskLocalMusicInput?.addEventListener('change', (e) => {
+        const files = e.target.files;
+        if (files?.length) {
+            pendingTaskLocalMusicFiles = Array.from(files);
+            if (DOM.taskLocalMusicLabel) DOM.taskLocalMusicLabel.textContent = `${files.length} file(s) selected`;
+        }
+    });
     DOM.startTaskButton.addEventListener('click', startTask);
     DOM.pauseTaskButton.addEventListener('click', pauseTask);
     DOM.resumeTaskButton.addEventListener('click', resumeTask);
@@ -716,9 +1206,102 @@ function toggleSidebar() {
     document.body.style.overflow = DOM.sidebar.classList.contains('-translate-x-full') ? '' : 'hidden';
 }
 
+function openLocalMusicDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(LOCAL_MUSIC_DB, 1);
+        req.onerror = () => reject(req.error);
+        req.onsuccess = () => resolve(req.result);
+        req.onupgradeneeded = (e) => {
+            e.target.result.createObjectStore(LOCAL_MUSIC_STORE, { keyPath: 'taskId' });
+        };
+    });
+}
+
+async function saveTaskLocalMusic(taskId, files) {
+    if (!files || files.length === 0) return;
+    const db = await openLocalMusicDB();
+    const entries = await Promise.all(Array.from(files).map(async (file) => ({
+        name: file.name,
+        type: file.type,
+        buffer: await file.arrayBuffer()
+    })));
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(LOCAL_MUSIC_STORE, 'readwrite');
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.objectStore(LOCAL_MUSIC_STORE).put({ taskId, files: entries });
+    });
+}
+
+async function loadTaskLocalMusic(taskId) {
+    const db = await openLocalMusicDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(LOCAL_MUSIC_STORE, 'readonly');
+        const req = tx.objectStore(LOCAL_MUSIC_STORE).get(taskId);
+        req.onsuccess = () => {
+            const files = req.result?.files || null;
+            if (!files) return resolve(null);
+            const blobs = files.map(f => new Blob([f.buffer], { type: f.type }));
+            resolve(files.map((f, i) => ({ name: f.name, type: f.type, blob: blobs[i] })));
+        };
+        req.onerror = () => reject(req.error);
+    });
+}
+
+async function deleteTaskLocalMusic(taskId) {
+    const db = await openLocalMusicDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(LOCAL_MUSIC_STORE, 'readwrite');
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.objectStore(LOCAL_MUSIC_STORE).delete(taskId);
+    });
+}
+
+async function loadAndPlayTaskLocalMusic(taskId) {
+    const entries = await loadTaskLocalMusic(taskId);
+    if (!entries || entries.length === 0) return;
+    localMusicFiles = entries;
+    stopAudio();
+    const localMusicControl = document.getElementById('local-music-info');
+    localMusicControl?.classList.remove('hidden');
+    const slider = localMusicControl?.querySelector('.channel-slider');
+    if (slider) {
+        slider.value = parseInt(DOM.volumeControl?.value) || 50;
+        updateSliderValue(slider);
+    }
+    const fileNameDisplay = document.getElementById('current-file-name');
+    if (fileNameDisplay) fileNameDisplay.textContent = entries[0].name || 'Track';
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'bg-[rgb(2,4,3)]', 'text-white');
+        btn.classList.add('text-gray-600', 'dark:text-gray-300');
+        btn.style.setProperty('--after-opacity', '0');
+    });
+    const localTabBtn = document.querySelector('.tab-button[data-tab="local-files"]');
+    const localTabPane = document.getElementById('local-files-tab');
+    if (localTabBtn) {
+        localTabBtn.classList.add('active', 'bg-[rgb(2,4,3)]', 'text-white');
+        localTabBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
+        localTabBtn.style.setProperty('--after-opacity', '1');
+    }
+    if (localTabPane) localTabPane.classList.remove('hidden');
+    playLocalMusic(0);
+}
+
+function toggleTaskLocalMusicSection() {
+    const section = DOM.taskLocalMusicSection;
+    const sound = DOM.taskSoundInput?.value;
+    if (section) {
+        section.classList.toggle('hidden', sound !== 'local_music');
+        if (sound !== 'local_music') pendingTaskLocalMusicFiles = [];
+    }
+}
+
 function openCreateTaskModal() {
     editTaskId = null;
     DOM.taskForm.reset();
+    toggleTaskLocalMusicSection();
     DOM.createTaskFormContainer.classList.remove('hidden');
     DOM.createTaskFormContainer.querySelector('h2').textContent = 'Create New Task';
     DOM.taskForm.querySelector('button[type="submit"]').textContent = 'Add Task';
@@ -729,36 +1312,58 @@ function closeCreateTaskModal() {
     DOM.createTaskFormContainer.classList.add('hidden');
     DOM.taskForm.reset();
     editTaskId = null;
+    pendingTaskLocalMusicFiles = [];
+    if (DOM.taskLocalMusicLabel) DOM.taskLocalMusicLabel.textContent = 'Select music files';
     DOM.createTaskFormContainer.querySelector('h2').textContent = 'Create New Task';
     DOM.taskForm.querySelector('button[type="submit"]').textContent = 'Add Task';
 }
 
-function handleTaskFormSubmit(e) {
+async function handleTaskFormSubmit(e) {
     e.preventDefault();
     const taskName = DOM.taskNameInput.value.trim();
     const taskTime = parseInt(DOM.taskTimeInput.value);
     const taskSound = DOM.taskSoundInput.value;
+    const taskYoutubeUrl = DOM.taskYoutubeUrlInput ? DOM.taskYoutubeUrlInput.value.trim() : '';
     if (!taskName || !taskTime || taskTime <= 0) return;
-    
+
+    if (taskSound === 'local_music' && !editTaskId && pendingTaskLocalMusicFiles.length === 0) {
+        alert('Please select music files for this task.');
+        return;
+    }
+
+    const youtubeUrl = taskYoutubeUrl && extractYouTubeId(taskYoutubeUrl) ? taskYoutubeUrl : null;
+    let taskId;
+
     if (editTaskId) {
         const task = state.tasks.find(t => t.id === editTaskId);
         if (task) {
             task.name = taskName;
             task.duration = taskTime;
             task.sound = taskSound;
+            task.youtubeUrl = youtubeUrl;
+            task.updatedAt = Date.now();
+            taskId = task.id;
+            if (taskSound !== 'local_music') await deleteTaskLocalMusic(taskId);
             if (state.activeTaskId === editTaskId) setActiveTask(editTaskId);
         }
     } else {
+        taskId = Date.now().toString();
         const newTask = {
-            id: Date.now().toString(),
+            id: taskId,
             name: taskName,
             duration: taskTime,
             sound: taskSound,
+            youtubeUrl: youtubeUrl,
             createdAt: Date.now()
         };
         state.tasks.push(newTask);
         if (!state.activeTaskId) setActiveTask(newTask.id);
     }
+
+    if (taskSound === 'local_music' && pendingTaskLocalMusicFiles.length > 0) {
+        await saveTaskLocalMusic(taskId, pendingTaskLocalMusicFiles);
+    }
+    pendingTaskLocalMusicFiles = [];
 
     saveToLocalStorage();
     updateTaskList();
@@ -772,8 +1377,25 @@ function handleTaskListClick(e) {
     const startButton = e.target.closest('.start-button');
     const editButton = e.target.closest('.edit-button');
     const deleteButton = e.target.closest('.delete-button');
+    const playYoutubeButton = e.target.closest('.play-youtube-button');
     const taskItem = e.target.closest('.task-item');
 
+    const playLocalMusicButton = e.target.closest('.play-local-music-button');
+    if (playLocalMusicButton) {
+        const taskId = playLocalMusicButton.dataset.id;
+        loadAndPlayTaskLocalMusic(taskId);
+        if (window.innerWidth < 768 && !DOM.sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+        return;
+    }
+    if (playYoutubeButton) {
+        const taskId = playYoutubeButton.dataset.id;
+        const task = state.completedTasks.find(t => t.id === taskId) || state.canceledTasks.find(t => t.id === taskId) || state.tasks.find(t => t.id === taskId);
+        if (task && task.youtubeUrl) {
+            loadTaskYouTubeVideo(task.youtubeUrl);
+            if (window.innerWidth < 768 && !DOM.sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+        }
+        return;
+    }
     if (startButton) {
         setActiveTask(startButton.dataset.id);
         startTask();
@@ -864,7 +1486,9 @@ function createTaskListItem(task, type) {
          li.classList.add('hover:bg-gray-100', 'dark:hover:bg-gray-700/50');
     }
 
-    const soundIcon = task.sound !== 'none' ? `<i class="fas fa-music mr-1 text-gray-500"></i>${findAudioName(task.sound)}` : '';
+    const soundIcon = task.sound !== 'none' && task.sound !== 'local_music' ? `<i class="fas fa-music mr-1 text-gray-500"></i>${findAudioName(task.sound)}` : '';
+    const youtubeBadge = task.youtubeUrl ? `<span><i class="fab fa-youtube mr-1 text-red-500"></i>YouTube</span>` : '';
+    const localMusicBadge = task.sound === 'local_music' ? `<span><i class="fas fa-music mr-1 text-[rgb(2,4,3)]"></i>Local Music</span>` : '';
     const durationInfo = type === 'queued' ? `<i class="far fa-clock mr-1"></i>${task.duration} min` : '';
     let statusIcon = '', timestamp = '';
 
@@ -884,9 +1508,17 @@ function createTaskListItem(task, type) {
                     ${statusIcon ? `<span>${statusIcon}${timestamp}</span>` : ''}
                     ${durationInfo ? `<span>${durationInfo}</span>` : ''}
                     ${soundIcon ? `<span class="truncate max-w-[100px]">${soundIcon}</span>` : ''}
+                    ${youtubeBadge}
+                    ${localMusicBadge}
                 </div>
             </div>
             <div class="task-actions flex items-center flex-shrink-0 ml-2">
+                ${(type === 'completed' || type === 'canceled') && task.youtubeUrl ? `
+                    <button title="Play YouTube" class="play-youtube-button p-2 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900 rounded-full" data-id="${task.id}"><i class="fab fa-youtube fa-sm"></i></button>
+                ` : ''}
+                ${(type === 'completed' || type === 'canceled') && task.sound === 'local_music' ? `
+                    <button title="Play Local Music" class="play-local-music-button p-2 text-[rgb(2,4,3)] hover:bg-[rgb(2,4,3)]/10 dark:hover:bg-[rgb(2,4,3)]/20 rounded-full" data-id="${task.id}"><i class="fas fa-music fa-sm"></i></button>
+                ` : ''}
                 ${type === 'queued' && task.id !== state.activeTaskId ? `
                     <button title="Start Task" class="start-button p-2 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900 rounded-full" data-id="${task.id}"><i class="fas fa-play fa-sm"></i></button>
                     <button title="Edit Task" class="edit-button p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-full" data-id="${task.id}"><i class="fas fa-pen fa-sm"></i></button>
@@ -899,6 +1531,7 @@ function createTaskListItem(task, type) {
 }
 
 function findAudioName(audioId) {
+    if (audioId === 'local_music') return 'Local Music';
     if (audioId.startsWith('mix_')) {
         const mixName = audioId.replace('mix_', '');
         return mixName.charAt(0).toUpperCase() + mixName.slice(1) + ' Mix';
@@ -994,6 +1627,7 @@ function clearActiveTask() {
 function deleteTask(taskId) {
     if (taskId === state.activeTaskId) clearActiveTask();
     state.tasks = state.tasks.filter(task => task.id !== taskId);
+    deleteTaskLocalMusic(taskId).catch(() => {});
     saveToLocalStorage();
     updateTaskList();
 }
@@ -1072,9 +1706,12 @@ function startTask() {
         }
     }
     
-    // ***MODIFIED***: Only play the task's sound if it's defined.
-    // This preserves any manually played sounds if the task has no sound.
-    if (task.sound && task.sound !== 'none') {
+    // Play task's sound, local music, or YouTube if defined (first match wins).
+    if (task.youtubeUrl) {
+        loadTaskYouTubeVideo(task.youtubeUrl);
+    } else if (task.sound === 'local_music') {
+        loadAndPlayTaskLocalMusic(task.id);
+    } else if (task.sound && task.sound !== 'none') {
         updateSoundCheckboxes(task.sound);
     }
     
@@ -1374,24 +2011,30 @@ function saveToLocalStorage() {
             canceledTasks: state.canceledTasks,
             stats: state.stats
         };
-        localStorage.setItem('focusflow_data', JSON.stringify(dataToSave));
+        localStorage.setItem(getStorageKey(currentUserId), JSON.stringify(dataToSave));
+        if (supabaseClient && currentUserId) scheduleSyncToCloud();
     } catch (error) {
         console.warn('Could not save data to localStorage:', error);
     }
 }
 
-function loadFromLocalStorage() {
+function loadFromLocalStorage(userId) {
     try {
-        const savedData = localStorage.getItem('focusflow_data');
+        const key = getStorageKey(userId);
+        const savedData = localStorage.getItem(key);
         if (savedData) {
             const parsedData = JSON.parse(savedData);
             if (parsedData && typeof parsedData === 'object') {
-                Object.assign(state, parsedData);
-                if (!state.tasks) state.tasks = [];
-                if (!state.completedTasks) state.completedTasks = [];
-                if (!state.canceledTasks) state.canceledTasks = [];
-                if (!state.stats) state.stats = { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} };
+                state.tasks = parsedData.tasks || [];
+                state.completedTasks = parsedData.completedTasks || [];
+                state.canceledTasks = parsedData.canceledTasks || [];
+                state.stats = parsedData.stats || { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} };
             }
+        } else {
+            state.tasks = [];
+            state.completedTasks = [];
+            state.canceledTasks = [];
+            state.stats = { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} };
         }
     } catch (error) {
         console.warn('Could not load data from localStorage:', error);
@@ -1400,12 +2043,14 @@ function loadFromLocalStorage() {
 
 function deleteCompletedTask(taskId) {
     state.completedTasks = state.completedTasks.filter(task => task.id !== taskId);
+    deleteTaskLocalMusic(taskId).catch(() => {});
     saveToLocalStorage();
     updateTaskList();
 }
 
 function deleteCanceledTask(taskId) {
     state.canceledTasks = state.canceledTasks.filter(task => task.id !== taskId);
+    deleteTaskLocalMusic(taskId).catch(() => {});
     saveToLocalStorage();
     updateTaskList();
 }
@@ -1493,6 +2138,33 @@ function extractYouTubeId(url) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
+function loadTaskYouTubeVideo(url) {
+    const videoId = extractYouTubeId(url);
+    if (!videoId) return;
+    const youtubePlayerContainer = document.getElementById('youtube-player');
+    const youtubeIframe = document.getElementById('youtube-iframe');
+    const youtubeUrlInput = document.getElementById('youtube-url');
+    if (!youtubePlayerContainer || !youtubeIframe) return;
+    stopAudio();
+    youtubeIframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+    youtubePlayerContainer.classList.remove('hidden');
+    if (youtubeUrlInput) youtubeUrlInput.value = url;
+    document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active', 'bg-[rgb(2,4,3)]', 'text-white');
+        btn.style.setProperty('--after-opacity', '0');
+        btn.classList.add('text-gray-600', 'dark:text-gray-300');
+    });
+    const youtubeTabBtn = document.querySelector('.tab-button[data-tab="youtube"]');
+    const youtubeTabPane = document.getElementById('youtube-tab');
+    if (youtubeTabBtn) {
+        youtubeTabBtn.classList.add('active', 'bg-[rgb(2,4,3)]', 'text-white');
+        youtubeTabBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
+        youtubeTabBtn.style.setProperty('--after-opacity', '1');
+    }
+    if (youtubeTabPane) youtubeTabPane.classList.remove('hidden');
+}
+
 function onYouTubePlayerReady(event) {}
 function onYouTubePlayerStateChange(event) {
     isYoutubePlaying = (event.data === YT.PlayerState.PLAYING);
@@ -1574,6 +2246,9 @@ function openEditTaskModal(taskId) {
     DOM.taskNameInput.value = task.name;
     DOM.taskTimeInput.value = task.duration;
     DOM.taskSoundInput.value = task.sound;
+    if (DOM.taskYoutubeUrlInput) DOM.taskYoutubeUrlInput.value = task.youtubeUrl || '';
+    toggleTaskLocalMusicSection();
+    if (DOM.taskLocalMusicLabel) DOM.taskLocalMusicLabel.textContent = task.sound === 'local_music' ? 'Files saved (select new to replace)' : 'Select music files';
     DOM.createTaskFormContainer.querySelector('h2').textContent = 'Edit Task';
     DOM.taskForm.querySelector('button[type="submit"]').textContent = 'Save Changes';
     DOM.taskNameInput.focus();

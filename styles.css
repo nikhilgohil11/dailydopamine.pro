@@ -1520,3 +1520,17 @@ select {
   padding-top: 1rem;
   border-top: 1px solid var(--card-border);
 }
+
+/* Auth modal - matches site styling */
+.auth-modal-card {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+.dark .auth-modal-card {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+}
+.auth-modal-card input:focus {
+  outline: none;
+}
+.auth-tab {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}

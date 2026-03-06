@@ -1,0 +1,28 @@
+---
+description: Core conventions for DailyDopamine.pro (UI, auth, sync)
+alwaysApply: true
+---
+
+# DailyDopamine.pro Core Rules
+
+- **Preserve existing UX**
+  - Do not remove or significantly change current UI flows without an explicit request.
+  - Keep the app fully usable without authentication; localStorage must remain a first-class data source.
+
+- **Auth & sync architecture**
+  - Use Supabase Auth and the `task_state` table for cloud sync; do not introduce another backend unless explicitly requested.
+  - Treat Supabase configuration as optional. When `SUPABASE_URL`/`SUPABASE_ANON_KEY` are missing, the app should gracefully fall back to purely local behavior.
+  - Never store secrets other than the public Supabase anon key in the frontend repo.
+
+- **Data model**
+  - Tasks and stats are the single source of truth in `state` and are mirrored to both `localStorage` and Supabase.
+  - When merging cloud and local data, prefer the most recent timestamps and keep IDs stable.
+
+- **Tech stack constraints**
+  - Stick to vanilla JS, HTML, Tailwind CSS utilities, and small browser-friendly libraries already in use.
+  - Avoid adding heavy frameworks (React, Vue, etc.) or build tooling without explicit approval.
+
+- **Code style**
+  - Prefer small, composable functions over large monoliths in `script.js`.
+  - Keep comments focused on non-obvious intent, data-flow, and constraints (not line-by-line narration).
+
