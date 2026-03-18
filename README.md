@@ -2,7 +2,7 @@
 
 FocusFlow is a browser-based task management application designed specifically for people with ADHD, combining to-do list functionality with ambient audio to enhance focus and productivity.
 
-## Features
+## Features....
 
 - **Task Management**: Create, edit, and delete tasks with custom time durations
 - **Focus Timer**: Start a countdown timer for each task with pause/resume functionality
