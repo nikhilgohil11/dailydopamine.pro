@@ -881,10 +881,9 @@ function initializeApp() {
     try {
         localStorage.setItem('test', 'test');
         localStorage.removeItem('test');
-        if (!initSupabase()) {
-            currentUserId = null;
-            loadFromLocalStorage(null);
-        }
+        initSupabase();
+        currentUserId = null;
+        loadFromLocalStorage(null);
     } catch (error) {
         console.warn('localStorage is not available:', error);
         state.tasks = [];

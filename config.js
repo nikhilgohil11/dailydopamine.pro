@@ -1,4 +1,3 @@
-// Copy this file to `config.js` and fill in your Supabase project details.
 // The anon key is safe to expose in the browser – it is a public key.
 
 window.SUPABASE_URL = "https://drxqeuspjzhuofkxtosf.supabase.co";
