@@ -31,7 +31,7 @@ As a browser-based application, FocusFlow requires no installation. Simply open 
 
 1. Clone or download this repository
 2. (Optional) Copy `config.sample.js` to `config.js` and add your Supabase URL and anon key for auth and cloud sync
-3. Run `supabase-schema.sql` in your Supabase project to create the `task_state` table
+3. Run `supabase-schema.sql` in your Supabase project to create the `task_state` and `tasks` tables (each task is stored as its own row in `tasks`)
 4. For password reset: add your app URL (e.g. `http://localhost:3000` or `https://yoursite.com`) to Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
 5. Open `index.html` in your browser
 6. Start adding and completing tasks!
