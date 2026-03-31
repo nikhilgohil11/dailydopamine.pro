@@ -635,8 +635,8 @@
                         <i class="fas fa-user text-white text-sm"></i>
                     </div>
                     <div>
-                        <h2 class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100">Your Account</h2>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Sync tasks across devices</p>
+                        <h2 id="auth-modal-title" class="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-100">Your Account</h2>
+                        <p id="auth-modal-subtitle" class="text-xs text-gray-500 dark:text-gray-400">Sync tasks across devices</p>
                     </div>
                 </div>
                 <button id="close-auth-modal" class="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2 h-9 w-9 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" aria-label="Close">
@@ -658,6 +658,7 @@
             <!-- Sign In -->
             <div id="auth-signin" class="auth-pane">
                 <form id="auth-signin-form" class="space-y-4">
+                    <div id="auth-signin-success-after-reset" class="text-sm text-green-600 dark:text-green-400 hidden rounded-lg bg-green-50 dark:bg-green-900/20 px-3 py-2" role="status"></div>
                     <p class="text-sm text-gray-600 dark:text-gray-400">Welcome back! Enter your details to continue.</p>
                     <div>
                         <label for="auth-email" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Email</label>
@@ -692,39 +693,40 @@
                     </button>
                 </form>
             </div>
-            <!-- Reset Password -->
+            <!-- Reset Password: request link + set new password (same tab) -->
             <div id="auth-reset" class="auth-pane hidden">
-                <form id="auth-reset-form" class="space-y-4">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Forgot your password? Enter your email and we'll send you a reset link.</p>
-                    <div>
-                        <label for="auth-reset-email" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Email</label>
-                        <input type="email" id="auth-reset-email" class="w-full px-4 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400" required placeholder="you@example.com" autocomplete="email">
-                    </div>
-                    <div id="auth-reset-error" class="text-sm text-red-600 dark:text-red-400 hidden rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2"></div>
-                    <div id="auth-reset-success" class="text-sm text-green-600 dark:text-green-400 hidden rounded-lg bg-green-50 dark:bg-green-900/20 px-3 py-2"></div>
-                    <button type="submit" class="w-full bg-[rgb(2,4,3)] text-white py-3 rounded-xl hover:bg-[rgb(2,4,3)]/90 transition font-semibold text-base border border-[rgb(2,4,3)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                        <i class="fas fa-paper-plane mr-2"></i>Send Reset Link
-                    </button>
-                </form>
-            </div>
-            <!-- Set New Password (shown when user returns from reset link) -->
-            <div id="auth-reset-new" class="auth-pane hidden">
-                <form id="auth-reset-new-form" class="space-y-4">
-                    <p class="text-sm text-gray-600 dark:text-gray-400">Set a new password for your account.</p>
-                    <div>
-                        <label for="auth-reset-new-password" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">New password</label>
-                        <input type="password" id="auth-reset-new-password" class="w-full px-4 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
-                    </div>
-                    <div>
-                        <label for="auth-reset-new-confirm" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Confirm password</label>
-                        <input type="password" id="auth-reset-new-confirm" class="w-full px-4 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400" required minlength="6" placeholder="Confirm your new password" autocomplete="new-password">
-                    </div>
-                    <div id="auth-reset-new-error" class="text-sm text-red-600 dark:text-red-400 hidden rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2"></div>
-                    <div id="auth-reset-new-success" class="text-sm text-green-600 dark:text-green-400 hidden rounded-lg bg-green-50 dark:bg-green-900/20 px-3 py-2"></div>
-                    <button type="submit" class="w-full bg-[rgb(2,4,3)] text-white py-3 rounded-xl hover:bg-[rgb(2,4,3)]/90 transition font-semibold text-base border border-[rgb(2,4,3)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                        <i class="fas fa-key mr-2"></i>Update Password
-                    </button>
-                </form>
+                <div id="auth-reset-request-section">
+                    <form id="auth-reset-form" class="space-y-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Forgot your password? Enter your email and we'll send you a reset link.</p>
+                        <div>
+                            <label for="auth-reset-email" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Email</label>
+                            <input type="email" id="auth-reset-email" class="w-full px-4 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400" required placeholder="you@example.com" autocomplete="email">
+                        </div>
+                        <div id="auth-reset-error" class="text-sm text-red-600 dark:text-red-400 hidden rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2"></div>
+                        <div id="auth-reset-success" class="text-sm text-green-600 dark:text-green-400 hidden rounded-lg bg-green-50 dark:bg-green-900/20 px-3 py-2"></div>
+                        <button type="submit" class="w-full bg-[rgb(2,4,3)] text-white py-3 rounded-xl hover:bg-[rgb(2,4,3)]/90 transition font-semibold text-base border border-[rgb(2,4,3)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                            <i class="fas fa-paper-plane mr-2"></i>Send Reset Link
+                        </button>
+                    </form>
+                </div>
+                <div id="auth-reset-set-password-section" class="hidden">
+                    <form id="auth-reset-new-form" class="space-y-4">
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Set a new password for your account.</p>
+                        <div>
+                            <label for="auth-reset-new-password" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">New password</label>
+                            <input type="password" id="auth-reset-new-password" class="w-full px-4 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password">
+                        </div>
+                        <div>
+                            <label for="auth-reset-new-confirm" class="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Confirm password</label>
+                            <input type="password" id="auth-reset-new-confirm" class="w-full px-4 py-2.5 text-base border border-gray-300 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400" required minlength="6" placeholder="Confirm your new password" autocomplete="new-password">
+                        </div>
+                        <div id="auth-reset-new-error" class="text-sm text-red-600 dark:text-red-400 hidden rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2"></div>
+                        <div id="auth-reset-new-success" class="text-sm text-green-600 dark:text-green-400 hidden rounded-lg bg-green-50 dark:bg-green-900/20 px-3 py-2"></div>
+                        <button type="submit" class="w-full bg-[rgb(2,4,3)] text-white py-3 rounded-xl hover:bg-[rgb(2,4,3)]/90 transition font-semibold text-base border border-[rgb(2,4,3)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,4,3)] focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                            <i class="fas fa-key mr-2"></i>Update Password
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

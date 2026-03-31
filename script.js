@@ -339,7 +339,7 @@ const DOM = {
     authSignupForm: document.getElementById('auth-signup-form'),
     authResetForm: document.getElementById('auth-reset-form'),
     authResetNewForm: document.getElementById('auth-reset-new-form'),
-    authResetNewPane: document.getElementById('auth-reset-new'),
+    authResetNewPane: document.getElementById('auth-reset-set-password-section'),
     authTabsContainer: document.getElementById('auth-tabs-container'),
     authResetNewError: document.getElementById('auth-reset-new-error'),
     authResetNewSuccess: document.getElementById('auth-reset-new-success'),
@@ -353,11 +353,72 @@ const DOM = {
 // Supabase client (null when not configured)
 let supabaseClient = null;
 
+/** True while user opened a password-reset link (session exists but we show “set password”, not “signed in”). */
+let authRecoveryMode = false;
+
+/** BroadcastChannel for telling other tabs (same origin) to navigate to the password-reset URL. */
+let authRecoveryBc = null;
+let authRecoveryNavBroadcastSent = false;
+
+function setupAuthRecoveryCrossTab() {
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            authRecoveryBc = new BroadcastChannel('ddp-auth-recovery-nav');
+            authRecoveryBc.onmessage = (event) => {
+                if (event.data?.type !== 'recovery-nav' || typeof event.data.href !== 'string') return;
+                try {
+                    const dest = new URL(event.data.href);
+                    if (dest.origin !== window.location.origin) return;
+                    if (window.location.href === event.data.href) return;
+                    window.location.replace(event.data.href);
+                } catch (_) { /* ignore */ }
+            };
+        } catch (_) { /* ignore */ }
+    }
+    window.addEventListener('storage', (e) => {
+        if (e.key !== 'ddp-recovery-nav' || !e.newValue) return;
+        try {
+            const { href } = JSON.parse(e.newValue);
+            if (typeof href !== 'string') return;
+            const dest = new URL(href);
+            if (dest.origin !== window.location.origin) return;
+            if (window.location.href === href) return;
+            window.location.replace(href);
+        } catch (_) { /* ignore */ }
+    });
+}
+
+/** When the user opens the reset link from email (often a new tab), notify other open tabs so they can navigate here. */
+function broadcastPasswordRecoveryUrlToOtherTabs() {
+    if (authRecoveryNavBroadcastSent) return;
+    authRecoveryNavBroadcastSent = true;
+    const href = window.location.href;
+    try {
+        if (authRecoveryBc) authRecoveryBc.postMessage({ type: 'recovery-nav', href });
+    } catch (_) { /* ignore */ }
+    try {
+        localStorage.setItem('ddp-recovery-nav', JSON.stringify({ href, t: Date.now() }));
+        setTimeout(() => {
+            try { localStorage.removeItem('ddp-recovery-nav'); } catch (_) { /* ignore */ }
+        }, 2500);
+    } catch (_) { /* ignore */ }
+}
+
+setupAuthRecoveryCrossTab();
+
 function initSupabase() {
     const url = typeof window.SUPABASE_URL === 'string' && window.SUPABASE_URL.length > 0 ? window.SUPABASE_URL : null;
     const key = typeof window.SUPABASE_ANON_KEY === 'string' && window.SUPABASE_ANON_KEY.length > 0 ? window.SUPABASE_ANON_KEY : null;
     if (url && key && typeof supabase !== 'undefined') {
-        supabaseClient = supabase.createClient(url, key);
+        // Implicit flow: reset links work when opened from email on another device/browser.
+        // PKCE requires the same browser/session that called resetPasswordForEmail (code verifier in storage).
+        supabaseClient = supabase.createClient(url, key, {
+            auth: {
+                flowType: 'implicit',
+                detectSessionInUrl: true,
+                persistSession: true
+            }
+        });
         return true;
     }
     return false;
@@ -369,12 +430,32 @@ function showAuthError(el, msg) {
     el.classList.toggle('hidden', !msg);
 }
 
+function setAuthModalHeaderForRecovery(isRecoveryFlow) {
+    const title = document.getElementById('auth-modal-title');
+    const subtitle = document.getElementById('auth-modal-subtitle');
+    if (title) {
+        title.textContent = isRecoveryFlow ? 'Set a new password' : 'Your Account';
+    }
+    if (subtitle) {
+        subtitle.textContent = isRecoveryFlow
+            ? 'Choose a password, then sign in with it.'
+            : 'Sync tasks across devices';
+    }
+}
+
 function switchAuthTab(tabName) {
     if (!DOM.authTabs || !DOM.authPanes) return;
+    const signinAfterReset = document.getElementById('auth-signin-success-after-reset');
+    if (signinAfterReset) {
+        signinAfterReset.classList.add('hidden');
+        signinAfterReset.textContent = '';
+    }
     const isRecovery = tabName === 'reset-new';
-    if (DOM.authTabsContainer) DOM.authTabsContainer.classList.toggle('hidden', isRecovery);
+    setAuthModalHeaderForRecovery(isRecovery);
+    if (DOM.authTabsContainer) DOM.authTabsContainer.classList.remove('hidden');
+    const tabHighlight = tabName === 'reset-new' ? 'reset' : tabName;
     DOM.authTabs.forEach(t => {
-        const active = t.dataset.tab === tabName && !isRecovery;
+        const active = t.dataset.tab === tabHighlight;
         t.classList.toggle('bg-[rgb(2,4,3)]', active);
         t.classList.toggle('text-white', active);
         t.classList.toggle('text-gray-600', !active);
@@ -386,10 +467,20 @@ function switchAuthTab(tabName) {
         const id = p.id;
         const visible = (id === 'auth-signin' && tabName === 'signin') ||
             (id === 'auth-signup' && tabName === 'signup') ||
-            (id === 'auth-reset' && tabName === 'reset') ||
-            (id === 'auth-reset-new' && tabName === 'reset-new');
+            (id === 'auth-reset' && (tabName === 'reset' || tabName === 'reset-new'));
         p.classList.toggle('hidden', !visible);
     });
+    const reqSection = document.getElementById('auth-reset-request-section');
+    const setPwdSection = document.getElementById('auth-reset-set-password-section');
+    if (reqSection && setPwdSection) {
+        if (tabName === 'reset-new') {
+            reqSection.classList.add('hidden');
+            setPwdSection.classList.remove('hidden');
+        } else {
+            reqSection.classList.remove('hidden');
+            setPwdSection.classList.add('hidden');
+        }
+    }
     showAuthError(DOM.authError);
     showAuthError(DOM.authSignupError);
     showAuthError(DOM.authResetError);
@@ -403,6 +494,17 @@ function switchAuthTab(tabName) {
     }
 }
 
+function hasPasswordRecoveryHash() {
+    try {
+        const raw = (window.location.hash || '').replace(/^#/, '');
+        if (!raw) return false;
+        const params = new URLSearchParams(raw);
+        return params.get('type') === 'recovery';
+    } catch (_) {
+        return false;
+    }
+}
+
 function updateAuthButtonUI(user) {
     const btn = DOM.authButton;
     const btnMobile = DOM.authButtonMobile;
@@ -413,7 +515,8 @@ function updateAuthButtonUI(user) {
     const show = !!supabaseClient;
     if (btn) btn.style.display = show ? '' : 'none';
     if (btnMobile) btnMobile.style.display = show ? '' : 'none';
-    if (user) {
+    const showSignedIn = user && !authRecoveryMode;
+    if (showSignedIn) {
         const email = user.email || 'Signed in';
         if (txt) { txt.textContent = email; txt.classList.remove('hidden'); }
         if (txtMobile) { txtMobile.textContent = email; txtMobile.classList.remove('hidden'); }
@@ -437,22 +540,50 @@ function initAuth() {
         return;
     }
 
-    supabaseClient.auth.getUser().then(({ data }) => {
-        updateAuthButtonUI(data?.user ?? null);
-        if (data?.user) onSignedIn();
-        else loadDataForAnonymous();
-    });
+    // Supabase may redirect with ?error= / ?error_description= when the link is invalid or expired
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const err = params.get('error_description') || params.get('error');
+        if (err) {
+            if (DOM.authModal) DOM.authModal.classList.remove('hidden');
+            switchAuthTab('reset');
+            showAuthError(DOM.authResetError, decodeURIComponent(err.replace(/\+/g, ' ')));
+            window.history.replaceState(null, '', window.location.pathname || '/');
+        }
+    } catch (_) { /* ignore */ }
+
+    // Before async auth runs: recovery link uses #...&type=recovery — show only “set password”, not Sign In tab
+    if (hasPasswordRecoveryHash()) {
+        broadcastPasswordRecoveryUrlToOtherTabs();
+        authRecoveryMode = true;
+        switchAuthTab('reset-new');
+        if (DOM.authModal) DOM.authModal.classList.remove('hidden');
+        updateAuthButtonUI(null);
+        loadDataForAnonymous();
+    }
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
         updateAuthButtonUI(session?.user ?? null);
         if (event === 'PASSWORD_RECOVERY') {
+            broadcastPasswordRecoveryUrlToOtherTabs();
+            authRecoveryMode = true;
             if (DOM.authModal) DOM.authModal.classList.remove('hidden');
             switchAuthTab('reset-new');
-        } else if (session?.user) {
+        } else if (session?.user && !authRecoveryMode) {
             onSignedIn();
-        } else {
+        } else if (!session?.user) {
             onSignedOut();
         }
+    });
+
+    // getSession runs before getUser so the client can parse the hash; authRecoveryMode is set synchronously from the hash above
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) updateAuthButtonUI(session.user);
+        return supabaseClient.auth.getUser();
+    }).then(({ data }) => {
+        updateAuthButtonUI(data?.user ?? null);
+        if (data?.user && !authRecoveryMode) onSignedIn();
+        else if (!data?.user) loadDataForAnonymous();
     });
 
     function onAuthButtonClick() {
@@ -470,22 +601,36 @@ function initAuth() {
         if (btn) btn.addEventListener('click', onAuthButtonClick);
     });
 
+    function closeAuthModalAndMaybeCancelRecovery() {
+        if (authRecoveryMode && supabaseClient) {
+            authRecoveryMode = false;
+            supabaseClient.auth.signOut();
+            window.history.replaceState(null, '', window.location.pathname || '/');
+            switchAuthTab('signin');
+        }
+        if (DOM.authModal) DOM.authModal.classList.add('hidden');
+    }
+
     // Close auth modal
     if (DOM.closeAuthModal) {
         DOM.closeAuthModal.addEventListener('click', () => {
-            if (DOM.authModal) DOM.authModal.classList.add('hidden');
+            closeAuthModalAndMaybeCancelRecovery();
         });
     }
     if (DOM.authModal) {
         DOM.authModal.addEventListener('click', (e) => {
-            if (e.target === DOM.authModal) DOM.authModal.classList.add('hidden');
+            if (e.target === DOM.authModal) closeAuthModalAndMaybeCancelRecovery();
         });
     }
 
     // Auth tab switching
     if (DOM.authTabs) {
         DOM.authTabs.forEach(t => {
-            t.addEventListener('click', () => switchAuthTab(t.dataset.tab));
+            t.addEventListener('click', () => {
+                let tab = t.dataset.tab;
+                if (tab === 'reset' && authRecoveryMode) tab = 'reset-new';
+                switchAuthTab(tab);
+            });
         });
     }
 
@@ -496,6 +641,8 @@ function initAuth() {
             const email = document.getElementById('auth-email')?.value?.trim();
             const password = document.getElementById('auth-password')?.value;
             if (!email || !password || !supabaseClient) return;
+            const signinAfterReset = document.getElementById('auth-signin-success-after-reset');
+            if (signinAfterReset) signinAfterReset.classList.add('hidden');
             showAuthError(DOM.authError);
             try {
                 const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -571,16 +718,23 @@ function initAuth() {
             try {
                 const { error } = await supabaseClient.auth.updateUser({ password });
                 if (error) throw error;
+                await supabaseClient.auth.signOut();
+                authRecoveryMode = false;
                 if (DOM.authResetNewSuccess) {
-                    DOM.authResetNewSuccess.textContent = 'Password updated! You can sign in now.';
+                    DOM.authResetNewSuccess.textContent = 'Password saved.';
                     DOM.authResetNewSuccess.classList.remove('hidden');
                 }
                 window.history.replaceState(null, '', window.location.pathname || '/');
                 setTimeout(() => {
-                    if (DOM.authModal) DOM.authModal.classList.add('hidden');
                     switchAuthTab('signin');
                     if (DOM.authTabsContainer) DOM.authTabsContainer.classList.remove('hidden');
-                }, 1500);
+                    const signinBanner = document.getElementById('auth-signin-success-after-reset');
+                    if (signinBanner) {
+                        signinBanner.textContent = 'Your new password is saved. Sign in below.';
+                        signinBanner.classList.remove('hidden');
+                    }
+                    if (DOM.authModal) DOM.authModal.classList.remove('hidden');
+                }, 1600);
             } catch (err) {
                 showAuthError(DOM.authResetNewError, err.message || 'Update failed');
             }
