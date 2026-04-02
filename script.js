@@ -570,7 +570,8 @@ function initAuth() {
             if (DOM.authModal) DOM.authModal.classList.remove('hidden');
             switchAuthTab('reset-new');
         } else if (session?.user && !authRecoveryMode) {
-            onSignedIn();
+            // TOKEN_REFRESHED fires right after SIGNED_IN; running a full merge twice causes a double list refresh.
+            if (event !== 'TOKEN_REFRESHED') onSignedIn();
         } else if (!session?.user) {
             onSignedOut();
         }
@@ -582,15 +583,15 @@ function initAuth() {
         return supabaseClient.auth.getUser();
     }).then(({ data }) => {
         updateAuthButtonUI(data?.user ?? null);
-        if (data?.user && !authRecoveryMode) onSignedIn();
-        else if (!data?.user) loadDataForAnonymous();
+        // Signed-in data load runs only from onAuthStateChange (SIGNED_IN / INITIAL_SESSION), not here — avoids a second onSignedIn after the first finishes.
+        if (!data?.user) loadDataForAnonymous();
     });
 
     function onAuthButtonClick() {
         supabaseClient.auth.getUser().then(({ data }) => {
             if (data?.user) {
                 supabaseClient.auth.signOut();
-            } else if (DOM.authModal) {
+            } else if (DOM.authModal) { 
                 DOM.authModal.classList.remove('hidden');
                 switchAuthTab('signin');
             }
@@ -746,10 +747,48 @@ function initAuth() {
 // --- Cloud sync (Supabase task_state) ---
 let syncDebounceTimer = null;
 let currentUserId = null;
+let onSignedInPromise = null;
+let tabFocusCloudSyncPromise = null;
+let tabFocusVisibilityDebounceTimer = null;
 const SYNC_DEBOUNCE_MS = 800;
+const TAB_FOCUS_CLOUD_DEBOUNCE_MS = 120;
 
 function getStorageKey(userId) {
     return userId ? `focusflow_data_${userId}` : 'focusflow_data';
+}
+
+function getEmptyTaskPayload() {
+    return {
+        tasks: [],
+        completedTasks: [],
+        canceledTasks: [],
+        stats: { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} }
+    };
+}
+
+/** Stable string for comparing task buckets + stats (skip DOM when unchanged after cloud merge). */
+function snapshotTaskState(tasks, completedTasks, canceledTasks, stats) {
+    return JSON.stringify({ tasks, completedTasks, canceledTasks, stats });
+}
+
+/** Read saved tasks/stats for a user id without mutating global `state`. */
+function readStoragePayload(userId) {
+    try {
+        const savedData = localStorage.getItem(getStorageKey(userId));
+        if (!savedData) return getEmptyTaskPayload();
+        const parsedData = JSON.parse(savedData);
+        if (parsedData && typeof parsedData === 'object') {
+            return {
+                tasks: parsedData.tasks || [],
+                completedTasks: parsedData.completedTasks || [],
+                canceledTasks: parsedData.canceledTasks || [],
+                stats: parsedData.stats || { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} }
+            };
+        }
+    } catch (error) {
+        console.warn('Could not read storage payload:', error);
+    }
+    return getEmptyTaskPayload();
 }
 
 function getTaskTimestamp(task, bucket) {
@@ -857,34 +896,55 @@ function getAnonymousData() {
 }
 
 async function onSignedIn() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
-    currentUserId = user.id;
-
-    const anonymousData = getAnonymousData();
-    loadFromLocalStorage(user.id);
-    const userLocal = { tasks: state.tasks, completedTasks: state.completedTasks, canceledTasks: state.canceledTasks, stats: state.stats };
-    const cloud = await pullFromCloud();
-
-    let local = userLocal;
-    if (anonymousData && (anonymousData.tasks?.length > 0 || anonymousData.completedTasks?.length > 0 || anonymousData.canceledTasks?.length > 0)) {
-        local = mergeCloudWithLocal(userLocal, anonymousData);
+    if (onSignedInPromise) return onSignedInPromise;
+    onSignedInPromise = (async () => {
         try {
-            localStorage.removeItem(getStorageKey(null));
-        } catch (_) {}
-    }
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+            currentUserId = user.id;
 
-    const merged = mergeCloudWithLocal(cloud, local);
-    state.tasks = merged.tasks;
-    state.completedTasks = merged.completedTasks;
-    state.canceledTasks = merged.canceledTasks;
-    state.stats = merged.stats;
-    saveToLocalStorage();
-    updateTaskList();
-    updateStats();
-    if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) clearActiveTask();
-    else if (state.activeTaskId) setActiveTask(state.activeTaskId);
-    pushToCloud();
+            const anonymousData = getAnonymousData();
+            const hadAnonymous =
+                anonymousData &&
+                (anonymousData.tasks?.length > 0 ||
+                    anonymousData.completedTasks?.length > 0 ||
+                    anonymousData.canceledTasks?.length > 0);
+
+            const userLocal = readStoragePayload(user.id);
+            let local = userLocal;
+            if (hadAnonymous) {
+                local = mergeCloudWithLocal(userLocal, anonymousData);
+            }
+
+            const cloud = await pullFromCloud();
+
+            if (hadAnonymous) {
+                try {
+                    localStorage.removeItem(getStorageKey(null));
+                } catch (_) {}
+            }
+
+            const merged = mergeCloudWithLocal(cloud, local);
+            state.tasks = merged.tasks;
+            state.completedTasks = merged.completedTasks;
+            state.canceledTasks = merged.canceledTasks;
+            state.stats = merged.stats;
+
+            updateStats();
+            if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) {
+                clearActiveTask();
+            } else if (state.activeTaskId) {
+                setActiveTask(state.activeTaskId);
+            } else {
+                saveToLocalStorage();
+                updateTaskList();
+            }
+            pushToCloud();
+        } finally {
+            onSignedInPromise = null;
+        }
+    })();
+    return onSignedInPromise;
 }
 
 function loadDataForAnonymous() {
@@ -907,21 +967,43 @@ function onSignedOut() {
 
 async function syncFromCloudOnTabFocus() {
     if (!supabaseClient) return;
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
-    const cloud = await pullFromCloud();
-    if (!cloud) return;
-    const local = { tasks: state.tasks, completedTasks: state.completedTasks, canceledTasks: state.canceledTasks, stats: state.stats };
-    const merged = mergeCloudWithLocal(cloud, local);
-    state.tasks = merged.tasks;
-    state.completedTasks = merged.completedTasks;
-    state.canceledTasks = merged.canceledTasks;
-    state.stats = merged.stats;
-    saveToLocalStorage();
-    updateTaskList();
-    updateStats();
-    if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) clearActiveTask();
-    else if (state.activeTaskId) setActiveTask(state.activeTaskId);
+    if (tabFocusCloudSyncPromise) return tabFocusCloudSyncPromise;
+    tabFocusCloudSyncPromise = (async () => {
+        try {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) return;
+            const cloud = await pullFromCloud();
+            if (!cloud) return;
+            const local = {
+                tasks: state.tasks,
+                completedTasks: state.completedTasks,
+                canceledTasks: state.canceledTasks,
+                stats: state.stats
+            };
+            const merged = mergeCloudWithLocal(cloud, local);
+            const before = snapshotTaskState(state.tasks, state.completedTasks, state.canceledTasks, state.stats);
+            const after = snapshotTaskState(merged.tasks, merged.completedTasks, merged.canceledTasks, merged.stats);
+            if (before === after) return;
+
+            state.tasks = merged.tasks;
+            state.completedTasks = merged.completedTasks;
+            state.canceledTasks = merged.canceledTasks;
+            state.stats = merged.stats;
+
+            updateStats();
+            if (state.activeTaskId && !state.tasks.find(t => t.id === state.activeTaskId)) {
+                clearActiveTask();
+            } else if (state.activeTaskId) {
+                setActiveTask(state.activeTaskId);
+            } else {
+                saveToLocalStorage();
+                updateTaskList();
+            }
+        } finally {
+            tabFocusCloudSyncPromise = null;
+        }
+    })();
+    return tabFocusCloudSyncPromise;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -946,10 +1028,14 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCompletionSound();
     
     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
-            initializeAudioContext();
+        if (document.visibilityState !== 'visible') return;
+        initializeAudioContext();
+        // Browsers sometimes fire `visible` twice when refocusing; debounce cloud sync only (not audio resume).
+        clearTimeout(tabFocusVisibilityDebounceTimer);
+        tabFocusVisibilityDebounceTimer = setTimeout(() => {
+            tabFocusVisibilityDebounceTimer = null;
             syncFromCloudOnTabFocus();
-        }
+        }, TAB_FOCUS_CLOUD_DEBOUNCE_MS);
     });
 });
 
@@ -2173,22 +2259,11 @@ function saveToLocalStorage() {
 
 function loadFromLocalStorage(userId) {
     try {
-        const key = getStorageKey(userId);
-        const savedData = localStorage.getItem(key);
-        if (savedData) {
-            const parsedData = JSON.parse(savedData);
-            if (parsedData && typeof parsedData === 'object') {
-                state.tasks = parsedData.tasks || [];
-                state.completedTasks = parsedData.completedTasks || [];
-                state.canceledTasks = parsedData.canceledTasks || [];
-                state.stats = parsedData.stats || { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} };
-            }
-        } else {
-            state.tasks = [];
-            state.completedTasks = [];
-            state.canceledTasks = [];
-            state.stats = { todayFocusTime: 0, tasksCompleted: 0, soundUsage: {} };
-        }
+        const p = readStoragePayload(userId);
+        state.tasks = p.tasks;
+        state.completedTasks = p.completedTasks;
+        state.canceledTasks = p.canceledTasks;
+        state.stats = p.stats;
     } catch (error) {
         console.warn('Could not load data from localStorage:', error);
     }
