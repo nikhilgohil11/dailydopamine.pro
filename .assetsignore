@@ -1,0 +1,14 @@
+.git
+.gitignore
+.github
+node_modules
+.wrangler
+*.bak
+*.bak2
+.cursorrules
+netlify.toml
+wrangler.jsonc
+package.json
+package-lock.json
+README.md
+LICENSE
