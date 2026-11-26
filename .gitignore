@@ -1,3 +1,27 @@
+# Dependencies
+node_modules/
 node_modules
+
+# Cloudflare / Wrangler
 .wrangler
 .dev.vars
+
+# Docs (doesn't affect runtime)
+docs/
+
+# IDE / Editor
+.vscode/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env / Logs
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
