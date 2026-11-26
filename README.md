@@ -25,16 +25,23 @@ FocusFlow is a browser-based task management application designed specifically f
 
 ## Installation
 
-As a browser-based application, FocusFlow requires no installation. Simply open the `index.html` file in any modern web browser.
+Hosted on Cloudflare Workers: https://dailydopamine.nikhilgohil11.workers.dev
 
 ### Running Locally
 
 1. Clone or download this repository
-2. (Optional) Copy `config.sample.js` to `config.js` and add your Supabase URL and anon key for auth and cloud sync
-3. Run `supabase-schema.sql` in your Supabase project to create the `task_state` and `tasks` tables (each task is stored as its own row in `tasks`)
-4. For password reset: add your app URL (e.g. `http://localhost:3000` or `https://yoursite.com`) to Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
-5. Open `index.html` in your browser
-6. Start adding and completing tasks!
+2. `npm install`
+3. `npm run dev` — preview with Wrangler
+4. (Optional) Copy `config.sample.js` to `config.js` and add your Supabase URL and anon key for auth and cloud sync
+5. Run `supabase-schema.sql` in your Supabase project to create the `task_state` and `tasks` tables (each task is stored as its own row in `tasks`)
+6. For password reset: add your app URL (e.g. `http://localhost:8787` or `https://yoursite.com`) to Supabase Dashboard → Authentication → URL Configuration → Redirect URLs
+7. Or open `index.html` directly in a browser
+
+### Deploy
+
+```bash
+npm run deploy
+```
 
 ## Audio Credits
 
@@ -58,6 +65,7 @@ The application includes various ambient audio tracks:
 - Uses LocalStorage API for data persistence
 - Optional Supabase for auth and cloud sync (tasks, stats)
 - HTML5 Audio API for sound management
+- Deployed as Cloudflare Workers static assets (Wrangler)
 
 ## Designed For
 
@@ -69,4 +77,4 @@ The application includes various ambient audio tracks:
 
 ## Browser Support
 
-Compatible with all modern browsers, including Chrome, Firefox, Safari, and Edge. 
+Compatible with all modern browsers, including Chrome, Firefox, Safari, and Edge.
